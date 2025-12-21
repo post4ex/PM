@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postman - Document Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .doc-item { transition: all 0.2s ease; border-left: 3px solid transparent; }
+        .doc-item:hover { background-color: #f1f5f9; }
+        .doc-item.active { background-color: #eff6ff; border-left-color: #1e3a8a; font-weight: 600; color: #1e3a8a; }
+        .form-section-header { border-bottom: 1px solid #e2e8f0; margin-bottom: 1.5rem; padding-bottom: 0.5rem; }
+        .category-header { position: sticky; top: 0; z-index: 10; background-color: white; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col text-slate-900">
+
+    <div id="header-placeholder"></div>
+
+    <div class="flex flex-col md:flex-row flex-grow w-full md:h-[calc(100vh-88px)] overflow-hidden">
+        
+        <!-- LEFT SIDEBAR: Search & Categories -->
+        <aside class="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+            <div class="p-4 border-b bg-slate-50">
+                <h2 class="text-lg font-bold text-blue-900 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-folder-open"></i> Document Library
+                </h2>
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
+                    <input type="text" id="docSearch" placeholder="Search forms..." 
+                           class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 text-sm transition-all">
+                </div>
+            </div>
+
+            <div class="overflow-y-auto flex-grow custom-scrollbar p-2 space-y-6" id="sidebarContent">
+                
+                <!-- Core Shipping & Registration -->
+                <div class="space-y-4">
+                    <h3 class="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Core Shipping</h3>
+                    <nav class="space-y-1">
+                        <button onclick="selectDoc('KYC_Form')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-id-card text-blue-600"></i> KYC Form
+                        </button>
+                        <button onclick="selectDoc('Commercial-Invoice')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-file-invoice text-blue-600"></i> Commercial Invoice
+                        </button>
+                        <button onclick="selectDoc('Packing-List')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-boxes-stacked text-blue-600"></i> Packing List
+                        </button>
+                        <button onclick="selectDoc('Shippers-Letter-of-Instructions')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-file-signature text-blue-600"></i> Shippers Letter (SLI)
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Customs Annexures & Appendices -->
+                <div class="space-y-4">
+                    <h3 class="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Customs & Export</h3>
+                    <nav class="space-y-1">
+                        <button onclick="selectDoc('SDF-Form')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-building-columns text-emerald-600"></i> SDF Form
+                        </button>
+                        <button onclick="selectDoc('Annexure-C1-for-EOU')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-file-contract text-emerald-600"></i> Annexure C1 (EOU)
+                        </button>
+                        <button onclick="selectDoc('Annexure-D-for-DEPB')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-file-contract text-emerald-600"></i> Annexure D (DEPB)
+                        </button>
+                        <button onclick="selectDoc('Annexure-I-for-Drawback')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-money-bill-transfer text-emerald-600"></i> Annexure I (DBK)
+                        </button>
+                        <button onclick="selectDoc('Annexure-II-for-Drawback')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-money-bill-transfer text-emerald-600"></i> Annexure II (DBK)
+                        </button>
+                        <button onclick="selectDoc('Appendix-II-for-DEEC')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-shield-halved text-emerald-600"></i> Appendix II (DEEC)
+                        </button>
+                        <button onclick="selectDoc('Appendix-III-for-Drawback')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-money-bill-transfer text-emerald-600"></i> Appendix III (DBK)
+                        </button>
+                        <button onclick="selectDoc('Appendix-IV-for-Drawback')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-money-bill-transfer text-emerald-600"></i> Appendix IV (DBK)
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Declarations & Certificates -->
+                <div class="space-y-4">
+                    <h3 class="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Declarations</h3>
+                    <nav class="space-y-1">
+                        <button onclick="selectDoc('Non-DG-Declaration')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-circle-check text-indigo-600"></i> Non-DG Declaration
+                        </button>
+                        <button onclick="selectDoc('Negative-Declaration')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-circle-minus text-indigo-600"></i> Negative Declaration
+                        </button>
+                        <button onclick="selectDoc('TSCA-Certificate')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-certificate text-indigo-600"></i> TSCA Certificate
+                        </button>
+                        <button onclick="selectDoc('Single-Country-Declaration')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-flag text-indigo-600"></i> Single Country Dec.
+                        </button>
+                        <button onclick="selectDoc('Multiple-Country-Declaration')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-earth-americas text-indigo-600"></i> Multiple Country Dec.
+                        </button>
+                        <button onclick="selectDoc('Quota-Charge-Statement')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-percent text-indigo-600"></i> Quota Statement
+                        </button>
+                        <button onclick="selectDoc('GR-Waiver-Form-(for-Free-Trade-Sample)')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-gift text-indigo-600"></i> GR Waiver (Sample)
+                        </button>
+                        <button onclick="selectDoc('GR-Waiver-Form-(for-Repair-&-Return)')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-screwdriver-wrench text-indigo-600"></i> GR Waiver (Repair)
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Safety & Legal -->
+                <div class="space-y-4">
+                    <h3 class="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Safety & Legal</h3>
+                    <nav class="space-y-1">
+                        <button onclick="selectDoc('MSDS')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-flask-vial text-rose-600"></i> MSDS (Safety Sheet)
+                        </button>
+                        <button onclick="selectDoc('Letter of Authority')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
+                            <i class="fa-solid fa-stamp text-rose-600"></i> Letter of Authority
+                        </button>
+                    </nav>
+                </div>
+            </div>
+        </aside>
+
+        <!-- RIGHT PANEL: Info or Form -->
+        <main class="flex-grow overflow-y-auto bg-slate-50 p-6 md:p-10" id="mainPanel">
+            
+            <!-- INITIAL INFO VIEW -->
+            <div id="infoView" class="max-w-4xl mx-auto space-y-10">
+                <div class="text-center space-y-4">
+                    <div class="w-20 h-20 bg-blue-100 text-blue-900 rounded-full flex items-center justify-center mx-auto shadow-sm">
+                        <i class="fa-solid fa-file-circle-plus text-4xl"></i>
+                    </div>
+                    <h1 class="text-3xl font-black text-slate-800">Document Generation Center</h1>
+                    <p class="text-slate-500 max-w-lg mx-auto">Select a document from the library to generate, fill, or download official shipping and compliance forms.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-slate-800 mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-info text-blue-600"></i> How it works
+                        </h3>
+                        <p class="text-sm text-slate-600 leading-relaxed">Choose a form from the sidebar. You can then fill in the required details directly in the panel to generate a professional PDF or download the blank template.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-slate-800 mb-2 flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved text-emerald-600"></i> Compliance Ready
+                        </h3>
+                        <p class="text-sm text-slate-600 leading-relaxed">All documents provided here are updated according to the latest IATA DGR and Indian Customs regulations for Session 2025-26.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DYNAMIC FORM VIEW (Hidden initially) -->
+            <div id="formView" class="hidden max-w-3xl mx-auto bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                <div class="bg-blue-900 p-6 text-white flex justify-between items-center">
+                    <div>
+                        <h2 id="formTitle" class="text-xl font-bold">Document Form</h2>
+                        <p class="text-xs text-blue-200 opacity-80 mt-1">Fill the details below to generate your document.</p>
+                    </div>
+                    <button onclick="resetView()" class="text-blue-300 hover:text-white transition-colors">
+                        <i class="fa-solid fa-circle-xmark text-2xl"></i>
+                    </button>
+                </div>
+                
+                <form id="docGenerationForm" class="p-8 space-y-6">
+                    <!-- COMPANY HEADER (Professional Branding) -->
+                    <div class="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
+                        <img src="https://i.postimg.cc/wv02f1fb/postman-Logo-28.png" class="h-12 w-auto" alt="Postman">
+                        <div>
+                            <h4 class="font-bold text-slate-800">Postman Logistics Pvt Ltd</h4>
+                            <p class="text-[10px] text-slate-500 uppercase tracking-wider">Shivlok Colony, Haripur, Dehradun - 248001</p>
+                        </div>
+                    </div>
+
+                    <!-- DYNAMIC FIELDS INJECTED HERE -->
+                    <div id="dynamicFieldsContainer" class="space-y-8"></div>
+
+                    <!-- FORM ACTIONS -->
+                    <div class="flex flex-col sm:flex-row gap-4 pt-4 border-t">
+                        <button type="button" onclick="downloadFile('Generated_Form.pdf')" class="flex-1 bg-blue-900 text-white font-bold py-3 rounded-lg hover:bg-blue-800 transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-file-pdf"></i> Generate PDF
+                        </button>
+                        <button type="button" onclick="downloadFile('Template.pdf')" class="flex-1 border border-slate-300 text-slate-700 font-bold py-3 rounded-lg hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-download"></i> Download Blank
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="layout.js"></script>
+    <script>
+        // ============================================================================
+        // DOCUMENT CONFIGURATION ENGINE
+        // ============================================================================
+        const COMMON_SECTIONS = {
+            IDENTITY: { title: 'Shipment Identity', fields: [
+                { label: 'AWB / Reference No.', type: 'text', key: 'awb', placeholder: 'Enter Number', full: false },
+                { label: 'Date of Issue', type: 'date', key: 'date', full: false }
+            ]},
+            PARTIES: { title: 'Parties Involved', fields: [
+                { label: 'Consignor (Exporter) Name', type: 'text', key: 'consignor_name', full: true },
+                { label: 'Consignor Address', type: 'textarea', key: 'consignor_address', full: true },
+                { label: 'Consignee (Importer) Name', type: 'text', key: 'consignee_name', full: true },
+                { label: 'Consignee Address', type: 'textarea', key: 'consignee_address', full: true }
+            ]},
+            BANK: { title: 'Financial & Banking Details', fields: [
+                { label: 'Bank Name', type: 'text', key: 'bank_name', full: false },
+                { label: 'Branch Address', type: 'text', key: 'bank_branch', full: false },
+                { label: 'Account Number', type: 'text', key: 'bank_acc', full: false },
+                { label: 'IFSC Code', type: 'text', key: 'bank_ifsc', full: false },
+                { label: 'AD Code', type: 'text', key: 'ad_code', placeholder: 'Authorized Dealer Code', full: true }
+            ]}
+        };
+
+        const DOC_CONFIG = {
+            'KYC_Form': { sections: [
+                COMMON_SECTIONS.IDENTITY,
+                { title: 'KYC Details', fields: [
+                    { label: 'Entity Type', type: 'select', options: ['Individual', 'Proprietorship', 'Partnership', 'Private Limited'], full: false },
+                    { label: 'Document Type', type: 'select', options: ['Aadhaar', 'PAN', 'GST', 'Passport'], full: false },
+                    { label: 'Document Number', type: 'text', placeholder: 'Enter ID Number', full: true },
+                    { label: 'Authorized Signatory', type: 'text', placeholder: 'Name of person signing', full: true }
+                ]}
+            ]},
+            'Commercial-Invoice': { sections: [
+                COMMON_SECTIONS.IDENTITY,
+                COMMON_SECTIONS.PARTIES,
+                { title: 'Invoice Details', fields: [
+                    { label: 'Invoice Number', type: 'text', placeholder: 'INV/2025/001', full: false },
+                    { label: 'Incoterms', type: 'select', options: ['FOB', 'CIF', 'EXW', 'DDP', 'DAP'], full: false },
+                    { label: 'Currency', type: 'select', options: ['INR', 'USD', 'EUR', 'GBP'], full: false },
+                    { label: 'Total Invoice Value', type: 'number', placeholder: '0.00', full: false }
+                ]},
+                { title: 'Itemized Products', type: 'table', columns: [
+                    { label: 'Description', type: 'text', placeholder: 'Item name...' },
+                    { label: 'HSN Code', type: 'text', placeholder: '8-digit' },
+                    { label: 'Qty', type: 'number', placeholder: '0' },
+                    { label: 'Unit Price', type: 'number', placeholder: '0.00' },
+                    { label: 'Total', type: 'number', placeholder: '0.00', readonly: true }
+                ]}
+            ]},
+            'Packing-List': { sections: [
+                COMMON_SECTIONS.IDENTITY,
+                COMMON_SECTIONS.PARTIES,
+                { title: 'Packing Details', type: 'table', columns: [
+                    { label: 'Box No', type: 'text', placeholder: '1' },
+                    { label: 'Description', type: 'text', placeholder: 'Contents...' },
+                    { label: 'Dimensions (LxWxH)', type: 'text', placeholder: 'cm' },
+                    { label: 'Net Wt', type: 'number', placeholder: 'kg' },
+                    { label: 'Gross Wt', type: 'number', placeholder: 'kg' }
+                ]}
+            ]},
+            'MSDS': { sections: [
+                COMMON_SECTIONS.IDENTITY,
+                { title: 'Safety & Hazard Info', fields: [
+                    { label: 'Technical Name', type: 'text', placeholder: 'Chemical/Product Name', full: true },
+                    { label: 'UN Number', type: 'text', placeholder: 'e.g. UN1263', full: false },
+                    { label: 'Hazard Class', type: 'text', placeholder: 'e.g. Class 3', full: false },
+                    { label: 'Emergency Contact', type: 'tel', placeholder: '24/7 Phone Number', full: true }
+                ]}
+            ]},
+            'SDF-Form': { sections: [
+                COMMON_SECTIONS.IDENTITY,
+                COMMON_SECTIONS.BANK,
+                { title: 'Declaration', fields: [
+                    { label: 'Export Value Declaration', type: 'number', placeholder: 'FOB Value', full: true }
+                ]}
+            ]},
+            'Annexure-I-for-Drawback': { sections: [
+                COMMON_SECTIONS.IDENTITY,
+                COMMON_SECTIONS.BANK,
+                { title: 'Drawback Details', fields: [
+                    { label: 'DBK Schedule No', type: 'text', placeholder: 'Serial Number', full: false },
+                    { label: 'Shipping Bill No', type: 'text', full: false }
+                ]}
+            ]},
+            'TSCA-Certificate': { sections: [
+                COMMON_SECTIONS.IDENTITY,
+                COMMON_SECTIONS.PARTIES,
+                { title: 'TSCA Statement', fields: [
+                    { label: 'Statement Type', type: 'select', options: ['Positive Certification', 'Negative Certification'], full: true },
+                    { label: 'Product Description', type: 'text', placeholder: 'As per TSCA guidelines', full: true }
+                ]}
+            ]},
+            'GR-Waiver-Form-(for-Repair-&-Return)': { sections: [
+                COMMON_SECTIONS.IDENTITY,
+                COMMON_SECTIONS.PARTIES,
+                { title: 'Original Import Details', fields: [
+                    { label: 'Original Import AWB', type: 'text', full: false },
+                    { label: 'Original Import Date', type: 'date', full: false },
+                    { label: 'Bill of Entry (BE) No', type: 'text', full: false },
+                    { label: 'Reason for Return', type: 'text', full: true }
+                ]}
+            ]},
+            'DEFAULT': { sections: [
+                COMMON_SECTIONS.IDENTITY,
+                COMMON_SECTIONS.PARTIES,
+                { title: 'Additional Information', fields: [
+                    { label: 'Remarks', type: 'textarea', placeholder: 'Any specific instructions...', full: true }
+                ]}
+            ]}
+        };
+
+        function renderDynamicForm(docName) {
+            const container = document.getElementById('dynamicFieldsContainer');
+            container.innerHTML = '';
+            
+            const config = DOC_CONFIG[docName] || DOC_CONFIG['DEFAULT'];
+
+            config.sections.forEach(section => {
+                const sectionDiv = document.createElement('div');
+                sectionDiv.innerHTML = `<h5 class="form-section-header text-xs font-black text-blue-900 uppercase tracking-widest">${section.title}</h5>`;
+                
+                if (section.type === 'table') {
+                    const tableWrapper = document.createElement('div');
+                    tableWrapper.className = 'overflow-x-auto border border-slate-200 rounded-lg';
+                    
+                    const table = document.createElement('table');
+                    table.className = 'w-full text-left border-collapse';
+                    
+                    let thead = '<thead><tr class="bg-slate-50 border-b border-slate-200">';
+                    section.columns.forEach(col => {
+                        thead += `<th class="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">${col.label}</th>`;
+                    });
+                    thead += '<th class="w-10"></th></tr></thead>';
+                    table.innerHTML = thead;
+                    
+                    const tbody = document.createElement('tbody');
+                    tbody.className = 'divide-y divide-slate-200';
+                    table.appendChild(tbody);
+                    
+                    const addRow = () => {
+                        const tr = document.createElement('tr');
+                        section.columns.forEach(col => {
+                            const td = document.createElement('td');
+                            const input = document.createElement('input');
+                            input.type = col.type || 'text';
+                            input.className = 'w-full px-4 py-2 text-sm focus:bg-blue-50 outline-none transition-colors';
+                            if (col.placeholder) input.placeholder = col.placeholder;
+                            if (col.readonly) {
+                                input.readOnly = true;
+                                input.classList.add('bg-slate-50', 'text-slate-400');
+                            }
+                            td.appendChild(input);
+                            tr.appendChild(td);
+                        });
+                        
+                        const actionsTd = document.createElement('td');
+                        actionsTd.className = 'px-2 text-center';
+                        actionsTd.innerHTML = `<button type="button" class="text-slate-300 hover:text-red-600 transition-colors"><i class="fa-solid fa-trash-can text-xs"></i></button>`;
+                        actionsTd.querySelector('button').onclick = () => tr.remove();
+                        tr.appendChild(actionsTd);
+                        tbody.appendChild(tr);
+                    };
+                    
+                    addRow(); // Initial row
+                    tableWrapper.appendChild(table);
+                    sectionDiv.appendChild(tableWrapper);
+                    
+                    const addBtn = document.createElement('button');
+                    addBtn.type = 'button';
+                    addBtn.className = 'mt-3 text-xs font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1 transition-colors';
+                    addBtn.innerHTML = `<i class="fa-solid fa-plus-circle"></i> Add Row`;
+                    addBtn.onclick = addRow;
+                    sectionDiv.appendChild(addBtn);
+                } else if (section.fields) {
+                    const gridDiv = document.createElement('div');
+                    gridDiv.className = 'grid grid-cols-1 md:grid-cols-2 gap-6';
+
+                    section.fields.forEach(field => {
+                        const fieldDiv = document.createElement('div');
+                        if (field.full) fieldDiv.classList.add('md:col-span-2');
+                        fieldDiv.classList.add('space-y-1');
+
+                        const label = document.createElement('label');
+                        label.className = 'text-[10px] font-bold text-slate-500 uppercase tracking-tight';
+                        label.innerText = field.label;
+                        fieldDiv.appendChild(label);
+
+                        let input;
+                        if (field.type === 'select') {
+                            input = document.createElement('select');
+                            field.options.forEach(opt => {
+                                const o = document.createElement('option');
+                                o.value = opt; o.text = opt;
+                                input.add(o);
+                            });
+                        } else if (field.type === 'textarea') {
+                            input = document.createElement('textarea');
+                            input.rows = 3;
+                        } else {
+                            input = document.createElement('input');
+                            input.type = field.type;
+                        }
+
+                        input.className = 'w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none text-sm transition-all bg-slate-50 focus:bg-white';
+                        if (field.placeholder) input.placeholder = field.placeholder;
+                        if (field.type === 'date' && !input.value) {
+                            input.value = new Date().toISOString().split('T')[0];
+                        }
+
+                        fieldDiv.appendChild(input);
+                        gridDiv.appendChild(fieldDiv);
+                    });
+                    sectionDiv.appendChild(gridDiv);
+                }
+
+                container.appendChild(sectionDiv);
+            });
+        }
+
+        // Search Logic
+        document.getElementById('docSearch').addEventListener('input', function(e) {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('.doc-item').forEach(item => {
+                const text = item.innerText.toLowerCase();
+                item.style.display = text.includes(term) ? 'flex' : 'none';
+            });
+        });
+
+        // Selection Logic
+        function selectDoc(docName) {
+            // Update Sidebar UI
+            document.querySelectorAll('.doc-item').forEach(item => item.classList.remove('active'));
+            const activeBtn = Array.from(document.querySelectorAll('.doc-item')).find(btn => btn.getAttribute('onclick').includes(docName));
+            if (activeBtn) activeBtn.classList.add('active');
+
+            // Update Main Panel
+            document.getElementById('infoView').classList.add('hidden');
+            document.getElementById('formView').classList.remove('hidden');
+            document.getElementById('formTitle').innerText = docName.replace(/-/g, ' ');
+            renderDynamicForm(docName);
+            
+            // Scroll to top of panel
+            document.getElementById('mainPanel').scrollTop = 0;
+        }
+
+        function resetView() {
+            document.getElementById('infoView').classList.remove('hidden');
+            document.getElementById('formView').classList.add('hidden');
+            document.querySelectorAll('.doc-item').forEach(item => item.classList.remove('active'));
+        }
+
+        function downloadFile(fileName) {
+            if (window.showNotification) {
+                showNotification(`Preparing download for ${fileName}...`, 'info');
+            } else {
+                alert(`Download started for: ${fileName} (Placeholder)`);
+            }
+        }
+    </script>
+</body>
+</html>
