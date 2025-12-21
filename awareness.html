@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postman - Security Awareness & Fraud Prevention</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        
+        /* Animation for warning icons */
+        @keyframes pulse-warning {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .pulse-warning {
+            animation: pulse-warning 2s infinite;
+        }
+        
+        /* Progress bar animation */
+        @keyframes progress {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        
+        .progress-animation {
+            animation: progress 30s linear forwards;
+        }
+        
+        /* Fraud card hover effects */
+        .fraud-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        
+        .fraud-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .fraud-card.fake-call { border-left-color: #dc2626; }
+        .fraud-card.fake-call:hover { background-color: #fffafb; }
+        
+        .fraud-card.phishing { border-left-color: #d97706; }
+        .fraud-card.phishing:hover { background-color: #fffdfa; }
+        
+        .fraud-card.impersonation { border-left-color: #4f46e5; }
+        .fraud-card.impersonation:hover { background-color: #f9faff; }
+        
+        .fraud-card.identity-theft { border-left-color: #059669; }
+        .fraud-card.identity-theft:hover { background-color: #f0fdf4; }
+        
+        /* Modal animations */
+        .modal-enter {
+            opacity: 0;
+            transform: scale(0.95);
+        }
+        
+        .modal-enter-active {
+            opacity: 1;
+            transform: scale(1);
+            transition: opacity 300ms, transform 300ms;
+        }
+        
+        .modal-exit {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        .modal-exit-active {
+            opacity: 0;
+            transform: scale(0.95);
+            transition: opacity 300ms, transform 300ms;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col text-slate-900">
+
+    <!-- HEADER: Injected by layout.js -->
+    <div id="header-placeholder"></div>
+
+    <main class="flex-grow w-full p-4 sm:p-8">
+        <div class="container mx-auto max-w-6xl space-y-8">
+            
+            <!-- HERO BANNER WITH LIVE ALERT -->
+            <section class="relative overflow-hidden rounded-2xl bg-slate-900 text-white shadow-2xl">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-red-600 rounded-full -translate-x-32 -translate-y-32 opacity-20"></div>
+                <div class="absolute bottom-0 left-0 w-96 h-96 bg-red-600 rounded-full -translate-x-64 translate-y-64 opacity-10"></div>
+                
+                <div class="relative p-8 md:p-12">
+                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                        <div class="flex-1">
+                            <div class="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-4">
+                                <div class="w-2 h-2 bg-red-500 rounded-full pulse-warning"></div>
+                                <span class="text-sm font-bold uppercase tracking-widest">LIVE SECURITY ALERT</span>
+                            </div>
+                            
+                            <h1 class="text-3xl md:text-4xl font-black mb-4 leading-tight">
+                                <span class="block">Security Awareness</span>
+                                <span class="block text-indigo-400">Fraud Prevention Center</span>
+                            </h1>
+                            
+                            <p class="text-lg text-slate-300 max-w-2xl mb-6">
+                                Stay vigilant against evolving fraud tactics. Learn how to identify and report suspicious activities.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MAIN CONTENT GRID -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- LEFT COLUMN: Fraud Types & Prevention -->
+                <div class="lg:col-span-2 space-y-8">
+                    <!-- COMMON FRAUD TYPES -->
+                    <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="p-6 border-b bg-slate-50/50">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                                        <i class="fa-solid fa-skull-crossbones text-red-600"></i>
+                                        Common Fraud Tactics
+                                    </h2>
+                                    <p class="text-sm text-slate-500 mt-1">Learn to identify these scams before they harm you</p>
+                                </div>
+                                <span class="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">
+                                    HIGH RISK
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="p-6 space-y-6">
+                            <!-- Fake Call Fraud -->
+                            <div class="fraud-card fake-call bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-12 h-12 bg-red-100 text-red-600 rounded-lg flex items-center justify-center">
+                                            <i class="fa-solid fa-phone-slash text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-slate-800">Fake Customer Service Calls</h3>
+                                            <p class="text-xs text-gray-500">Most reported fraud type</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-3">
+                                    <div class="flex items-start gap-2">
+                                        <i class="fa-solid fa-circle-exclamation text-red-500 mt-1"></i>
+                                        <div>
+                                            <p class="text-sm font-semibold text-slate-700">How it works:</p>
+                                            <p class="text-sm text-slate-600">Scammers impersonate Postman staff, claim issues with your shipment, and demand payment via UPI/online transfer.</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-start gap-2">
+                                        <i class="fa-solid fa-triangle-exclamation text-amber-500 mt-1"></i>
+                                        <div>
+                                            <p class="text-sm font-semibold text-slate-700">Red Flags:</p>
+                                            <ul class="text-sm text-slate-600 list-disc pl-5 space-y-1">
+                                                <li>Caller asks for OTP, UPI PIN, or online payment</li>
+                                                <li>Pressure to pay immediately for "release" of shipment</li>
+                                                <li>Call from personal number (not official helpline)</li>
+                                                <li>Refusal to provide official complaint ID</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-start gap-2">
+                                        <i class="fa-solid fa-shield-halved text-green-600 mt-1"></i>
+                                        <div>
+                                            <p class="text-sm font-semibold text-slate-700">Protect Yourself:</p>
+                                            <p class="text-sm text-slate-600"><strong>NEVER</strong> share OTP, UPI PIN, or make payments over phone. Immediately report incidents to the National Cyber Crime Helpline: <strong>1930</strong></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Phishing Fraud -->
+                            <div class="fraud-card phishing bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-12 h-12 bg-amber-100 text-amber-600 rounded-lg flex items-center justify-center">
+                                            <i class="fa-solid fa-envelope-open-text text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-slate-800">Phishing Emails/SMS</h3>
+                                            <p class="text-xs text-gray-500">Digital identity theft attempt</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-3">
+                                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                                        <p class="text-sm font-mono text-amber-800">
+                                            ❌ "URGENT: Your shipment #AWB12345 is held. Click: bit.ly/fake-postman-link"
+                                        </p>
+                                    </div>
+                                    
+                                    <div class="text-sm text-slate-600">
+                                        <p><strong>Legitimate Postman communications:</strong></p>
+                                        <ul class="list-disc pl-5 space-y-1 mt-1">
+                                            <li>Will come from @postman.com domains only</li>
+                                            <li>Will address you by name (not generic "Dear Customer")</li>
+                                            <li>Will provide valid tracking links to our official site</li>
+                                            <li>Will never ask for passwords or financial details</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Fake Website Fraud -->
+                            <div class="fraud-card impersonation bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center">
+                                            <i class="fa-solid fa-globe text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-slate-800">Fake Websites/Apps</h3>
+                                            <p class="text-xs text-gray-500">Digital impersonation scam</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-3">
+                                    <div class="text-sm text-slate-600">
+                                        <p>Scammers create fake websites that look identical to Postman's official site to steal login credentials and payment information.</p>
+                                    </div>
+                                    
+                                    <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                                        <p class="text-sm font-semibold text-indigo-800 mb-2">✅ VERIFY BEFORE YOU TRUST:</p>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <div class="flex items-center gap-2">
+                                                <i class="fa-solid fa-check text-green-500"></i>
+                                                <span class="text-sm">Official URL: postman.com</span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <i class="fa-solid fa-check text-green-500"></i>
+                                                <span class="text-sm">SSL Padlock in address bar</span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <i class="fa-solid fa-check text-green-500"></i>
+                                                <span class="text-sm">Company details in footer</span>
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <i class="fa-solid fa-check text-green-500"></i>
+                                                <span class="text-sm">Contact information visible</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+
+                <!-- RIGHT COLUMN: Prevention & Reporting -->
+                <div class="space-y-8">
+                    <!-- EMERGENCY REPORTING -->
+                    <section class="bg-white border border-red-200 rounded-xl p-6 shadow-sm">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-14 h-14 bg-red-100 text-red-600 rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-800">Emergency Reporting</h2>
+                                <p class="text-sm text-red-600 font-semibold">Immediate action required</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div class="bg-white border border-red-300 rounded-lg p-4">
+                                <h3 class="font-bold text-slate-800 text-sm mb-2">Immediate Steps:</h3>
+                                <ol class="text-sm text-slate-600 space-y-2 list-decimal pl-5">
+                                    <li><strong>DO NOT</strong> share any information</li>
+                                    <li>Take screenshot/call recording</li>
+                                    <li>Note phone number/email</li>
+                                    <li>Inform your bank if payment made</li>
+                                </ol>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <a href="tel:1930" class="bg-slate-100 hover:bg-slate-200 text-slate-800 p-3 rounded-lg text-center transition-colors">
+                                    <i class="fa-solid fa-phone block text-xl mb-1"></i>
+                                    <span class="text-xs font-bold">Gov Helpline</span>
+                                </a>
+                                <a href="mailto:report-cybercrime@gov.in" class="bg-slate-100 hover:bg-slate-200 text-slate-800 p-3 rounded-lg text-center transition-colors">
+                                    <i class="fa-solid fa-envelope block text-xl mb-1"></i>
+                                    <span class="text-xs font-bold">Gov Email</span>
+                                </a>
+                                <a href="https://www.cybercrime.gov.in/" target="_blank" class="bg-green-100 hover:bg-green-200 text-green-800 p-3 rounded-lg text-center transition-colors">
+                                    <i class="fa-solid fa-building-columns block text-xl mb-1"></i>
+                                    <span class="text-xs font-bold">Gov Portal</span>
+                                </a>
+                                <a href="https://www.cybercrime.gov.in/" target="_blank" class="bg-blue-100 hover:bg-blue-200 text-blue-800 p-3 rounded-lg text-center transition-colors">
+                                    <i class="fa-solid fa-ticket block text-xl mb-1"></i>
+                                    <span class="text-xs font-bold">File Report</span>
+                                </a>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- PREVENTION CHECKLIST -->
+                    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                            <i class="fa-solid fa-checklist text-green-600"></i>
+                            Safety Checklist
+                        </h2>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-check text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-800 text-sm">Verify Caller Identity</p>
+                                    <p class="text-xs text-gray-500">Always ask for official employee ID</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-check text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-800 text-sm">Check Website URL</p>
+                                    <p class="text-xs text-gray-500">Ensure it's postman.com (not postman-ship.com etc.)</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-check text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-800 text-sm">Never Share OTP/PIN</p>
+                                    <p class="text-xs text-gray-500">Postman never asks for OTP, UPI PIN, passwords</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-check text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-800 text-sm">Use Official Channels</p>
+                                    <p class="text-xs text-gray-500">Only use verified apps from official stores</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start gap-3">
+                                <div class="w-8 h-8 bg-green-100 text-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fa-solid fa-check text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-slate-800 text-sm">Enable 2FA</p>
+                                    <p class="text-xs text-gray-500">Use two-factor authentication for your account</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- FRAUD REPORT MODAL -->
+    <div id="fraudReportModal" class="fixed inset-0 bg-black bg-opacity-70 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b p-6 flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800">Report Fraudulent Activity</h2>
+                    <p class="text-sm text-gray-500">All information is confidential and secure</p>
+                </div>
+                <button onclick="closeFraudReportModal()" class="text-gray-400 hover:text-red-500 p-2">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Type of Fraud *</label>
+                        <select id="fraudType" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                            <option value="">Select type...</option>
+                            <option value="fake_call">Fake Customer Service Call</option>
+                            <option value="phishing">Phishing Email/SMS</option>
+                            <option value="fake_website">Fake Website/App</option>
+                            <option value="impersonation">Impersonation</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Date of Incident *</label>
+                        <input type="date" id="incidentDate" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Contact Method Used by Fraudster *</label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        <button type="button" onclick="selectContactMethod('phone')" class="contact-method-btn p-3 border rounded-lg text-center">
+                            <i class="fa-solid fa-phone block text-xl mb-2 text-gray-600"></i>
+                            <span class="text-sm font-semibold">Phone Call</span>
+                        </button>
+                        <button type="button" onclick="selectContactMethod('sms')" class="contact-method-btn p-3 border rounded-lg text-center">
+                            <i class="fa-solid fa-message block text-xl mb-2 text-gray-600"></i>
+                            <span class="text-sm font-semibold">SMS</span>
+                        </button>
+                        <button type="button" onclick="selectContactMethod('email')" class="contact-method-btn p-3 border rounded-lg text-center">
+                            <i class="fa-solid fa-envelope block text-xl mb-2 text-gray-600"></i>
+                            <span class="text-sm font-semibold">Email</span>
+                        </button>
+                        <button type="button" onclick="selectContactMethod('website')" class="contact-method-btn p-3 border rounded-lg text-center">
+                            <i class="fa-solid fa-globe block text-xl mb-2 text-gray-600"></i>
+                            <span class="text-sm font-semibold">Website</span>
+                        </button>
+                    </div>
+                    <input type="hidden" id="contactMethod">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Fraudster Details (if known)</label>
+                    <div class="space-y-3">
+                        <input type="text" id="fraudsterPhone" placeholder="Phone number used" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <input type="email" id="fraudsterEmail" placeholder="Email address used" class="w-full p-3 border border-gray-300 rounded-lg">
+                        <input type="url" id="fraudsterWebsite" placeholder="Website URL (if fake website)" class="w-full p-3 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Description of Incident *</label>
+                    <textarea id="incidentDescription" rows="4" placeholder="Please provide details of what happened, what information was asked for, and any other relevant information..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"></textarea>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Upload Evidence (Optional)</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-gray-400 mb-3"></i>
+                        <p class="text-sm text-gray-600">Screenshots, call recordings, or email forwards</p>
+                        <p class="text-xs text-gray-500 mt-1">Max file size: 5MB each</p>
+                        <input type="file" id="evidenceFile" class="hidden" multiple>
+                        <button type="button" onclick="document.getElementById('evidenceFile').click()" class="mt-4 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
+                            Choose Files
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-start gap-3">
+                        <i class="fa-solid fa-circle-info text-blue-600 text-xl mt-1"></i>
+                        <div>
+                            <p class="text-sm font-semibold text-blue-800">Important Information</p>
+                            <p class="text-xs text-blue-700 mt-1">Your report helps us track fraud patterns and protect other customers. All information is treated with strict confidentiality. You may be contacted by our security team for additional details.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-end gap-4">
+                    <button type="button" onclick="closeFraudReportModal()" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button type="button" onclick="submitFraudReport()" class="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-semibold flex items-center gap-2">
+                        <i class="fa-solid fa-paper-plane"></i>
+                        Submit Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="layout.js"></script>
+    <script>
+        function updateLastUpdatedTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-IN', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+            });
+            const element = document.getElementById('lastUpdatedTime');
+            if (element) element.textContent = `${timeString}`;
+        }
+        
+        function shareAwareness() {
+            const shareText = `Stay safe from fraud! Learn about common scams and how to protect yourself on Postman's Security Awareness page.`;
+            const shareUrl = window.location.href;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Postman Security Awareness',
+                    text: shareText,
+                    url: shareUrl,
+                });
+            } else {
+                // Fallback: Copy to clipboard
+                navigator.clipboard.writeText(`${shareText} ${shareUrl}`).then(() => {
+                    alert('Link copied to clipboard! Share it with friends and family.');
+                });
+            }
+        }
+        
+        function downloadChecklist() {
+            // Create a simple PDF/checklist download
+            const checklistContent = `
+                POSTMAN SECURITY CHECKLIST
+                ==========================
+                
+                ✅ VERIFY BEFORE YOU TRUST:
+                - Official URL: postman.com only
+                - SSL Padlock in address bar
+                - Developer: Postman Logistics Pvt Ltd
+                
+                ✅ PHONE CALL SAFETY:
+                - Ask for official employee ID
+                - Call back on official helpline: 1800-XXX-XXXX
+                - NEVER share OTP, UPI PIN, passwords
+                - Postman never asks for immediate payments
+                
+                ✅ EMAIL/SMS SAFETY:
+                - Check sender address (@postman.com)
+                - Never click suspicious links
+                - Visit website directly instead
+                - Report phishing attempts
+                
+                ✅ ACCOUNT SAFETY:
+                - Use strong, unique passwords
+                - Enable two-factor authentication
+                - Monitor account activity
+                - Log out from shared devices
+                
+                ✅ IF YOU SUSPECT FRAUD:
+                1. DO NOT share any information
+                2. Take screenshot/call recording
+                3. Note phone number/email used
+                4. Report immediately
+                5. Contact bank if payment made
+                
+                Download this checklist: ${window.location.href}
+            `;
+            
+            const blob = new Blob([checklistContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Postman-Security-Checklist.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert('Security checklist downloaded!');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateLastUpdatedTime();
+            setInterval(updateLastUpdatedTime, 60000);
+        });
+    </script>
+</body>
+</html>

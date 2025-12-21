@@ -1,0 +1,1737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postman - Company Memos & Announcements</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Memo Card Animations */
+        .memo-card {
+            transition: all 0.3s ease;
+            border-left: 5px solid transparent;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: slideUp 0.5s ease forwards;
+        }
+        
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .memo-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .memo-card.urgent { border-left-color: #ef4444; }
+        .memo-card.important { border-left-color: #f59e0b; }
+        .memo-card.informational { border-left-color: #3b82f6; }
+        .memo-card.update { border-left-color: #10b981; }
+        
+        /* Priority Badges */
+        .priority-badge {
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        
+        .priority-urgent { background-color: #fef2f2; color: #dc2626; }
+        .priority-high { background-color: #fffbeb; color: #d97706; }
+        .priority-medium { background-color: #eff6ff; color: #2563eb; }
+        .priority-low { background-color: #f0fdf4; color: #059669; }
+        
+        /* Tab Navigation */
+        .tab-button {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            user-select: none;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-button.active {
+            border-bottom-color: #1e3a8a;
+            color: #1e3a8a;
+            font-weight: 700;
+        }
+        
+        /* External News Cards */
+        .news-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .news-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .news-card.gov { border-left-color: #10b981; }
+        .news-card.industry { border-left-color: #8b5cf6; }
+        .news-card.logistics { border-left-color: #f59e0b; }
+        
+        /* Filter Pills */
+        .filter-pill {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .filter-pill.active {
+            background-color: #1e3a8a;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Admin Controls */
+        .admin-controls {
+            transition: all 0.3s ease;
+            max-height: 0;
+            overflow: hidden;
+        }
+        
+        .admin-controls.open {
+            max-height: 500px;
+            padding-top: 1.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+    <!-- HEADER: Injected by layout.js -->
+    <div id="header-placeholder"></div>
+
+    <main class="flex-grow w-full p-4 sm:p-8">
+        <div class="container mx-auto max-w-6xl space-y-8">
+            
+            <!-- PAGE HEADER -->
+            <section class="bg-gradient-to-r from-blue-900 to-blue-800 rounded-2xl p-8 text-white">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                    <div>
+                        <h1 class="text-3xl font-black mb-2 flex items-center gap-3">
+                            <i class="fa-solid fa-bullhorn"></i>
+                            Company Memos & External Updates
+                        </h1>
+                        <p class="text-blue-100 opacity-90 max-w-2xl">
+                            Official company communications, government notifications, and industry news relevant to Postman operations.
+                            Reply to memos via email for official communication.
+                        </p>
+                    </div>
+                    
+                    <div class="flex flex-col items-end">
+                        <div class="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-4 text-center">
+                            <p class="text-sm opacity-80 mb-1">Active Memos</p>
+                            <p class="text-3xl font-bold" id="totalMemosCount">--</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB NAVIGATION -->
+            <div class="flex border-b border-gray-200">
+                <button id="tab-internal" class="tab-button active px-6 py-3 text-lg font-semibold" onclick="switchTab('internal')">
+                    <i class="fa-solid fa-building mr-2"></i>Internal Memos
+                </button>
+                <button id="tab-external" class="tab-button px-6 py-3 text-lg font-semibold" onclick="switchTab('external')">
+                    <i class="fa-solid fa-globe mr-2"></i>External Updates
+                </button>
+            </div>
+
+            <!-- INTERNAL MEMOS TAB CONTENT -->
+            <div id="tabContent-internal" class="tab-content">
+                <!-- CONTROLS & STATS BAR -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Search & Filters -->
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <div class="flex-1">
+                                <div class="relative">
+                                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-400"></i>
+                                    <input type="text" id="memoSearch" placeholder="Search memos by title, content, or author..." 
+                                           class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent">
+                                    <button id="clearSearch" class="absolute right-3 top-3.5 text-gray-400 hover:text-red-500 hidden">
+                                        <i class="fa-solid fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <button id="newMemoBtn" class="px-6 py-3 bg-blue-900 text-white font-bold rounded-lg hover:bg-blue-800 transition-colors hidden">
+                                <i class="fa-solid fa-plus mr-2"></i> New Memo
+                            </button>
+                        </div>
+                        
+                        <!-- Filter Pills -->
+                        <div class="mt-4 flex flex-wrap gap-2" id="filterPills">
+                            <button onclick="memosEngine.filterMemos('all')" class="filter-pill active px-4 py-2 rounded-full bg-blue-900 text-white text-sm font-semibold">
+                                All Memos
+                            </button>
+                            <button onclick="memosEngine.filterMemos('urgent')" class="filter-pill px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200">
+                                <i class="fa-solid fa-fire mr-1"></i> Urgent
+                            </button>
+                            <button onclick="memosEngine.filterMemos('important')" class="filter-pill px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200">
+                                <i class="fa-solid fa-exclamation-circle mr-1"></i> Important
+                            </button>
+                            <button onclick="memosEngine.filterMemos('policy')" class="filter-pill px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200">
+                                <i class="fa-solid fa-scale-balanced mr-1"></i> Policy Updates
+                            </button>
+                            <button onclick="memosEngine.filterMemos('holiday')" class="filter-pill px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200">
+                                <i class="fa-solid fa-calendar-day mr-1"></i> Holidays
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Stats -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="font-bold text-gray-800 mb-4">Memo Statistics</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">This Month</span>
+                                <span class="font-bold text-gray-800" id="monthCount">0</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Unread</span>
+                                <span class="font-bold text-blue-800" id="unreadCount">0</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Requires Action</span>
+                                <span class="font-bold text-red-600" id="actionRequiredCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ADMIN CONTROLS (Hidden by default - only for logged-in admins) -->
+                <div id="adminControls" class="admin-controls bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="p-6 border-b">
+                        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                            <i class="fa-solid fa-user-shield text-blue-600"></i>
+                            Create New Company Memo
+                        </h3>
+                        <p class="text-sm text-gray-500 mt-1">Post official announcements and updates</p>
+                    </div>
+                    
+                    <div class="p-6">
+                        <form id="memoForm" class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Memo Title *</label>
+                                    <input type="text" id="memoTitle" placeholder="Enter memo title" 
+                                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900" required>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Priority *</label>
+                                    <select id="memoPriority" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900" required>
+                                        <option value="low">Low Priority</option>
+                                        <option value="medium">Medium Priority</option>
+                                        <option value="high">High Priority</option>
+                                        <option value="urgent">Urgent</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                                    <select id="memoCategory" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900" required>
+                                        <option value="general">General Announcement</option>
+                                        <option value="policy">Policy Update</option>
+                                        <option value="holiday">Holiday Notice</option>
+                                        <option value="security">Security Alert</option>
+                                        <option value="system">System Update</option>
+                                        <option value="operations">Operations</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Requires Acknowledgement</label>
+                                    <select id="memoRequiresAck" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900">
+                                        <option value="no">No</option>
+                                        <option value="yes">Yes</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Memo Content *</label>
+                                <textarea id="memoContent" rows="5" placeholder="Enter detailed memo content..." 
+                                          class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900" required></textarea>
+                            </div>
+                            
+                            <div class="flex gap-3">
+                                <button type="submit" class="px-6 py-3 bg-blue-900 text-white rounded-lg hover:bg-blue-800 font-semibold">
+                                    <i class="fa-solid fa-paper-plane mr-2"></i> Publish Memo
+                                </button>
+                                <button type="button" onclick="memosEngine.toggleAdminControls()" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                                    Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- MEMOS GRID -->
+                <section>
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Recent Company Memos</h2>
+                        <div class="flex items-center gap-3">
+                            <button onclick="memosEngine.toggleSortOrder()" class="text-sm text-gray-600 hover:text-blue-900 flex items-center gap-1">
+                                <i class="fa-solid fa-arrow-down-wide-short"></i>
+                                <span id="sortLabel">Newest First</span>
+                            </button>
+                            
+                            <button id="toggleAdminBtn" class="text-sm text-blue-900 hover:underline hidden">
+                                <i class="fa-solid fa-user-shield mr-1"></i> Create Memo
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Memos Container -->
+                    <div id="memosContainer" class="space-y-4">
+                        <div class="text-center py-12">
+                            <i class="fa-solid fa-spinner fa-spin text-3xl text-blue-900 mb-4"></i>
+                            <p class="text-gray-500">Loading company memos...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- No Results State -->
+                    <div id="noResults" class="hidden text-center py-12">
+                        <i class="fa-solid fa-inbox text-4xl text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-bold text-gray-700 mb-2">No memos found</h3>
+                        <p class="text-gray-500">Try different search terms or check back later for new announcements.</p>
+                    </div>
+                    
+                    <!-- Load More Button -->
+                    <div class="mt-8 text-center">
+                        <button id="loadMoreBtn" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hidden">
+                            <i class="fa-solid fa-arrow-down mr-2"></i> Load More Memos
+                        </button>
+                    </div>
+                </section>
+            </div>
+
+            <!-- EXTERNAL UPDATES TAB CONTENT -->
+            <div id="tabContent-external" class="tab-content hidden">
+                <!-- EXTERNAL UPDATES CONTROLS -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Sources & Filters -->
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <div class="flex-1">
+                                <div class="relative">
+                                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-400"></i>
+                                    <input type="text" id="newsSearch" placeholder="Search external updates..." 
+                                           class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent">
+                                    <button id="clearNewsSearch" class="absolute right-3 top-3.5 text-gray-400 hover:text-red-500 hidden">
+                                        <i class="fa-solid fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <button onclick="newsEngine.refreshNews()" class="px-6 py-3 bg-green-700 text-white font-bold rounded-lg hover:bg-green-800 transition-colors">
+                                <i class="fa-solid fa-rotate mr-2"></i> Refresh
+                            </button>
+                        </div>
+                        
+                        <!-- Source Filter Pills -->
+                        <div class="mt-4 flex flex-wrap gap-2">
+                            <button onclick="newsEngine.filterNews('all')" class="filter-pill active px-4 py-2 rounded-full bg-green-700 text-white text-sm font-semibold">
+                                All Updates
+                            </button>
+                            <button onclick="newsEngine.filterNews('gov')" class="filter-pill px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200">
+                                <i class="fa-solid fa-landmark mr-1"></i> Government
+                            </button>
+                            <button onclick="newsEngine.filterNews('industry')" class="filter-pill px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200">
+                                <i class="fa-solid fa-industry mr-1"></i> Industry
+                            </button>
+                            <button onclick="newsEngine.filterNews('logistics')" class="filter-pill px-4 py-2 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold hover:bg-gray-200">
+                                <i class="fa-solid fa-truck mr-1"></i> Logistics
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Sources Info -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="font-bold text-gray-800 mb-4">Update Sources</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Government Portals</span>
+                                <span class="font-bold text-green-700" id="govCount">0</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Industry News</span>
+                                <span class="font-bold text-blue-800" id="industryCount">0</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-gray-600">Logistics Updates</span>
+                                <span class="font-bold text-amber-600" id="logisticsCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EXTERNAL UPDATES GRID -->
+                <section>
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-800">Recent External Updates</h2>
+                        <div class="flex items-center gap-3">
+                            <button onclick="newsEngine.toggleSortOrder()" class="text-sm text-gray-600 hover:text-green-700 flex items-center gap-1">
+                                <i class="fa-solid fa-arrow-down-wide-short"></i>
+                                <span id="newsSortLabel">Latest First</span>
+                            </button>
+                            <button onclick="newsEngine.toggleAutoRefresh()" class="text-sm text-gray-600 hover:text-green-700 flex items-center gap-1">
+                                <i class="fa-solid fa-clock" id="autoRefreshIcon"></i>
+                                <span id="autoRefreshLabel">Auto-refresh: OFF</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- News Container -->
+                    <div id="newsContainer" class="space-y-4">
+                        <div class="text-center py-12">
+                            <i class="fa-solid fa-spinner fa-spin text-3xl text-green-700 mb-4"></i>
+                            <p class="text-gray-500">Loading external updates...</p>
+                        </div>
+                    </div>
+                    
+                    <!-- No News Results -->
+                    <div id="noNewsResults" class="hidden text-center py-12">
+                        <i class="fa-solid fa-newspaper text-4xl text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-bold text-gray-700 mb-2">No updates found</h3>
+                        <p class="text-gray-500">Try different search terms or check back later for new updates.</p>
+                    </div>
+                    
+                    <!-- Load More News Button -->
+                    <div class="mt-8 text-center">
+                        <button id="loadMoreNewsBtn" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 hidden">
+                            <i class="fa-solid fa-arrow-down mr-2"></i> Load More Updates
+                        </button>
+                    </div>
+                </section>
+
+                <!-- SOURCES INFORMATION -->
+                <div class="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-xl p-6">
+                    <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-info-circle text-green-700"></i>
+                        About External Updates
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-4 bg-white rounded-lg border">
+                            <h4 class="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-landmark text-green-600"></i>
+                                Government Sources
+                            </h4>
+                            <p class="text-sm text-gray-600">Updates from government portals, ministry websites, and official notifications relevant to logistics and trade.</p>
+                        </div>
+                        <div class="p-4 bg-white rounded-lg border">
+                            <h4 class="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-industry text-blue-600"></i>
+                                Industry News
+                            </h4>
+                            <p class="text-sm text-gray-600">Latest developments in shipping, transportation, e-commerce, and supply chain management.</p>
+                        </div>
+                        <div class="p-4 bg-white rounded-lg border">
+                            <h4 class="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-truck text-amber-600"></i>
+                                Logistics Updates
+                            </h4>
+                            <p class="text-sm text-gray-600">Regulatory changes, port updates, customs notifications, and transportation advisories.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REPLY TO MEMO SECTION (Only on internal tab) -->
+            <div id="replySection" class="bg-gradient-to-r from-blue-50 to-white border border-blue-200 rounded-xl p-6">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="font-bold text-gray-800 mb-2">Need to Respond to a Company Memo?</h3>
+                        <p class="text-sm text-gray-600">Use your official Postman email to reply to memo authors. Click "Reply" on any memo card.</p>
+                    </div>
+                    
+                    <div class="flex flex-col items-end">
+                        <p class="text-sm text-gray-600 mb-2">Official reply email:</p>
+                        <code id="officialReplyEmail" class="bg-blue-900 text-white px-4 py-2 rounded-lg font-mono text-sm">
+                            post4ex@gmail.com
+                        </code>
+                    </div>
+                </div>
+                
+                <div class="mt-4 p-4 bg-white border border-blue-100 rounded-lg">
+                    <p class="text-sm text-gray-700">
+                        <strong>Note:</strong> All memo replies are directed to the official support channel. 
+                        The memo reference ID and title are automatically included in the email subject.
+                    </p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- MEMO DETAIL MODAL -->
+    <div id="memoDetailModal" class="fixed inset-0 bg-black bg-opacity-70 z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b p-6 flex justify-between items-center">
+                <div>
+                    <h2 id="modalMemoTitle" class="text-xl font-bold text-gray-800"></h2>
+                    <p id="modalMemoMeta" class="text-sm text-gray-500"></p>
+                </div>
+                <button onclick="memosEngine.closeMemoModal()" class="text-gray-400 hover:text-red-500 p-2">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <div id="modalMemoContent" class="text-gray-700 leading-relaxed">
+                    <!-- Content loaded dynamically -->
+                </div>
+                
+                <div class="border-t pt-6">
+                    <h4 class="font-semibold text-gray-800 mb-3">Memo Details</h4>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-gray-500">Reference ID</p>
+                            <p id="modalMemoId" class="font-mono font-bold text-gray-800"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Priority</p>
+                            <p id="modalMemoPriority" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Category</p>
+                            <p id="modalMemoCategory" class="font-semibold"></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-500">Status</p>
+                            <p id="modalMemoStatus" class="font-semibold"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="border-t pt-6">
+                    <h4 class="font-semibold text-gray-800 mb-3">Actions</h4>
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="memosEngine.replyToCurrentMemo()" class="px-4 py-2 bg-blue-900 text-white rounded-lg hover:bg-blue-800 text-sm">
+                            <i class="fa-solid fa-reply mr-2"></i> Reply via Email
+                        </button>
+                        <button onclick="memosEngine.markCurrentAsRead()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm">
+                            <i class="fa-solid fa-check mr-2"></i> Mark as Read
+                        </button>
+                        <button onclick="memosEngine.downloadCurrentMemo()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm">
+                            <i class="fa-solid fa-download mr-2"></i> Download
+                        </button>
+                        <button id="deleteMemoBtn" onclick="memosEngine.deleteCurrentMemo()" class="px-4 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 text-sm hidden">
+                            <i class="fa-solid fa-trash mr-2"></i> Delete Memo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="layout.js"></script>
+    <script>
+        // ============================================================================
+        // MEMOS DATA ENGINE
+        // ============================================================================
+        const SUPPORT_EMAIL = 'post4ex@gmail.com';
+        
+        class MemosEngine {
+            constructor() {
+                this.memos = [];
+                this.filteredMemos = [];
+                this.storageKey = 'postman_memos';
+                this.apiCollection = 'MEMOS'; // Future backend collection
+                this.currentFilter = 'all';
+                this.searchTerm = '';
+                this.sortNewestFirst = true;
+                this.isAdmin = false;
+                this.visibleCount = 10;
+                this.userEmail = this.getUserEmail();
+                this.userName = this.getUserName();
+                
+                this.initialize();
+            }
+            
+            initialize() {
+                this.loadMemos();
+                this.setupEventListeners();
+                this.checkAdminStatus();
+                this.renderMemos();
+                this.updateStats();
+            }
+            
+            async loadMemos() {
+                const isLoggedIn = !!localStorage.getItem('loginData');
+                const action = isLoggedIn ? 'getMemos' : 'getPublicMemos';
+                
+                try {
+                    const res = await callApi(action);
+                    if (res && res.status === 'success') {
+                        this.memos = res.data || [];
+                        this.applyFilters();
+                        this.renderMemos();
+                        this.updateStats();
+                    } else {
+                        this.renderErrorMessage(res?.message || 'Failed to load memos');
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch memos:", e);
+                    this.renderErrorMessage('Network error. Could not reach server.');
+                }
+            }
+            
+            renderErrorMessage(message) {
+                const container = document.getElementById('memosContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-12 bg-red-50 rounded-xl border border-red-100">
+                            <i class="fa-solid fa-circle-exclamation text-3xl text-red-600 mb-4"></i>
+                            <p class="text-red-800 font-semibold">${message}</p>
+                        </div>
+                    `;
+                }
+            }
+
+            saveMemosLocally() {
+                localStorage.setItem(this.storageKey, JSON.stringify(this.memos));
+            }
+            
+            applyFilters() {
+                let filtered = [...this.memos];
+                
+                // Apply category filter
+                if (this.currentFilter !== 'all') {
+                    filtered = filtered.filter(memo => {
+                        if (this.currentFilter === 'urgent') return memo.priority === 'urgent';
+                        if (this.currentFilter === 'important') return memo.priority === 'high';
+                        if (this.currentFilter === 'policy') return memo.category === 'policy';
+                        if (this.currentFilter === 'holiday') return memo.category === 'holiday';
+                        return true;
+                    });
+                }
+                
+                // Apply search filter
+                if (this.searchTerm) {
+                    const term = this.searchTerm.toLowerCase();
+                    filtered = filtered.filter(memo => 
+                        memo.title.toLowerCase().includes(term) ||
+                        memo.content.toLowerCase().includes(term) ||
+                        memo.author.toLowerCase().includes(term) ||
+                        memo.tags.some(tag => tag.toLowerCase().includes(term))
+                    );
+                }
+                
+                // Apply sorting
+                filtered.sort((a, b) => {
+                    const dateA = new Date(a.date);
+                    const dateB = new Date(b.date);
+                    return this.sortNewestFirst ? 
+                        dateB - dateA : dateA - dateB;
+                });
+                
+                this.filteredMemos = filtered;
+            }
+            
+            renderMemos() {
+                const container = document.getElementById('memosContainer');
+                if (!container) return;
+                
+                const memosToShow = this.filteredMemos.slice(0, this.visibleCount);
+                
+                if (memosToShow.length === 0) {
+                    container.innerHTML = '';
+                    document.getElementById('noResults').classList.remove('hidden');
+                    document.getElementById('loadMoreBtn').classList.add('hidden');
+                    return;
+                }
+                
+                document.getElementById('noResults').classList.add('hidden');
+                
+                let html = '';
+                
+                memosToShow.forEach((memo, index) => {
+                    const isUnread = !memo.readBy.includes(this.userEmail);
+                    const priorityClass = `priority-${memo.priority}`;
+                    const cardClass = `memo-card ${memo.priority} bg-white rounded-lg shadow-sm border border-gray-200 p-5 cursor-pointer`;
+                    const delay = index * 100;
+                    
+                    // Generate reply email link
+                    const replySubject = `Re: Memo ${memo.id} - ${memo.title}`;
+                    const replyBody = `\n\n---\nReplying to memo: ${memo.id}\nOriginal title: ${memo.title}\nAuthor: ${memo.author}\nDate: ${this.formatDate(memo.date)}\n\nMy response:`;
+                    const mailtoLink = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(replySubject)}&body=${encodeURIComponent(replyBody)}`;
+                    
+                    html += `
+                        <div class="${cardClass}" style="animation-delay: ${delay}ms" onclick="memosEngine.openMemoDetail('${memo.id}')">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        ${isUnread ? `<span class="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span>` : ''}
+                                        <h3 class="font-bold text-gray-800 ${isUnread ? '' : 'opacity-90'}">${memo.title}</h3>
+                                    </div>
+                                    <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                                        <span class="flex items-center gap-1">
+                                            <i class="fa-solid fa-user"></i>
+                                            ${memo.author}
+                                        </span>
+                                        <span class="flex items-center gap-1">
+                                            <i class="fa-solid fa-calendar"></i>
+                                            ${this.formatDate(memo.date)}
+                                        </span>
+                                        <span class="${priorityClass} priority-badge">
+                                            ${memo.priority.toUpperCase()}
+                                        </span>
+                                        ${memo.requiresAck ? `<span class="text-amber-600 flex items-center gap-1">
+                                            <i class="fa-solid fa-exclamation-circle"></i>
+                                            Requires Acknowledgement
+                                        </span>` : ''}
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end gap-2">
+                                    <span class="text-xs text-gray-400 font-mono">${memo.id}</span>
+                                    <button onclick="event.stopPropagation(); window.open('${mailtoLink}', '_blank')" 
+                                            class="text-blue-600 hover:text-blue-800 p-2 hover:bg-blue-50 rounded-lg transition-colors"
+                                            title="Reply to this memo">
+                                        <i class="fa-solid fa-reply"></i> Reply
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <p class="text-gray-600 line-clamp-2 mb-4">${memo.content.substring(0, 150)}...</p>
+                            
+                            <div class="flex justify-between items-center">
+                                <div class="flex flex-wrap gap-2">
+                                    ${memo.tags.map(tag => `
+                                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">${tag}</span>
+                                    `).join('')}
+                                </div>
+                                <button class="text-blue-900 text-sm font-semibold hover:underline">
+                                    Read More <i class="fa-solid fa-arrow-right ml-1"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                
+                // Show/hide load more button
+                const loadMoreBtn = document.getElementById('loadMoreBtn');
+                if (this.filteredMemos.length > this.visibleCount) {
+                    loadMoreBtn.classList.remove('hidden');
+                } else {
+                    loadMoreBtn.classList.add('hidden');
+                }
+            }
+            
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                }) + ' • ' + date.toLocaleTimeString('en-IN', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+            
+            openMemoDetail(memoId) {
+                const memo = this.memos.find(m => m.id === memoId);
+                if (!memo) return;
+                
+                // Mark as read for this user
+                if (this.userEmail && !memo.readBy.includes(this.userEmail)) {
+                    memo.readBy.push(this.userEmail);
+                    this.saveMemosLocally();
+                    this.updateStats();
+                }
+                
+                // Update modal content
+                document.getElementById('modalMemoTitle').textContent = memo.title;
+                document.getElementById('modalMemoMeta').innerHTML = `
+                    By ${memo.author} • ${this.formatDate(memo.date)} • 
+                    <span class="${`priority-${memo.priority}`} priority-badge">${memo.priority.toUpperCase()}</span>
+                `;
+                
+                document.getElementById('modalMemoContent').innerHTML = `
+                    <div class="prose max-w-none">
+                        <p class="whitespace-pre-wrap">${memo.content}</p>
+                        ${memo.tags.length > 0 ? `
+                            <div class="mt-6">
+                                <strong>Tags:</strong>
+                                <div class="flex flex-wrap gap-2 mt-2">
+                                    ${memo.tags.map(tag => `
+                                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">${tag}</span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                
+                document.getElementById('modalMemoId').textContent = memo.id;
+                document.getElementById('modalMemoPriority').textContent = memo.priority.toUpperCase();
+                document.getElementById('modalMemoCategory').textContent = memo.category.toUpperCase();
+                document.getElementById('modalMemoStatus').textContent = memo.status.toUpperCase();
+                
+                // Show delete button only for admins
+                const deleteBtn = document.getElementById('deleteMemoBtn');
+                if (this.isAdmin) {
+                    deleteBtn.classList.remove('hidden');
+                    deleteBtn.dataset.memoId = memo.id;
+                } else {
+                    deleteBtn.classList.add('hidden');
+                }
+                
+                // Show modal
+                document.getElementById('memoDetailModal').classList.remove('hidden');
+            }
+            
+            closeMemoModal() {
+                document.getElementById('memoDetailModal').classList.add('hidden');
+            }
+            
+            filterMemos(filterType) {
+                this.currentFilter = filterType;
+                this.visibleCount = 10;
+                
+                // Update active filter pill
+                document.querySelectorAll('#filterPills .filter-pill').forEach(pill => {
+                    pill.classList.remove('active', 'bg-blue-900', 'text-white');
+                    pill.classList.add('bg-gray-100', 'text-gray-700');
+                });
+                
+                const activePill = event.target.closest('.filter-pill');
+                if (activePill) {
+                    activePill.classList.add('active', 'bg-blue-900', 'text-white');
+                    activePill.classList.remove('bg-gray-100', 'text-gray-700');
+                }
+                
+                this.applyFilters();
+                this.renderMemos();
+            }
+            
+            searchMemos(term) {
+                this.searchTerm = term;
+                this.visibleCount = 10;
+                this.applyFilters();
+                this.renderMemos();
+            }
+            
+            toggleSortOrder() {
+                this.sortNewestFirst = !this.sortNewestFirst;
+                document.getElementById('sortLabel').textContent = 
+                    this.sortNewestFirst ? 'Newest First' : 'Oldest First';
+                this.applyFilters();
+                this.renderMemos();
+            }
+            
+            loadMoreMemos() {
+                this.visibleCount += 10;
+                this.renderMemos();
+            }
+            
+            updateStats() {
+                const total = this.memos.length;
+                const thisMonth = this.memos.filter(memo => {
+                    const memoDate = new Date(memo.date);
+                    const now = new Date();
+                    return memoDate.getMonth() === now.getMonth() && 
+                           memoDate.getFullYear() === now.getFullYear();
+                }).length;
+                
+                const unread = this.memos.filter(memo => 
+                    !memo.readBy.includes(this.userEmail)
+                ).length;
+                
+                const actionRequired = this.memos.filter(memo => 
+                    memo.requiresAck && !memo.readBy.includes(this.userEmail)
+                ).length;
+                
+                document.getElementById('totalMemosCount').textContent = total;
+                document.getElementById('monthCount').textContent = thisMonth;
+                document.getElementById('unreadCount').textContent = unread;
+                document.getElementById('actionRequiredCount').textContent = actionRequired;
+            }
+            
+            checkAdminStatus() {
+                // Check if current user is admin based on localStorage
+                const loginData = localStorage.getItem('loginData');
+                if (loginData) {
+                    try {
+                        const user = JSON.parse(loginData).userData;
+                        this.isAdmin = user && (user.ROLE === 'ADMIN' || user.ROLE === 'MASTER' || user.ROLE === 'MANAGER');
+                    } catch (e) {
+                        this.isAdmin = false;
+                    }
+                }
+                
+                // Show/hide admin controls
+                const adminBtn = document.getElementById('toggleAdminBtn');
+                const newMemoBtn = document.getElementById('newMemoBtn');
+                
+                if (this.isAdmin) {
+                    if (adminBtn) adminBtn.classList.remove('hidden');
+                    if (newMemoBtn) newMemoBtn.classList.remove('hidden');
+                }
+            }
+            
+            getUserEmail() {
+                // Get user email from localStorage or return default
+                const loginData = localStorage.getItem('loginData');
+                if (loginData) {
+                    try {
+                        const user = JSON.parse(loginData).userData;
+                        return user.EMAIL || user.USER + '@postman.com';
+                    } catch (e) {
+                        return 'user@postman.com';
+                    }
+                }
+                return 'guest@postman.com';
+            }
+            
+            getUserName() {
+                const loginData = localStorage.getItem('loginData');
+                if (loginData) {
+                    try {
+                        const user = JSON.parse(loginData).userData;
+                        return user.NAME || user.USER || 'User';
+                    } catch (e) {
+                        return 'User';
+                    }
+                }
+                return 'Guest';
+            }
+            
+            toggleAdminControls() {
+                const controls = document.getElementById('adminControls');
+                const toggleBtn = document.getElementById('toggleAdminBtn');
+                
+                if (!this.isAdmin) {
+                    this.showNotification('Admin access required to create memos', 'error');
+                    return;
+                }
+                
+                controls.classList.toggle('open');
+                if (controls.classList.contains('open')) {
+                    toggleBtn.innerHTML = '<i class="fa-solid fa-times mr-1"></i> Close Form';
+                } else {
+                    toggleBtn.innerHTML = '<i class="fa-solid fa-user-shield mr-1"></i> Create Memo';
+                }
+            }
+            
+            createNewMemo(formData) {
+                const newMemo = {
+                    id: `MEMO-${new Date().getFullYear()}-${String(this.memos.length + 1).padStart(3, '0')}`,
+                    title: formData.title,
+                    content: formData.content,
+                    author: this.userName,
+                    authorEmail: this.userEmail,
+                    date: new Date().toISOString(),
+                    priority: formData.priority,
+                    category: formData.category,
+                    status: 'active',
+                    readBy: [],
+                    requiresAck: formData.requiresAck === 'yes',
+                    tags: [formData.category, formData.priority]
+                };
+                
+                this.memos.unshift(newMemo);
+                this.saveMemos();
+                this.applyFilters();
+                this.renderMemos();
+                this.updateStats();
+                
+                // Show success message
+                this.showNotification('Memo published successfully!', 'success');
+                this.toggleAdminControls();
+            }
+            
+            deleteCurrentMemo() {
+                const memoId = document.getElementById('modalMemoId').textContent;
+                if (!confirm('Are you sure you want to delete this memo? This action cannot be undone.')) {
+                    return;
+                }
+                
+                this.memos = this.memos.filter(memo => memo.id !== memoId);
+                this.saveMemosLocally();
+                this.applyFilters();
+                this.renderMemos();
+                this.updateStats();
+                this.closeMemoModal();
+                
+                this.showNotification('Memo deleted successfully', 'success');
+            }
+            
+            markCurrentAsRead() {
+                const memoId = document.getElementById('modalMemoId').textContent;
+                const memo = this.memos.find(m => m.id === memoId);
+                if (memo && this.userEmail && !memo.readBy.includes(this.userEmail)) {
+                    memo.readBy.push(this.userEmail);
+                    this.saveMemosLocally();
+                    this.updateStats();
+                    this.showNotification('Marked as read', 'success');
+                    this.closeMemoModal();
+                }
+            }
+            
+            replyToCurrentMemo() {
+                const memoId = document.getElementById('modalMemoId').textContent;
+                const memoTitle = document.getElementById('modalMemoTitle').textContent;
+                const memoAuthor = this.memos.find(m => m.id === memoId)?.author || 'Author';
+                
+                const replySubject = `Re: Memo ${memoId} - ${memoTitle}`;
+                const replyBody = `\n\n---\nReplying to memo: ${memoId}\nOriginal title: ${memoTitle}\nAuthor: ${memoAuthor}\nDate: ${new Date().toLocaleString()}\n\nMy response:`;
+                
+                window.open(`mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(replySubject)}&body=${encodeURIComponent(replyBody)}`, '_blank');
+            }
+            
+            downloadCurrentMemo() {
+                const memoId = document.getElementById('modalMemoId').textContent;
+                const memoTitle = document.getElementById('modalMemoTitle').textContent;
+                const memoContent = document.getElementById('modalMemoContent').textContent;
+                
+                const content = `
+MEMO: ${memoId}
+TITLE: ${memoTitle}
+DATE: ${document.getElementById('modalMemoMeta').textContent.split('•')[1]}
+PRIORITY: ${document.getElementById('modalMemoPriority').textContent}
+CATEGORY: ${document.getElementById('modalMemoCategory').textContent}
+STATUS: ${document.getElementById('modalMemoStatus').textContent}
+
+CONTENT:
+${memoContent}
+                `.trim();
+                
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `memo-${memoId}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                this.showNotification('Memo downloaded as text file', 'success');
+            }
+            
+            showNotification(message, type = 'info') {
+                if (window.showNotification) {
+                    window.showNotification(message, type);
+                } else {
+                    // Fallback notification
+                    const colors = {
+                        success: 'bg-green-100 text-green-800',
+                        error: 'bg-red-100 text-red-800',
+                        info: 'bg-blue-100 text-blue-800'
+                    };
+                    
+                    const notification = document.createElement('div');
+                    notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg ${colors[type] || colors.info} z-50`;
+                    notification.textContent = message;
+                    document.body.appendChild(notification);
+                    
+                    setTimeout(() => notification.remove(), 3000);
+                }
+            }
+            
+            setupEventListeners() {
+                // Search input
+                const searchInput = document.getElementById('memoSearch');
+                if (searchInput) {
+                    searchInput.addEventListener('input', (e) => {
+                        this.searchMemos(e.target.value);
+                        
+                        // Show/hide clear button
+                        const clearBtn = document.getElementById('clearSearch');
+                        if (clearBtn) {
+                            if (e.target.value) {
+                                clearBtn.classList.remove('hidden');
+                            } else {
+                                clearBtn.classList.add('hidden');
+                            }
+                        }
+                    });
+                }
+                
+                // Clear search button
+                const clearBtn = document.getElementById('clearSearch');
+                if (clearBtn) {
+                    clearBtn.addEventListener('click', () => {
+                        searchInput.value = '';
+                        this.searchMemos('');
+                        clearBtn.classList.add('hidden');
+                    });
+                }
+                
+                // Load more button
+                const loadMoreBtn = document.getElementById('loadMoreBtn');
+                if (loadMoreBtn) {
+                    loadMoreBtn.addEventListener('click', () => {
+                        this.loadMoreMemos();
+                    });
+                }
+                
+                // New memo form
+                const memoForm = document.getElementById('memoForm');
+                if (memoForm) {
+                    memoForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        
+                        if (!this.isAdmin) {
+                            this.showNotification('Admin access required to create memos', 'error');
+                            return;
+                        }
+                        
+                        const formData = {
+                            title: document.getElementById('memoTitle').value,
+                            priority: document.getElementById('memoPriority').value,
+                            category: document.getElementById('memoCategory').value,
+                            requiresAck: document.getElementById('memoRequiresAck').value,
+                            content: document.getElementById('memoContent').value
+                        };
+                        
+                        if (!formData.title || !formData.content) {
+                            this.showNotification('Title and content are required', 'error');
+                            return;
+                        }
+                        
+                        this.createNewMemo(formData);
+                        memoForm.reset();
+                    });
+                }
+                
+                // New memo button
+                const newMemoBtn = document.getElementById('newMemoBtn');
+                if (newMemoBtn) {
+                    newMemoBtn.addEventListener('click', () => {
+                        this.toggleAdminControls();
+                    });
+                }
+                
+                // Admin toggle button
+                const toggleAdminBtn = document.getElementById('toggleAdminBtn');
+                if (toggleAdminBtn) {
+                    toggleAdminBtn.addEventListener('click', () => {
+                        this.toggleAdminControls();
+                    });
+                }
+            }
+        }
+
+        // ============================================================================
+        // EXTERNAL NEWS ENGINE
+        // ============================================================================
+        
+        class NewsEngine {
+            constructor() {
+                this.news = [];
+                this.filteredNews = [];
+                this.currentFilter = 'all';
+                this.searchTerm = '';
+                this.sortNewestFirst = true;
+                this.visibleCount = 10;
+                this.autoRefreshInterval = null;
+                this.autoRefreshEnabled = false;
+                this.lastRefreshTime = null;
+                
+                this.initialize();
+            }
+            
+            initialize() {
+                this.loadNews();
+                this.setupEventListeners();
+                this.renderNews();
+                this.updateStats();
+            }
+            
+            async loadNews() {
+                const container = document.getElementById('newsContainer');
+                if (container) container.innerHTML = '<div class="text-center py-12"><i class="fa-solid fa-spinner fa-spin text-3xl text-green-700 mb-4"></i><p class="text-gray-500">Fetching external updates...</p></div>';
+                
+                try {
+                    const res = await callApi('getExternalNews');
+                    if (res && res.status === 'success') {
+                        this.news = res.data || [];
+                        this.applyFilters();
+                        this.renderNews();
+                        this.updateStats();
+                        this.lastRefreshTime = new Date();
+                    } else {
+                        this.renderErrorMessage(res?.message || 'Failed to load updates');
+                        this.stopAutoRefresh();
+                    }
+                } catch (error) {
+                    console.error('Error loading news:', error);
+                    this.renderErrorMessage('Network error. Could not reach server.');
+                    this.stopAutoRefresh();
+                }
+            }
+
+            renderErrorMessage(message) {
+                const container = document.getElementById('newsContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-12 bg-red-50 rounded-xl border border-red-100">
+                            <i class="fa-solid fa-circle-exclamation text-3xl text-red-600 mb-4"></i>
+                            <p class="text-red-800 font-semibold">${message}</p>
+                        </div>
+                    `;
+                }
+            }
+
+            applyFilters() {
+                let filtered = [...this.news];
+                
+                // Apply source filter
+                if (this.currentFilter !== 'all') {
+                    filtered = filtered.filter(item => item.sourceType === this.currentFilter);
+                }
+                
+                // Apply search filter
+                if (this.searchTerm) {
+                    const term = this.searchTerm.toLowerCase();
+                    filtered = filtered.filter(item => 
+                        item.title.toLowerCase().includes(term) ||
+                        item.content.toLowerCase().includes(term) ||
+                        item.source.toLowerCase().includes(term) ||
+                        item.tags.some(tag => tag.toLowerCase().includes(term))
+                    );
+                }
+                
+                // Apply sorting
+                filtered.sort((a, b) => {
+                    const dateA = new Date(a.date);
+                    const dateB = new Date(b.date);
+                    return this.sortNewestFirst ? 
+                        dateB - dateA : dateA - dateB;
+                });
+                
+                this.filteredNews = filtered;
+            }
+
+            renderNews() {
+                const container = document.getElementById('newsContainer');
+                if (!container) return;
+                
+                const newsToShow = this.filteredNews.slice(0, this.visibleCount);
+                
+                if (newsToShow.length === 0) {
+                    container.innerHTML = '';
+                    document.getElementById('noNewsResults').classList.remove('hidden');
+                    document.getElementById('loadMoreNewsBtn').classList.add('hidden');
+                    return;
+                }
+                
+                document.getElementById('noNewsResults').classList.add('hidden');
+                
+                let html = '';
+                newsToShow.forEach((item, index) => {
+                    const cardClass = `news-card ${item.sourceType} bg-white rounded-lg shadow-sm border border-gray-200 p-5`;
+                    const delay = index * 100;
+                    const formattedDate = this.formatDate(item.date);
+                    
+                    const sourceIcons = { gov: 'fa-landmark', industry: 'fa-industry', logistics: 'fa-truck' };
+                    const importanceClass = item.importance === 'high' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800';
+                    
+                    html += `
+                        <div class="${cardClass}" style="animation-delay: ${delay}ms">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <i class="fa-solid ${sourceIcons[item.sourceType] || 'fa-newspaper'} text-gray-400"></i>
+                                        <h3 class="font-bold text-gray-800">${item.title}</h3>
+                                    </div>
+                                    <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500 mb-2">
+                                        <span class="flex items-center gap-1"><i class="fa-solid fa-globe"></i> ${item.source}</span>
+                                        <span class="flex items-center gap-1"><i class="fa-solid fa-calendar"></i> ${formattedDate}</span>
+                                        <span class="${importanceClass} px-2 py-1 rounded text-xs font-semibold">${item.importance.toUpperCase()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-600 mb-4 text-sm">${item.content}</p>
+                            <div class="flex justify-between items-center">
+                                <div class="flex flex-wrap gap-2">
+                                    ${item.tags.map(tag => `<span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">${tag}</span>`).join('')}
+                                </div>
+                                <a href="${item.url}" target="_blank" class="text-green-700 text-sm font-semibold hover:underline flex items-center gap-1">
+                                    View Source <i class="fa-solid fa-external-link"></i>
+                                </a>
+                            </div>
+                        </div>`;
+                });
+                
+                container.innerHTML = html;
+                const loadMoreBtn = document.getElementById('loadMoreNewsBtn');
+                if (this.filteredNews.length > this.visibleCount) {
+                    loadMoreBtn.classList.remove('hidden');
+                } else {
+                    loadMoreBtn.classList.add('hidden');
+                }
+            }
+
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+            }
+
+            toggleSortOrder() {
+                this.sortNewestFirst = !this.sortNewestFirst;
+                document.getElementById('newsSortLabel').textContent = this.sortNewestFirst ? 'Latest First' : 'Oldest First';
+                this.applyFilters();
+                this.renderNews();
+            }
+
+            loadMoreNews() {
+                this.visibleCount += 10;
+                this.renderNews();
+            }
+
+            refreshNews() {
+                this.loadNews();
+            }
+
+            toggleAutoRefresh() {
+                this.autoRefreshEnabled = !this.autoRefreshEnabled;
+                const icon = document.getElementById('autoRefreshIcon');
+                const label = document.getElementById('autoRefreshLabel');
+                
+                if (this.autoRefreshEnabled) {
+                    icon.className = 'fa-solid fa-clock text-green-700';
+                    label.textContent = 'Auto-refresh: ON (30min)';
+                    this.startAutoRefresh();
+                } else {
+                    icon.className = 'fa-solid fa-clock';
+                    label.textContent = 'Auto-refresh: OFF';
+                    this.stopAutoRefresh();
+                }
+            }
+
+            startAutoRefresh() {
+                this.stopAutoRefresh();
+                this.autoRefreshInterval = setInterval(() => this.refreshNews(), 30 * 60 * 1000);
+            }
+
+            stopAutoRefresh() {
+                if (this.autoRefreshInterval) {
+                    clearInterval(this.autoRefreshInterval);
+                    this.autoRefreshInterval = null;
+                }
+            }
+
+            updateStats() {
+                const govCount = this.news.filter(item => item.sourceType === 'gov').length;
+                const industryCount = this.news.filter(item => item.sourceType === 'industry').length;
+                const logisticsCount = this.news.filter(item => item.sourceType === 'logistics').length;
+                
+                document.getElementById('govCount').textContent = govCount;
+                document.getElementById('industryCount').textContent = industryCount;
+                document.getElementById('logisticsCount').textContent = logisticsCount;
+            }
+
+            updateLastUpdatedDisplay() {
+                const el = document.getElementById('lastUpdatedNews');
+                if (el && this.lastRefreshTime) {
+                    el.textContent = `Last Sync: ${this.lastRefreshTime.toLocaleTimeString()}`;
+                }
+            }
+
+            setupEventListeners() {
+                const searchInput = document.getElementById('newsSearch');
+                if (searchInput) {
+                    searchInput.addEventListener('input', (e) => {
+                        this.searchTerm = e.target.value;
+                        this.applyFilters();
+                        this.renderNews();
+                        document.getElementById('clearNewsSearch').classList.toggle('hidden', !e.target.value);
+                    });
+                }
+                
+                const clearBtn = document.getElementById('clearNewsSearch');
+                if (clearBtn) {
+                    clearBtn.addEventListener('click', () => {
+                        searchInput.value = '';
+                        this.searchTerm = '';
+                        this.applyFilters();
+                        this.renderNews();
+                        clearBtn.classList.add('hidden');
+                    });
+                }
+
+                const loadMoreBtn = document.getElementById('loadMoreNewsBtn');
+                if (loadMoreBtn) loadMoreBtn.addEventListener('click', () => this.loadMoreNews());
+            }
+
+            filterNews(filterType) {
+                this.currentFilter = filterType;
+                this.visibleCount = 10;
+                document.querySelectorAll('#tabContent-external .filter-pill').forEach(pill => {
+                    pill.classList.remove('active', 'bg-green-700', 'text-white');
+                    pill.classList.add('bg-gray-100', 'text-gray-700');
+                });
+                event.target.closest('.filter-pill').classList.add('active', 'bg-green-700', 'text-white');
+                this.applyFilters();
+                this.renderNews();
+            }
+        }
+
+        // ============================================================================
+        // GLOBAL FUNCTIONS
+        // ============================================================================
+        
+        let memosEngine, newsEngine;
+        
+        function switchTab(tabName) {
+            document.getElementById('tab-internal').classList.toggle('active', tabName === 'internal');
+            document.getElementById('tab-external').classList.toggle('active', tabName === 'external');
+            document.getElementById('tabContent-internal').classList.toggle('hidden', tabName !== 'internal');
+            document.getElementById('tabContent-external').classList.toggle('hidden', tabName !== 'external');
+            document.getElementById('replySection').classList.toggle('hidden', tabName !== 'internal');
+            
+            if (tabName === 'internal' && !memosEngine) memosEngine = new MemosEngine();
+            if (tabName === 'external' && !newsEngine) newsEngine = new NewsEngine();
+        }
+        
+        // ============================================================================
+        // INITIALIZATION
+        // ============================================================================
+        
+        window.addEventListener('footerLoaded', function() {
+            const emailEl = document.getElementById('officialReplyEmail');
+            if(emailEl) emailEl.textContent = SUPPORT_EMAIL;
+            memosEngine = new MemosEngine();
+            document.getElementById('tab-internal').addEventListener('click', () => switchTab('internal'));
+            document.getElementById('tab-external').addEventListener('click', () => switchTab('external'));
+            switchTab('internal');
+        });
+    </script>
+</body>
+</html>
+                let filtered = [...this.news];
+                
+                // Apply source filter
+                if (this.currentFilter !== 'all') {
+                    filtered = filtered.filter(item => item.sourceType === this.currentFilter);
+                }
+                
+                // Apply search filter
+                if (this.searchTerm) {
+                    const term = this.searchTerm.toLowerCase();
+                    filtered = filtered.filter(item => 
+                        item.title.toLowerCase().includes(term) ||
+                        item.content.toLowerCase().includes(term) ||
+                        item.source.toLowerCase().includes(term) ||
+                        item.tags.some(tag => tag.toLowerCase().includes(term))
+                    );
+                }
+                
+                // Apply sorting
+                filtered.sort((a, b) => {
+                    const dateA = new Date(a.date);
+                    const dateB = new Date(b.date);
+                    return this.sortNewestFirst ? 
+                        dateB - dateA : dateA - dateB;
+                });
+                
+                this.filteredNews = filtered;
+            }
+            
+            renderNews() {
+                const container = document.getElementById('newsContainer');
+                if (!container) return;
+                
+                const newsToShow = this.filteredNews.slice(0, this.visibleCount);
+                
+                if (newsToShow.length === 0) {
+                    container.innerHTML = '';
+                    document.getElementById('noNewsResults').classList.remove('hidden');
+                    document.getElementById('loadMoreNewsBtn').classList.add('hidden');
+                    return;
+                }
+                
+                document.getElementById('noNewsResults').classList.add('hidden');
+                
+                let html = '';
+                
+                newsToShow.forEach((item, index) => {
+                    const cardClass = `news-card ${item.sourceType} bg-white rounded-lg shadow-sm border border-gray-200 p-5`;
+                    const delay = index * 100;
+                    const formattedDate = this.formatDate(item.date);
+                    
+                    // Source icon based on type
+                    const sourceIcons = {
+                        gov: 'fa-landmark',
+                        industry: 'fa-industry',
+                        logistics: 'fa-truck'
+                    };
+                    
+                    // Importance badge
+                    const importanceClass = item.importance === 'high' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800';
+                    
+                    html += `
+                        <div class="${cardClass}" style="animation-delay: ${delay}ms">
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <i class="fa-solid ${sourceIcons[item.sourceType] || 'fa-newspaper'} text-gray-400"></i>
+                                        <h3 class="font-bold text-gray-800">${item.title}</h3>
+                                    </div>
+                                    <div class="flex flex-wrap items-center gap-3 text-sm text-gray-500 mb-2">
+                                        <span class="flex items-center gap-1">
+                                            <i class="fa-solid fa-source"></i>
+                                            ${item.source}
+                                        </span>
+                                        <span class="flex items-center gap-1">
+                                            <i class="fa-solid fa-calendar"></i>
+                                            ${formattedDate}
+                                        </span>
+                                        <span class="${importanceClass} px-2 py-1 rounded text-xs font-semibold">
+                                            ${item.importance.toUpperCase()} PRIORITY
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end gap-2">
+                                    <span class="text-xs text-gray-400 font-mono">${item.id}</span>
+                                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                                        ${item.category}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <p class="text-gray-600 mb-4">${item.content}</p>
+                            
+                            <div class="flex justify-between items-center">
+                                <div class="flex flex-wrap gap-2">
+                                    ${item.tags.map(tag => `
+                                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">${tag}</span>
+                                    `).join('')}
+                                </div>
+                                <a href="${item.url}" target="_blank" 
+                                   class="text-green-700 text-sm font-semibold hover:underline flex items-center gap-1">
+                                    View Source <i class="fa-solid fa-external-link ml-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                container.innerHTML = html;
+                
+                // Show/hide load more button
+                const loadMoreBtn = document.getElementById('loadMoreNewsBtn');
+                if (this.filteredNews.length > this.visibleCount) {
+                    loadMoreBtn.classList.remove('hidden');
+                } else {
+                    loadMoreBtn.classList.add('hidden');
+                }
+            }
+            
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-IN', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                });
+            }
+            
+            filterNews(filterType) {
+                this.currentFilter = filterType;
+                this.visibleCount = 10;
+                
+                // Update active filter pill
+                document.querySelectorAll('#tabContent-external .filter-pill').forEach(pill => {
+                    pill.classList.remove('active', 'bg-green-700', 'text-white');
+                    pill.classList.add('bg-gray-100', 'text-gray-700');
+                });
+                
+                const activePill = event.target.closest('.filter-pill');
+                if (activePill) {
+                    activePill.classList.add('active', 'bg-green-700', 'text-white');
+                    activePill.classList.remove('bg-gray-100', 'text-gray-700');
+                }
+                
+                this.applyFilters();
+                this.renderNews();
+            }
+            
+            searchNews(term) {
+                this.searchTerm = term;
+                this.visibleCount = 10;
+                this.applyFilters();
+                this.renderNews();
+            }
+            
+            toggleSortOrder() {
+                this.sortNewestFirst = !this.sortNewestFirst;
+                document.getElementById('newsSortLabel').textContent = 
+                    this.sortNewestFirst ? 'Latest First' : 'Oldest First';
+                this.applyFilters();
+                this.renderNews();
+            }
+            
+            loadMoreNews() {
+                this.visibleCount += 10;
+                this.renderNews();
+            }
+            
+            refreshNews() {
+                this.loadNews();
+            }
+            
+            toggleAutoRefresh() {
+                this.autoRefreshEnabled = !this.autoRefreshEnabled;
+                
+                const icon = document.getElementById('autoRefreshIcon');
+                const label = document.getElementById('autoRefreshLabel');
+                
+                if (this.autoRefreshEnabled) {
+                    icon.className = 'fa-solid fa-clock text-green-700';
+                    label.textContent = 'Auto-refresh: ON (30min)';
+                    this.startAutoRefresh();
+                    this.showNotification('Auto-refresh enabled (every 30 minutes)', 'success');
+                } else {
+                    icon.className = 'fa-solid fa-clock';
+                    label.textContent = 'Auto-refresh: OFF';
+                    this.stopAutoRefresh();
+                    this.showNotification('Auto-refresh disabled', 'info');
+                }
+            }
+            
+            startAutoRefresh() {
+                this.stopAutoRefresh(); // Clear any existing interval
+                this.autoRefreshInterval = setInterval(() => {
+                    this.refreshNews();
+                }, 30 * 60 * 1000); // 30 minutes
+            }
+            
+            stopAutoRefresh() {
+                if (this.autoRefreshInterval) {
+                    clearInterval(this.autoRefreshInterval);
+                    this.autoRefreshInterval = null;
+                }
+                this.autoRefreshEnabled = false;
+                const icon = document.getElementById('autoRefreshIcon');
+                const label = document.getElementById('autoRefreshLabel');
+                if (icon) icon.className = 'fa-solid fa-clock';
+                if (label) label.textContent = 'Auto-refresh: OFF';
+            }
+            
+            updateStats() {
+                const govCount = this.news.filter(item => item.sourceType === 'gov').length;
+                const industryCount = this.news.filter(item => item.sourceType === 'industry').length;
+                const logisticsCount = this.news.filter(item => item.sourceType === 'logistics').length;
+                
+                document.getElementById('govCount').textContent = govCount;
+                document.getElementById('industryCount').textContent = industryCount;
+                document.getElementById('logisticsCount').textContent = logisticsCount;
+            }
+            
+            showNotification(message, type = 'info') {
+                if (window.showNotification) {
+                    window.showNotification(message, type);
+                }
+            }
+            
+            setupEventListeners() {
+                // News search input
+                const searchInput = document.getElementById('newsSearch');
+                if (searchInput) {
+                    searchInput.addEventListener('input', (e) => {
+                        this.searchNews(e.target.value);
+                        
+                        // Show/hide clear button
+                        const clearBtn = document.getElementById('clearNewsSearch');
+                        if (clearBtn) {
+                            if (e.target.value) {
+                                clearBtn.classList.remove('hidden');
+                            } else {
+                                clearBtn.classList.add('hidden');
+                            }
+                        }
+                    });
+                }
+                
+                // Clear news search button
+                const clearBtn = document.getElementById('clearNewsSearch');
+                if (clearBtn) {
+                    clearBtn.addEventListener('click', () => {
+                        searchInput.value = '';
+                        this.searchNews('');
+                        clearBtn.classList.add('hidden');
+                    });
+                }
+                
+                // Load more news button
+                const loadMoreBtn = document.getElementById('loadMoreNewsBtn');
+                if (loadMoreBtn) {
+                    loadMoreBtn.addEventListener('click', () => {
+                        this.loadMoreNews();
+                    });
+                }
+            }
+        }
+
+        // ============================================================================
+        // GLOBAL FUNCTIONS
+        // ============================================================================
+        
+        let memosEngine, newsEngine;
+        
+        function switchTab(tabName) {
+            // Update tab buttons
+            document.getElementById('tab-internal').classList.toggle('active', tabName === 'internal');
+            document.getElementById('tab-external').classList.toggle('active', tabName === 'external');
+            
+            // Show/hide tab contents
+            document.getElementById('tabContent-internal').classList.toggle('hidden', tabName !== 'internal');
+            document.getElementById('tabContent-external').classList.toggle('hidden', tabName !== 'external');
+            
+            // Show/hide reply section
+            document.getElementById('replySection').classList.toggle('hidden', tabName !== 'internal');
+            
+            // Initialize engines if needed
+            if (tabName === 'internal' && !memosEngine) {
+                memosEngine = new MemosEngine();
+            }
+            if (tabName === 'external' && !newsEngine) {
+                newsEngine = new NewsEngine();
+            }
+        }
+        
+        // ============================================================================
+        // INITIALIZATION
+        // ============================================================================
+        
+        window.addEventListener('footerLoaded', function() {
+            // Initialize support email display
+            const emailEl = document.getElementById('officialReplyEmail');
+            if(emailEl) emailEl.textContent = SUPPORT_EMAIL;
+
+            // Initialize memos engine
+            memosEngine = new MemosEngine();
+            
+            // Set up tab switching
+            document.getElementById('tab-internal').addEventListener('click', () => switchTab('internal'));
+            document.getElementById('tab-external').addEventListener('click', () => switchTab('external'));
+            
+            // Initialize on internal tab by default
+            switchTab('internal');
+        });
+    </script>
+</body>
+</html>

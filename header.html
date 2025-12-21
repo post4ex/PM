@@ -1,0 +1,394 @@
+<!-- Header -->
+<header class="w-full bg-white text-blue-900 shadow-md py-4 px-6 sticky top-0 z-30">
+    <div class="container-fluid mx-auto flex items-center justify-between relative">
+        
+        <!-- Left Section: Logo & Navigation -->
+        <div class="flex items-center space-x-8">
+            <!-- Logo & Sidebar Toggle -->
+            <div class="flex items-center space-x-4 flex-shrink-0">
+                <div id="sidebar-toggle-container" class="hidden">
+                    <button id="sidebar-toggle" class="p-2 rounded-lg text-blue-900 hover:text-blue-700 focus:outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+                <a href="main.html" id="logoLink" class="flex items-center space-x-2">
+                    <img src="https://i.postimg.cc/wv02f1fb/postman-Logo-28.png" alt="Postman logo" class="h-14 w-auto rounded-lg">
+                </a>
+            </div>
+
+            <!-- Desktop Navigation (Generated via Script) -->
+            <nav class="hidden xl:flex items-center space-x-2 text-sm font-semibold">
+                <div id="container-desktop-public" class="flex items-center space-x-2"></div>
+                <div id="container-desktop-private" class="hidden items-center space-x-2"></div>
+            </nav>
+        </div>
+
+        <!-- Right Section: Auth Controls & Tools -->
+        <div class="flex items-center space-x-3 sm:space-x-4">
+            
+            <!-- Global Notification Bell (Visible on ALL devices) -->
+            <!-- We added 'id="notification-container-global"' to toggle visibility based on login status -->
+            <div class="relative hidden" id="notification-container-global">
+                <button id="notification-button-global" class="p-2 rounded-full text-blue-800 bg-blue-100 hover:bg-blue-200 transition-colors relative focus:outline-none" title="Notifications">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    <!-- Badge -->
+                    <span id="notification-badge-global" class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-red-100 transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full hidden">0</span>
+                </button>
+                
+                <!-- Dropdown (Positioned to not overflow on mobile) -->
+                <div id="notification-dropdown" class="absolute right-[-60px] sm:right-0 mt-3 w-72 sm:w-80 bg-white rounded-lg shadow-xl z-50 hidden border border-gray-100 overflow-hidden">
+                    <div class="p-3 border-b bg-gray-50 flex justify-between items-center">
+                        <h3 class="font-semibold text-gray-700 text-sm">Notifications</h3>
+                        <button class="text-xs text-blue-600 hover:underline">Mark all read</button>
+                    </div>
+                    <div id="notification-list-global" class="max-h-64 overflow-y-auto p-2 space-y-2">
+                        <p class="text-sm text-gray-500 text-center py-4">No new notifications</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Desktop Only Tools (Refresh, Search, Profile) -->
+            <div class="hidden xl:flex items-center space-x-4">
+                <button id="manual-refresh-button" class="p-2 rounded-full text-blue-800 bg-blue-100 hover:bg-blue-200 transition-colors hidden" title="Refresh Data">
+                    <svg id="refresh-icon-static" class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z" />
+                    </svg>
+                    <svg id="refresh-icon-spinning" class="animate-spin h-5 w-5 hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+
+                <a id="nav-search-private" href="search.html" class="p-2 rounded-full text-blue-800 bg-blue-100 hover:bg-blue-200 transition-colors hidden">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                </a>
+                
+                <a id="login-button" href="login.html" class="px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Login</a>
+                
+                <div id="profile-section" class="relative hidden">
+                    <button id="profile-button" class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-300 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                    </button>
+                    <div id="profile-dropdown" class="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl z-50 hidden p-4 border">
+                        <div class="border-b pb-2 mb-2">
+                            <h3 class="text-md font-semibold text-gray-800">User Profile</h3>
+                        </div>
+                        <div id="profile-details-container" class="space-y-2"></div>
+                        <button id="profile-logout-button" class="w-full text-left mt-4 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">Logout</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <div class="xl:hidden">
+                <button id="menuButton" class="p-2 rounded-lg text-blue-900 hover:text-blue-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Dropdown Menu (Content Generated via Script) -->
+        <div id="dropdownMenu" class="dropdown-menu hidden xl:hidden w-48 z-40">
+            <div id="container-mobile-public"></div>
+            <div id="container-mobile-private" class="hidden"></div>
+            
+            <!-- Mobile System Tools -->
+            <div id="mobile-tools-section" class="hidden mt-2 pt-2 border-t text-sm">
+                <div class="px-4 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">System</div>
+                <!-- Note: Notifications removed from here as they are now top-bar global -->
+                <button id="mobile-refresh-button" class="w-full text-left px-4 py-2 text-blue-900 hover:bg-blue-50 transition-colors flex items-center gap-2">
+                    <svg class="h-5 w-5 text-blue-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h5M4 9a9 9 0 0115.12-4.38M20 20v-5h-5M20 15a9 9 0 01-15.12 4.38" />
+                    </svg>
+                    <span>Refresh Data</span>
+                </button>
+            </div>
+
+            <div class="mt-2 pt-2 border-t">
+                <a id="login-button-mobile" href="login.html" class="block px-4 py-2 rounded-lg bg-blue-800 text-white hover:bg-blue-900 transition-colors">Login</a>
+                <div id="profile-section-mobile" class="hidden">
+                    <div id="mobile-profile-details-container" class="p-2 space-y-1 bg-gray-700 rounded-lg mb-2"></div>
+                    <button id="logout-button-mobile" class="w-full text-left px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors">Logout</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Sidebar (Content Generated via Script) -->
+<aside id="sidebar" class="fixed top-0 left-0 h-full w-64 bg-gray-800 text-white transform -translate-x-full transition-transform duration-300 ease-in-out z-50 overflow-y-auto">
+    <div class="p-4">
+        <a href="dashboard.html" class="text-xl font-semibold mb-4 block hover:text-gray-300">Dashboard</a>
+        <nav id="container-sidebar-nav" class="space-y-2"></nav>
+    </div>
+</aside>
+
+<div id="sidebar-overlay" class="fixed inset-0 bg-black bg-opacity-50 z-40 hidden"></div>
+
+<!-- NAVIGATION CONFIGURATION & RENDERING -->
+<script>
+    // ============================================================================
+    // 1. ROLE HIERARCHY (Local Definition)
+    // ============================================================================
+    const NAV_ROLE_LEVELS = {
+        'MASTER':     100, 
+        'ADMIN':      90,  
+        'AUDITOR':    70,  
+        'ACCOUNTANT': 60,  
+        'MANAGER':    50,  
+        'STAFF':      10,  
+        'CLIENT':     1,   
+        'GUEST':      0    
+    };
+
+    function getUserLevel() {
+        try {
+            const loginData = JSON.parse(localStorage.getItem('loginData'));
+            const role = loginData?.userData?.ROLE || 'GUEST';
+            return NAV_ROLE_LEVELS[role] || 0;
+        } catch(e) { return 0; }
+    }
+
+    // ============================================================================
+    // 2. MENU CONFIGURATION
+    // ============================================================================
+    const NAV_CONFIG = {
+        public: [
+            { label: 'Home', link: 'main.html', id: 'home' },
+            { label: 'Pincode', link: 'Pincode.html', id: 'pincode' },
+            { label: 'Complaint', link: 'complaint.html', id: 'complaint' }
+        ],
+        private: [
+            { label: 'Book Order', link: 'BookOrder.html', id: 'bookorder', reqRole: 'CLIENT' },
+            { label: 'Tracking', link: 'tracking.html', id: 'tracking', reqRole: 'CLIENT' },
+            { label: 'Calculator', link: 'Calculator.html', id: 'calculator', reqRole: 'CLIENT' },
+            { label: 'Ticket', link: 'ticket.html', id: 'ticket', reqRole: 'CLIENT' },
+            { label: 'Task', link: 'task.html', id: 'task', reqRole: 'CLIENT' },
+            { label: 'Wallet', link: 'wallet.html', id: 'wallet', reqRole: 'CLIENT' }
+        ],
+        sidebar: [
+            { 
+                label: 'Orders', 
+                id: 'orders', 
+                reqRole: 'CLIENT',
+                submenu: [
+                    { label: 'Create Order', link: 'CreateOrder.html', reqRole: 'CLIENT' },
+                    { label: 'Pickup Request', link: 'PickupRequest.html', reqRole: 'CLIENT' },
+                    { label: 'Book Order', link: 'BookOrder.html', reqRole: 'CLIENT' },
+                    { label: 'Assign Carrier', link: 'AssignCarrier.html', reqRole: 'STAFF' },
+                    { label: 'Edit Order', link: 'EditOrder.html', reqRole: 'STAFF' }
+                ] 
+            },
+            { label: 'Shipments', link: 'Shipments.html', reqRole: 'STAFF' },
+            { 
+                label: 'Estimate', 
+                id: 'estimate', 
+                reqRole: 'CLIENT',
+                submenu: [
+                    { label: 'Pincode', link: 'Pincode.html' },
+                    { label: 'Calculator', link: 'Calculator.html' }
+                ] 
+            },
+            { label: 'Ticket', link: 'ticket.html', reqRole: 'CLIENT' },
+            { label: 'Search', link: 'search.html', reqRole: 'CLIENT' },
+            { label: 'Task', link: 'task.html', reqRole: 'CLIENT' },
+            { label: 'Wallet', link: 'wallet.html', reqRole: 'CLIENT' },
+            { 
+                label: 'Scans', 
+                id: 'scans', 
+                reqRole: 'STAFF', 
+                submenu: [
+                    { label: 'OutMenifest', link: 'OutMenifest.html', reqRole: 'STAFF' },
+                    { label: 'InMenifest', link: 'InMenifest.html', reqRole: 'STAFF' },
+                    { label: 'RunSheet', link: 'RunSheet.html', reqRole: 'STAFF' },
+                    { label: 'Update', link: 'Update.html', reqRole: 'STAFF' },
+                    { label: 'POD', link: 'POD.html', reqRole: 'STAFF' }
+                ] 
+            },
+            { label: 'Uploader', link: 'uploader.html', reqRole: 'STAFF' },
+            { label: 'CRM', link: 'CRM.html', reqRole: 'STAFF' },
+            { 
+                label: 'Report', 
+                id: 'report', 
+                reqRole: 'STAFF',
+                submenu: [
+                    { label: 'Booking', link: 'ReportBooking.html', reqRole: 'STAFF' },
+                    { label: 'Menifest', link: 'ReportMenifest.html', reqRole: 'STAFF' },
+                    { label: 'Update', link: 'ReportUpdate.html', reqRole: 'STAFF' },
+                    { label: 'Runsheet', link: 'ReportRunsheet.html', reqRole: 'STAFF' },
+                    { label: 'CRM', link: 'ReportCRM.html', reqRole: 'STAFF' }
+                ] 
+            },
+            { label: 'Billing', link: 'Billing.html', reqRole: 'ACCOUNTANT' },
+            { 
+                label: 'Ledger', 
+                id: 'ledger', 
+                reqRole: 'ACCOUNTANT', 
+                submenu: [
+                    { label: 'Summary', link: 'LedgerSummary.html', reqRole: 'ACCOUNTANT' },
+                    { label: 'Accounts', link: 'LedgerAccounts.html', reqRole: 'ACCOUNTANT' },
+                    { label: 'Receipts', link: 'LedgerReceipts.html', reqRole: 'ACCOUNTANT' },
+                    { label: 'Payments', link: 'LedgerPayments.html', reqRole: 'ACCOUNTANT' },
+                    { label: 'Expense Claims', link: 'LedgerExpenseClaims.html', reqRole: 'ACCOUNTANT' },
+                    { label: 'Customers', link: 'LedgerCustomers.html', reqRole: 'ACCOUNTANT' },
+                    { label: 'Sales Invoices', link: 'LedgerSalesInvoices.html', reqRole: 'ACCOUNTANT' },
+                    { label: 'Credit Notes', link: 'LedgerCreditNotes.html', reqRole: 'ACCOUNTANT' },
+                    { label: 'Delivery Notes', link: 'LedgerDeliveryNotes.html', reqRole: 'ACCOUNTANT' },
+                    { label: 'Suppliers', link: 'LedgerSuppliers.html', reqRole: 'ACCOUNTANT' },
+                    { label: 'Purchase Invoices', link: 'LedgerPurchaseInvoices.html', reqRole: 'ACCOUNTANT' },
+                    { label: 'Debit Notes', link: 'LedgerDebitNotes.html', reqRole: 'ACCOUNTANT' },
+                    { label: 'Employees', link: 'LedgerEmployees.html', reqRole: 'ACCOUNTANT' },
+                    { label: 'Journal Entries', link: 'LedgerJournalEntries.html', reqRole: 'ACCOUNTANT' },
+                    { label: 'Ledger Reports', link: 'LedgerReports.html', reqRole: 'ACCOUNTANT' }
+                ] 
+            },
+            { 
+                label: 'Masters', 
+                id: 'masters', 
+                reqRole: 'MASTER',
+                submenu: [
+                    { label: 'Pincode Master', link: 'PincodeMaster.html', reqRole: 'MASTER' },
+                    { label: 'Branches', link: 'Branches.html', reqRole: 'MASTER' },
+                    { label: 'Modes', link: 'Mode.html', reqRole: 'MASTER' },
+                    { label: 'Carriers', link: 'Carrier.html', reqRole: 'MASTER' },
+                    { label: 'Customer', link: 'Customer.html', reqRole: 'MASTER' },
+                    { label: 'Agent', link: 'Agent.html', reqRole: 'ADMIN' }, 
+                    { label: 'Clients', link: 'Clients.html', reqRole: 'MASTER' },
+                    { label: 'Suppliers', link: 'Suppliers.html', reqRole: 'MASTER' },
+                    { label: 'Vendors', link: 'Vendors.html', reqRole: 'MASTER' },
+                    { label: 'Staff', link: 'Staff.html', reqRole: 'MASTER' },
+                    { label: 'Stock', link: 'Stock.html', reqRole: 'MASTER' }
+                ] 
+            }
+        ]
+    };
+
+    // ============================================================================
+    // 3. RENDERING FUNCTIONS
+    // ============================================================================
+    function hasPermission(itemRole) {
+        if (!itemRole) return true;
+        const userLevel = getUserLevel();
+        const reqLevel = NAV_ROLE_LEVELS[itemRole] || 0;
+        return userLevel >= reqLevel;
+    }
+
+    function renderNavItems(items, type) { 
+        const desktopContainer = document.getElementById(`container-desktop-${type}`);
+        const mobileContainer = document.getElementById(`container-mobile-${type}`);
+        if (!desktopContainer || !mobileContainer) return;
+
+        let desktopHTML = '';
+        let mobileHTML = '';
+
+        items.forEach(item => {
+            if (!hasPermission(item.reqRole)) return; 
+
+            const desktopId = `nav-${item.id}-${type}`;
+            const mobileId = `dropdown-${item.id}-${type}`;
+
+            desktopHTML += `<a id="${desktopId}" href="${item.link}" class="px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">${item.label}</a>`;
+            mobileHTML += `<a id="${mobileId}" href="${item.link}" class="block mt-1 px-4 py-2 rounded-lg bg-blue-900 text-white hover:bg-blue-800 transition-colors">${item.label}</a>`;
+        });
+
+        desktopContainer.innerHTML = desktopHTML;
+        mobileContainer.innerHTML = mobileHTML;
+    }
+
+    function renderSidebar() {
+        const container = document.getElementById('container-sidebar-nav');
+        if (!container) return;
+
+        let html = '';
+        NAV_CONFIG.sidebar.forEach(item => {
+            if (!hasPermission(item.reqRole)) return; 
+
+            if (item.submenu) {
+                const visibleSubItems = item.submenu.filter(sub => hasPermission(sub.reqRole));
+                if (visibleSubItems.length > 0) {
+                    const submenuId = `${item.id}-submenu`;
+                    html += `
+                        <div>
+                            <button onclick="toggleSubmenu('${submenuId}')" class="w-full text-left flex justify-between items-center p-2 rounded hover:bg-gray-700 focus:outline-none">
+                                <span>${item.label}</span>
+                                <svg class="w-4 h-4 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                            </button>
+                            <div id="${submenuId}" class="hidden pl-4 mt-1 space-y-1">
+                                ${visibleSubItems.map(sub => `<a href="${sub.link}" class="block p-2 rounded hover:bg-gray-600">${sub.label}</a>`).join('')}
+                            </div>
+                        </div>`;
+                }
+            } else {
+                html += `<a href="${item.link}" class="block p-2 rounded hover:bg-gray-700">${item.label}</a>`;
+            }
+        });
+
+        container.innerHTML = html;
+    }
+
+    function toggleSubmenu(submenuId) {
+        const submenu = document.getElementById(submenuId);
+        if (submenu) {
+            submenu.classList.toggle('hidden');
+            const arrow = submenu.previousElementSibling.querySelector('svg');
+            if (arrow) {
+                arrow.classList.toggle('rotate-180');
+            }
+        }
+    }
+
+    // ============================================================================
+    // INITIALIZATION
+    // ============================================================================
+    window.addEventListener('footerLoaded', () => {
+        renderNavItems(NAV_CONFIG.public, 'public');
+        renderNavItems(NAV_CONFIG.private, 'private');
+        renderSidebar();
+
+        // 2. Setup Notification Dropdown Toggle (GLOBAL)
+        const notifBtn = document.getElementById('notification-button-global');
+        const notifDrop = document.getElementById('notification-dropdown');
+        if (notifBtn && notifDrop) {
+            notifBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                notifDrop.classList.toggle('hidden');
+            });
+            document.addEventListener('click', (e) => {
+                if (!notifDrop.contains(e.target) && !notifBtn.contains(e.target)) {
+                    notifDrop.classList.add('hidden');
+                }
+            });
+        }
+        
+        // 3. Setup Mobile Refresh
+        const mobileRefresh = document.getElementById('mobile-refresh-button');
+        const desktopRefresh = document.getElementById('manual-refresh-button');
+        if (mobileRefresh && desktopRefresh) {
+            mobileRefresh.addEventListener('click', () => {
+                desktopRefresh.click();
+                const menu = document.getElementById('dropdownMenu');
+                if (menu) menu.classList.add('hidden');
+            });
+        }
+        
+        const checkMobileTools = () => {
+            if (localStorage.getItem('loginData')) {
+                const tools = document.getElementById('mobile-tools-section');
+                const globalNotif = document.getElementById('notification-container-global');
+                
+                if (tools) tools.classList.remove('hidden');
+                if (globalNotif) globalNotif.classList.remove('hidden');
+                
+                document.getElementById('container-desktop-private')?.classList.remove('hidden');
+                document.getElementById('container-desktop-private')?.classList.add('flex');
+                document.getElementById('container-mobile-private')?.classList.remove('hidden');
+                document.getElementById('container-desktop-public')?.classList.add('hidden'); 
+            }
+        };
+        checkMobileTools();
+    });
+</script>

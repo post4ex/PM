@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postman - Our Services</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <div id="header-placeholder"></div>
+
+    <main class="w-full flex-grow p-4 sm:p-8">
+        <div class="container mx-auto max-w-7xl">
+            <section id="services-section" class="bg-white rounded-lg shadow-md p-8 space-y-8">
+                <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">Our Services</h2>
+                <p class="text-center text-gray-500 mb-8 -mt-6">Comprehensive solutions tailored to your logistics needs.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
+        
+                    <!-- Service 1: AirLine Services -->
+                    <div class="service-card bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center hover:shadow-lg transition-all duration-300 group h-full">
+                        <div class="w-16 h-16 mb-4 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-plane-departure text-3xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">AirLine Services</h3>
+                        <p class="text-gray-600 mb-4">Our AirLine Services offer the fastest way to get your consignments to their destination, ensuring timely and secure delivery across the globe.</p>
+                        
+                        <!-- PERMANENT DETAILS -->
+                        <div class="details-container text-left w-full mt-4 border-t border-gray-200 pt-4 flex-grow">
+                            <div class="space-y-4 text-sm text-gray-600">
+                                <div>
+                                    <h4 class="font-bold text-gray-800 mb-1">Key Features:</h4>
+                                    <ul class="list-disc list-inside">
+                                        <li>24-48 Hour Global Delivery</li>
+                                        <li>Door-to-Airport & Door-to-Door</li>
+                                        <li>Real-time GPS Flight Tracking</li>
+                                        <li>Customs Clearance Support</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 mb-1">Ideal For:</h4>
+                                    <p class="text-blue-800 bg-blue-50 p-2 rounded">High-value electronics, medical supplies, legal documents.</p>
+                                </div>
+                                <div class="pt-2 text-center mt-auto">
+                                    <!-- TODO: Redirect to specific service page when ready -->
+                                    <a href="login.html" class="inline-block w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-bold uppercase tracking-wider">Book Now</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Service 2: Surface Services -->
+                    <div class="service-card bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center hover:shadow-lg transition-all duration-300 group h-full">
+                        <div class="w-16 h-16 mb-4 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-truck-fast text-3xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Surface Services</h3>
+                        <p class="text-gray-600 mb-4">For cost-effective and reliable transportation, our Surface Services are the ideal choice. We handle large and heavy shipments with care.</p>
+                        
+                        <div class="details-container text-left w-full mt-4 border-t border-gray-200 pt-4 flex-grow">
+                            <div class="space-y-4 text-sm text-gray-600">
+                                <div>
+                                    <h4 class="font-bold text-gray-800 mb-1">Key Features:</h4>
+                                    <ul class="list-disc list-inside">
+                                        <li>Pan-India Coverage (19,000+ Pincodes)</li>
+                                        <li>FTL (Full Truck Load) & PTL Options</li>
+                                        <li>GPS-Enabled Fleet</li>
+                                        <li>Cost-Effective Pricing Models</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 mb-1">Ideal For:</h4>
+                                    <p class="text-emerald-800 bg-emerald-50 p-2 rounded">Bulk raw materials, furniture, machinery, textiles.</p>
+                                </div>
+                                <div class="pt-2 text-center mt-auto">
+                                    <!-- TODO: Redirect to specific service page when ready -->
+                                    <a href="login.html" class="inline-block w-full px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700 transition-colors text-sm font-bold uppercase tracking-wider">Check Rates</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Service 3: Premium Services -->
+                    <div class="service-card bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center hover:shadow-lg transition-all duration-300 group h-full">
+                        <div class="w-16 h-16 mb-4 bg-purple-100 text-purple-700 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-crown text-3xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">Premium Services</h3>
+                        <p class="text-gray-600 mb-4">Experience the highest standard of service. Enjoy priority handling, real-time tracking, and dedicated support for your most valuable shipments.</p>
+                        
+                        <div class="details-container text-left w-full mt-4 border-t border-gray-200 pt-4 flex-grow">
+                            <div class="space-y-4 text-sm text-gray-600">
+                                <div>
+                                    <h4 class="font-bold text-gray-800 mb-1">Key Features:</h4>
+                                    <ul class="list-disc list-inside">
+                                        <li>Dedicated Account Manager</li>
+                                        <li>Money-Back Guarantee on Timing</li>
+                                        <li>Enhanced Insurance Coverage</li>
+                                        <li>24/7 Priority Support Line</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 mb-1">Ideal For:</h4>
+                                    <p class="text-purple-800 bg-purple-50 p-2 rounded">Artworks, jewelry, sensitive prototypes, critical spare parts.</p>
+                                </div>
+                                <div class="pt-2 text-center mt-auto">
+                                    <!-- TODO: Redirect to specific service page when ready -->
+                                    <a href="login.html" class="inline-block w-full px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-sm font-bold uppercase tracking-wider">Get Premium</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Service 4: E-Commerce Services -->
+                    <div class="service-card bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center hover:shadow-lg transition-all duration-300 group h-full">
+                        <div class="w-16 h-16 mb-4 bg-orange-100 text-orange-700 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-shop text-3xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">E-Commerce Services</h3>
+                        <p class="text-gray-600 mb-4">Tailored solutions for your online business. We handle everything from last-mile delivery to cash-on-delivery and returns.</p>
+                        
+                        <div class="details-container text-left w-full mt-4 border-t border-gray-200 pt-4 flex-grow">
+                            <div class="space-y-4 text-sm text-gray-600">
+                                <div>
+                                    <h4 class="font-bold text-gray-800 mb-1">Key Features:</h4>
+                                    <ul class="list-disc list-inside">
+                                        <li>API Integration & Webhooks</li>
+                                        <li>Cash on Delivery (COD) Management</li>
+                                        <li>Automated Return (RTO) Handling</li>
+                                        <li>Branded Tracking Pages</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 mb-1">Ideal For:</h4>
+                                    <p class="text-orange-800 bg-orange-50 p-2 rounded">D2C brands, online marketplaces, subscription box services.</p>
+                                </div>
+                                <div class="pt-2 text-center mt-auto">
+                                    <!-- TODO: Redirect to specific service page when ready -->
+                                    <a href="login.html" class="inline-block w-full px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors text-sm font-bold uppercase tracking-wider">Integrate Now</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Service 5: LTL Services -->
+                    <div class="service-card bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center hover:shadow-lg transition-all duration-300 group h-full">
+                        <div class="w-16 h-16 mb-4 bg-cyan-100 text-cyan-700 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-boxes-stacked text-3xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">LTL Services</h3>
+                        <p class="text-gray-600 mb-4">Our Less-than-Truckload (LTL) Services are perfect for shipments that don't require a full truck. Flexible and economical.</p>
+                        
+                        <div class="details-container text-left w-full mt-4 border-t border-gray-200 pt-4 flex-grow">
+                            <div class="space-y-4 text-sm text-gray-600">
+                                <div>
+                                    <h4 class="font-bold text-gray-800 mb-1">Key Features:</h4>
+                                    <ul class="list-disc list-inside">
+                                        <li>Pay only for space occupied</li>
+                                        <li>Palletized Handling</li>
+                                        <li>Hub-and-Spoke Distribution</li>
+                                        <li>Barcode Tracking per Pallet</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 mb-1">Ideal For:</h4>
+                                    <p class="text-cyan-800 bg-cyan-50 p-2 rounded">Small manufacturers, distributors, businesses with fluctuating loads.</p>
+                                </div>
+                                <div class="pt-2 text-center mt-auto">
+                                    <!-- TODO: Redirect to specific service page when ready -->
+                                    <a href="login.html" class="inline-block w-full px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 transition-colors text-sm font-bold uppercase tracking-wider">Request LTL</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Service 6: VAS Services -->
+                    <div class="service-card bg-gray-50 p-6 rounded-lg border border-gray-200 flex flex-col items-center text-center hover:shadow-lg transition-all duration-300 group h-full">
+                        <div class="w-16 h-16 mb-4 bg-slate-200 text-slate-700 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-hand-holding-dollar text-3xl"></i>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-2">VAS Services</h3>
+                        <p class="text-gray-600 mb-4">Enhance your logistics with our Value-Added Services (VAS), including special handling, packaging, and customizable solutions.</p>
+                        
+                        <div class="details-container text-left w-full mt-4 border-t border-gray-200 pt-4 flex-grow">
+                            <div class="space-y-4 text-sm text-gray-600">
+                                <div>
+                                    <h4 class="font-bold text-gray-800 mb-1">Key Features:</h4>
+                                    <ul class="list-disc list-inside">
+                                        <li>Professional Packaging & Crating</li>
+                                        <li>Warehousing & Storage</li>
+                                        <li>Labeling & Kitting</li>
+                                        <li>Document Collection on Delivery</li>
+                                    </ul>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 mb-1">Ideal For:</h4>
+                                    <p class="text-slate-800 bg-slate-200 p-2 rounded">Fragile items, promotional kits, regulated chemical shipments.</p>
+                                </div>
+                                <div class="pt-2 text-center mt-auto">
+                                    <!-- TODO: Redirect to specific service page when ready -->
+                                    <a href="login.html" class="inline-block w-full px-4 py-2 bg-slate-700 text-white rounded hover:bg-slate-800 transition-colors text-sm font-bold uppercase tracking-wider">Explore VAS</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        
+                </div>
+            </section>
+        </div>
+    </main>
+    
+    <div id="footer-placeholder"></div>
+
+    <script src="layout.js"></script>
+</body>
+</html>

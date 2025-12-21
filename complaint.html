@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postman - Raise a Complaint</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://post4ex.github.io/postman/style.css">
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <div id="header-placeholder"></div>
+
+    <main class="w-full flex-grow p-4 sm:p-8">
+        <div class="container">
+            <div class="card w-full">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">Raise a Complaint</h2>
+                
+                <div class="space-y-4">
+                    <!-- Search for consignment details -->
+                    <p class="text-gray-600">First, find your consignment by entering the AWB or Reference Number.</p>
+                    <div class="flex flex-col sm:flex-row items-center gap-4">
+                        <input type="text" id="complaintSearchInput" placeholder="Enter AWB/Ref Number" class="flex-1 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700 w-full">
+                        <button id="complaintSearchButton" class="px-6 py-3 bg-blue-800 text-white font-semibold rounded-lg hover:bg-blue-900 transition-colors w-full sm:w-auto">
+                            Search
+                        </button>
+                    </div>
+                    
+                    <div id="complaintLoadingIndicator" class="hidden text-center text-gray-500"><p>Fetching consignment details...</p></div>
+                    <div id="complaintResultsContainer" class="hidden space-y-4"></div>
+                    
+                    <!-- Complaint Form Fields -->
+                    <div id="complaintFormFields" class="space-y-4 pt-4 border-t border-gray-200">
+                        <div>
+                            <label for="complaintCategory" class="block text-sm font-medium text-gray-700 mb-1">Complaint Category</label>
+                            <select id="complaintCategory" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700">
+                                <option value="">Select a category</option>
+                                <option value="Delay in Delivery">Delay in Delivery</option>
+                                <option value="Damaged Consignment">Damaged Consignment</option>
+                                <option value="Incorrect Status">Incorrect Status</option>
+                                <option value="Lost Consignment">Lost Consignment</option>
+                                <option value="Billing Issue">Billing Issue</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="complainantMobile" class="block text-sm font-medium text-gray-700 mb-1">Your Mobile Number</label>
+                            <input type="tel" id="complainantMobile" placeholder="Enter your mobile number" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700">
+                        </div>
+                        <div>
+                            <label for="complainantEmail" class="block text-sm font-medium text-gray-700 mb-1">Your Email Address</label>
+                            <input type="email" id="complainantEmail" placeholder="Enter your email address" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700">
+                        </div>
+                        <div>
+                            <label for="complaintMessage" class="block text-sm font-medium text-gray-700 mb-1">Your Message</label>
+                            <textarea id="complaintMessage" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-700" placeholder="Please provide details about your complaint"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 pt-4">
+                        <button id="submitComplaintButton" class="px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors">
+                            Submit Complaint
+                        </button>
+                        <div id="emailSendingStatus" class="hidden text-sm text-gray-500">Sending...</div>
+                    </div>
+                </div>
+                
+                <div id="complaintMessageBox" class="hidden p-4 mt-4 bg-red-100 border border-red-400 text-red-700 rounded-lg" role="alert">
+                    <p id="complaintMessageText"></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="https://post4ex.github.io/postman/layout.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Complaint Form Logic ---
+            const API_URL = 'https://script.google.com/macros/s/AKfycbwdEPTko2RsIDO4T3-11nwsCUcVR3jtzC8Xpya5FTqZo13aNWfn1uNhZQ9Zfw_r7hk4aQ/exec';
+            const complaintSearchInput = document.getElementById('complaintSearchInput');
+            const complaintSearchButton = document.getElementById('complaintSearchButton');
+            const complaintResultsContainer = document.getElementById('complaintResultsContainer');
+            const complaintCategory = document.getElementById('complaintCategory');
+            const complainantMobile = document.getElementById('complainantMobile');
+            const complainantEmail = document.getElementById('complainantEmail');
+            const complaintMessage = document.getElementById('complaintMessage');
+            const submitComplaintButton = document.getElementById('submitComplaintButton');
+            const emailSendingStatus = document.getElementById('emailSendingStatus');
+            const complaintLoadingIndicator = document.getElementById('complaintLoadingIndicator');
+            const complaintMessageBox = document.getElementById('complaintMessageBox');
+            const complaintMessageText = document.getElementById('complaintMessageText');
+            let complaintConsignment = null;
+
+            function formatDateTime(isoString) {
+                if (!isoString) return 'N/A';
+                const date = new Date(isoString);
+                if (isNaN(date.getTime())) return 'Date not available';
+                return date.toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'medium' });
+            }
+
+            complaintSearchButton.addEventListener('click', searchAndDisplayComplaint);
+            complaintSearchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') searchAndDisplayComplaint(); });
+            submitComplaintButton.addEventListener('click', sendComplaintEmail);
+
+            async function searchAndDisplayComplaint() {
+                const query = complaintSearchInput.value.trim();
+                complaintConsignment = null;
+                complaintResultsContainer.innerHTML = '';
+                complaintResultsContainer.classList.add('hidden');
+                complaintMessageBox.classList.add('hidden');
+                
+                if (!query) {
+                    showComplaintMessage('Please enter a valid AWB/Ref Number.', 'error');
+                    return;
+                }
+                
+                complaintLoadingIndicator.classList.remove('hidden');
+                
+                try {
+                    const url = `${API_URL}?searchType=ref&query=${encodeURIComponent(query)}`;
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('Network response was not ok.');
+                    const data = await response.json();
+                    
+                    if (data.orders && data.orders.length > 0) {
+                        complaintConsignment = data.orders[0];
+                        renderComplaintDetails(complaintConsignment);
+                        showComplaintMessage('Consignment details successfully loaded.', 'success');
+                    } else {
+                        showComplaintMessage('No consignment found for this number.', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error fetching complaint details:', error);
+                    showComplaintMessage('Failed to fetch details. Please try again.', 'error');
+                } finally {
+                    complaintLoadingIndicator.classList.add('hidden');
+                }
+            }
+            
+            function renderComplaintDetails(consignment) {
+                const { order } = consignment;
+                const detailsHtml = `<div class="card p-4 bg-gray-50 border border-gray-200"><h3 class="font-semibold text-gray-800 mb-2">Consignment Details</h3>
+                    <p class="text-sm text-gray-600">AWB/Ref: <span class="font-medium text-gray-900">${order['AWB Booked'] || order.Ref}</span></p>
+                    <p class="text-sm text-gray-600">Status: <span class="font-medium text-gray-900">${consignment.track?.['Current Status'] || 'N/A'}</span></p>
+                    <p class="text-sm text-gray-600">Order Date: <span class="font-medium text-gray-900">${formatDateTime(order['Order Date'])}</span></p>
+                    <p class="text-sm text-gray-600">Destination: <span class="font-medium text-gray-900">${order['Consignee Name']} - ${order['Consignee City']}</span></p></div>`;
+                complaintResultsContainer.innerHTML = detailsHtml;
+                complaintResultsContainer.classList.remove('hidden');
+            }
+            
+            async function sendComplaintEmail() {
+                if (!complaintConsignment) {
+                    showComplaintMessage('Please search for and load consignment details first.', 'error');
+                    return;
+                }
+                
+                const awb = complaintConsignment.order['AWB Booked'] || complaintConsignment.order.Ref;
+                const category = complaintCategory.value;
+                const mobile = complainantMobile.value.trim();
+                const email = complainantEmail.value.trim();
+                const message = complaintMessage.value.trim();
+                
+                if (!category || !mobile || !email || !message) {
+                    showComplaintMessage('Please fill in all required fields (Category, Mobile, Email, and Message).', 'error');
+                    return;
+                }
+                
+                emailSendingStatus.classList.remove('hidden');
+                submitComplaintButton.disabled = true;
+
+                const payload = { action: 'sendComplaint', awb: awb, category: category, mobile: mobile, email: email, message: message };
+                
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) {
+                        showComplaintMessage('Your complaint has been successfully submitted!', 'success');
+                        clearComplaintForm();
+                    } else {
+                        throw new Error('Server response was not ok.');
+                    }
+                } catch (error) {
+                    console.error('Error sending complaint:', error);
+                    showComplaintMessage('Failed to send complaint. Please try again.', 'error');
+                } finally {
+                    emailSendingStatus.classList.add('hidden');
+                    submitComplaintButton.disabled = false;
+                }
+            }
+            
+            function showComplaintMessage(text, type) {
+                complaintMessageText.textContent = text;
+                complaintMessageBox.classList.remove('hidden');
+                complaintMessageBox.className = 'p-4 mt-4 rounded-lg border';
+                if (type === 'error') {
+                    complaintMessageBox.classList.add('bg-red-100', 'border-red-400', 'text-red-700');
+                } else {
+                    complaintMessageBox.classList.add('bg-green-100', 'border-green-400', 'text-green-700');
+                }
+            }
+            
+            function clearComplaintForm() {
+                complaintSearchInput.value = '';
+                complaintResultsContainer.innerHTML = '';
+                complaintResultsContainer.classList.add('hidden');
+                complaintCategory.value = '';
+                complainantMobile.value = '';
+                complainantEmail.value = '';
+                complaintMessage.value = '';
+                complaintConsignment = null;
+            }
+        });
+    </script>
+</body>
+</html>
+

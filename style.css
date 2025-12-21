@@ -1,0 +1,203 @@
+/* General Body & Container Styles */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f3f4f6; /* bg-gray-100 */
+}
+.container {
+    max-width: 800px;
+    margin: auto;
+    width: 100%;
+}
+.card {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Dropdown Menu for Mobile Navigation */
+.dropdown-menu {
+    position: absolute;
+    right: 1.5rem;
+    top: 5rem;
+    background-color: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    padding: 0.5rem;
+    z-index: 50;
+}
+
+/* Table styling for scan history */
+.scan-history-table th, .scan-history-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb; /* border-gray-200 */
+}
+.scan-history-table th {
+    font-weight: 600;
+    color: #4b5563; /* text-gray-600 */
+    background-color: #f9fafb; /* bg-gray-50 */
+}
+.scan-history-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* List item for mobile order search results */
+.order-list-item {
+    background-color: #f3f4f6; /* bg-gray-100 */
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #e5e7eb; /* border-gray-200 */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+/* Modal styles for pop-ups */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    padding: 1rem;
+}
+.modal-content {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 0.75rem;
+    max-width: 90%;
+    width: 500px;
+    max-height: 90%;
+    overflow-y: auto;
+    position: relative;
+}
+
+/* REMOVED: Redundant social buttons styles */
+
+/* ============================================================ */
+/* FLOATING ACTION BUTTON (FAB) STYLES (FINAL CORRECTED VERSION)*/
+/* ============================================================ */
+#fab-container {
+    position: fixed;
+    bottom: 4rem; 
+    right: 1.5rem;
+    z-index: 90;
+    display: flex;
+    flex-direction: column;
+    /* THIS IS THE FIX: Align all children to the right edge */
+    align-items: flex-end; 
+    opacity: 0.2;
+    transition: opacity 0.3s ease;
+}
+
+#fab-container:hover,
+#fab-container.active {
+    opacity: 1;
+}
+
+#fab-main {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background-color: #1e3a8a;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    cursor: pointer;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+    border: none;
+    outline: none;
+    z-index: 91;
+}
+
+#fab-main:hover {
+    background-color: #1c357a;
+    transform: scale(1.05);
+}
+
+#fab-main .fab-icon {
+    transition: transform 0.3s ease;
+}
+
+#fab-container.active #fab-main .fab-icon {
+    transform: rotate(45deg);
+}
+
+#fab-actions {
+    position: absolute;
+    bottom: 100%;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    /* THIS IS THE FIX: Also align the actions menu to the right */
+    align-items: flex-end; 
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+#fab-container.active #fab-actions {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.fab-action {
+    display: flex;
+    align-items: center;
+    /* REMOVED: justify-content: flex-end; is no longer needed */
+    margin-top: 0.75rem; 
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+
+.fab-action-label {
+    background-color: white;
+    color: #374151;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    margin-right: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateX(10px);
+    transition: all 0.3s ease;
+    transition-delay: 0.1s; 
+}
+
+#fab-container.active .fab-action-label {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.fab-action-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background-color: #f9fafb;
+    color: #1e3a8a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    transition: transform 0.2s ease;
+}
+
+.fab-action:hover .fab-action-icon {
+    transform: scale(1.1);
+}
+

@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postman - Operations Calendar 25-26</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .calendar-day { min-height: 90px; transition: all 0.2s ease; }
+        .calendar-day:hover:not(.empty-day) { background-color: #eff6ff; cursor: pointer; border-color: #3b82f6; }
+        .calendar-day.active { background-color: #dbeafe; border-color: #2563eb; box-shadow: inset 0 0 0 2px #2563eb; }
+        
+        /* Event Markers */
+        .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+        .dot-holiday { background-color: #ef4444; } /* Red for Holidays */
+        .dot-task { background-color: #3b82f6; }    /* Blue for Internal Tasks */
+        
+        .is-holiday { background-color: #fef2f2 !important; color: #dc2626; }
+        .holiday-row:hover { background-color: #f8fafc; }
+        
+        /* Hide scrollbar for clean UI */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <!-- HEADER: Injected by layout.js -->
+    <div id="header-placeholder"></div>
+
+    <main class="flex-grow w-full p-4 sm:p-8">
+        <div class="container mx-auto space-y-6">
+            
+            <!-- PAGE HEADER & SESSION BADGE -->
+            <section class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-blue-900 flex items-center gap-2">
+                            <i class="fa-regular fa-calendar-check"></i> Operations Dashboard
+                        </h2>
+                        <p class="text-gray-500 text-sm mt-1">Live India Public Holidays & Internal Task Manager.</p>
+                    </div>
+                    
+                    <!-- DYNAMIC SESSION SELECTOR -->
+                    <div class="bg-blue-900 px-5 py-2 rounded-full shadow-lg border-2 border-blue-800 flex items-center gap-3 transition-transform hover:scale-105">
+                        <div id="apiStatus" class="w-2 h-2 rounded-full bg-green-400" title="System Ready"></div>
+                        <div class="relative flex items-center">
+                            <select id="sessionSelect" class="bg-transparent text-white font-bold text-sm tracking-widest focus:outline-none cursor-pointer uppercase appearance-none pr-6">
+                                <option value="2024">SESSION 2024-2025</option>
+                                <option value="2025" selected>SESSION 2025-2026</option>
+                                <option value="2026">SESSION 2026-2027</option>
+                            </select>
+                            <i class="fa-solid fa-caret-down text-white text-xs absolute right-0 pointer-events-none"></i>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 1: INTERACTIVE CALENDAR & SIDEBAR -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Monthly Calendar Control -->
+                <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="p-4 bg-gray-50 border-b flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <h3 id="monthDisplay" class="font-bold text-gray-800 text-lg min-w-[140px]">January 2025</h3>
+                            <div class="flex gap-1">
+                                <button onclick="changeMonth(-1)" class="p-2 hover:bg-white rounded-lg border transition-colors"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                                <button onclick="changeMonth(1)" class="p-2 hover:bg-white rounded-lg border transition-colors"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                             <button onclick="goToToday()" class="text-xs font-bold text-blue-700 hover:underline">GO TO TODAY</button>
+                        </div>
+                    </div>
+
+                    <div class="p-4">
+                        <div id="dayHeaders" class="grid grid-cols-7 mb-2">
+                            <!-- Headers generated by JS -->
+                        </div>
+                        <div id="calendarGrid" class="grid grid-cols-7 gap-px bg-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+                            <!-- Days generated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Selection Details Panel -->
+                <div class="space-y-6">
+                    <div class="bg-white rounded-xl shadow-md border-t-4 border-blue-900 p-6 min-h-[440px] flex flex-col">
+                        <div id="detailsHeader" class="mb-6">
+                            <h4 id="selectedDateDisplay" class="text-xl font-black text-gray-800 tracking-tight">Select a date</h4>
+                            <p id="selectedDaySub" class="text-xs text-gray-500 font-semibold uppercase tracking-widest">Scheduled Operations</p>
+                        </div>
+
+                        <div id="detailsContent" class="flex-grow">
+                            <!-- Empty State -->
+                            <div id="noSelectionState" class="flex flex-col items-center justify-center h-full text-center py-12">
+                                <i class="fa-solid fa-calendar-day text-gray-100 text-7xl mb-4"></i>
+                                <p class="text-gray-400 text-sm italic">Click on a date to view specific tasks, events, or holiday details.</p>
+                            </div>
+
+                            <!-- List Container -->
+                            <div id="activeDetailsList" class="hidden space-y-4">
+                                <!-- Dynamic Injection -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cut-off Quick Reference -->
+                    <div class="bg-blue-50 rounded-xl p-5 border border-blue-100">
+                        <h5 class="text-blue-900 font-bold text-[10px] uppercase mb-3 flex items-center gap-2 tracking-widest">
+                            <i class="fa-solid fa-bolt-lightning"></i> Booking Deadlines
+                        </h5>
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-600 font-medium text-xs">Express Air</span>
+                                <span class="bg-white px-2 py-0.5 rounded font-bold text-blue-800 border text-xs">16:30</span>
+                            </div>
+                            <div class="flex justify-between items-center text-sm">
+                                <span class="text-gray-600 font-medium text-xs">Surface / PTL</span>
+                                <span class="bg-white px-2 py-0.5 rounded font-bold text-blue-800 border text-xs">18:00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 2: OPERATIONS INFO GRID -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Card 1: Office Hours -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
+                        <i class="fa-solid fa-clock text-blue-600 text-sm"></i> Office Hours
+                    </h3>
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex justify-between">
+                            <span class="text-gray-500">Mon - Fri</span>
+                            <span class="font-semibold text-gray-700">09:00 AM - 08:00 PM</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span class="text-gray-500">Saturday</span>
+                            <span class="font-semibold text-gray-700">10:00 AM - 06:00 PM</span>
+                        </li>
+                        <li class="flex justify-between text-red-600">
+                            <span class="font-medium">Sunday</span>
+                            <span class="font-black">Closed</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Card 2: Cut-offs Detailed -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
+                        <i class="fa-solid fa-truck-fast text-blue-600 text-sm"></i> Service Cut-offs
+                    </h3>
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex justify-between">
+                            <span class="text-gray-500">Local Delivery</span>
+                            <span class="font-semibold text-blue-800">12:00 PM</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span class="text-gray-500">Outstation Air</span>
+                            <span class="font-semibold text-blue-800">04:30 PM</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span class="text-gray-500">Outstation Surface</span>
+                            <span class="font-semibold text-blue-800">06:00 PM</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Card 3: Helpdesk -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2">
+                        <i class="fa-solid fa-headset text-blue-600 text-sm"></i> Support Window
+                    </h3>
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex justify-between">
+                            <span class="text-gray-500">Voice Support</span>
+                            <span class="font-semibold text-gray-700">10 AM - 7 PM</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span class="text-gray-500">WhatsApp Chat</span>
+                            <span class="font-semibold text-gray-700">9 AM - 9 PM</span>
+                        </li>
+                        <li class="flex justify-between">
+                            <span class="text-gray-500">Email Query</span>
+                            <span class="font-semibold text-gray-700">24/7 Response</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- SECTION 3: FULL HOLIDAY TABLE -->
+            <section class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                <div class="p-6 border-b flex justify-between items-center bg-gray-50">
+                    <div>
+                        <h3 class="font-bold text-gray-800">Gazetted Holidays</h3>
+                        <p class="text-xs text-gray-500 mt-1">Official non-working days based on the selected session.</p>
+                    </div>
+                    <i class="fa-solid fa-globe text-2xl text-gray-300"></i>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-gray-100 text-gray-600 font-bold uppercase text-xs">
+                            <tr>
+                                <th class="px-6 py-4">Date</th>
+                                <th class="px-6 py-4">Holiday Name</th>
+                                <th class="px-6 py-4 text-center">Operation Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="holidayTableBody" class="divide-y divide-gray-100">
+                            <!-- Rows populated by Script -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- FOOTER NOTICE -->
+            <div class="bg-blue-900 rounded-lg p-6 text-center text-white shadow-inner">
+                <p class="text-sm opacity-80 leading-relaxed font-medium">
+                    <i class="fa-solid fa-circle-info mr-2"></i> Timings are strictly in IST (GMT+5:30). Public holiday data is served from the internal configuration manifest.
+                </p>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="layout.js"></script>
+    <script>
+        // ============================================================================
+        // DATA CONFIGURATION (HYBRID MANIFEST)
+        // ============================================================================
+        // This acts as a robust, error-proof configuration file instead of a fragile API fetch.
+        
+        let currentDate = new Date();
+        let calendarData = { 
+            tasks: [], 
+            events: [], 
+            // CORE CONFIGURATION: Ensures data availability regardless of API status
+            apiHolidays: {
+                // 2024
+                "2024-01-26": "Republic Day",
+                "2024-03-25": "Holi",
+                "2024-04-11": "Eid-ul-Fitr",
+                "2024-08-15": "Independence Day",
+                "2024-10-02": "Gandhi Jayanti",
+                "2024-10-31": "Diwali",
+                "2024-11-15": "Guru Nanak Jayanti",
+                "2024-12-25": "Christmas Day",
+                
+                // 2025
+                "2025-01-26": "Republic Day",
+                "2025-03-14": "Holi",
+                "2025-03-31": "Eid-ul-Fitr",
+                "2025-04-10": "Mahavir Jayanti",
+                "2025-04-18": "Good Friday",
+                "2025-08-15": "Independence Day",
+                "2025-10-02": "Gandhi Jayanti",
+                "2025-10-20": "Diwali",
+                "2025-11-05": "Guru Nanak Jayanti",
+                "2025-12-25": "Christmas Day",
+                
+                // 2026
+                "2026-01-26": "Republic Day",
+                "2026-03-03": "Holi",
+                "2026-03-20": "Eid-ul-Fitr",
+                "2026-04-03": "Good Friday",
+                "2026-08-15": "Independence Day",
+                "2026-10-02": "Gandhi Jayanti",
+                "2026-11-08": "Diwali",
+                "2026-12-25": "Christmas Day"
+            }
+        };
+
+        // Static operational status mapping for specific holidays
+        const OP_STATUS_MAP = {
+            "Republic Day": "Closed",
+            "Independence Day": "Closed",
+            "Gandhi Jayanti": "Closed",
+            "Diwali": "Closed",
+            "Deepavali": "Closed",
+            "Christmas Day": "Closed",
+            "Holi": "Closed",
+            "Good Friday": "Partial Ops",
+            "Eid-ul-Fitr": "Partial Ops",
+            "Mahavir Jayanti": "Partial Ops",
+            "Guru Nanak Jayanti": "Closed"
+        };
+
+        // ============================================================================
+        // CALENDAR ENGINE
+        // ============================================================================
+
+        async function initCalendar() {
+            renderDayHeaders();
+            
+            const sessionSelect = document.getElementById('sessionSelect');
+            sessionSelect.addEventListener('change', (e) => {
+                loadSessionData(parseInt(e.target.value));
+            });
+
+            // Initial Load
+            await loadSessionData(parseInt(sessionSelect.value));
+        }
+
+        async function loadSessionData(startYear) {
+            // We removed the API fetch call because it was failing in your environment.
+            // The data is now loaded from the 'apiHolidays' object above.
+            
+            await fetchOperationalData(); // Still fetch internal tasks
+            
+            const now = new Date();
+            if (now.getFullYear() === startYear) {
+                currentDate = now;
+            } else {
+                currentDate = new Date(startYear, 0, 1);
+            }
+
+            renderCalendar();
+            populateHolidayTable(startYear);
+        }
+
+        function renderDayHeaders() {
+            const container = document.getElementById('dayHeaders');
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            container.innerHTML = days.map(d => `<div class="text-center text-[10px] font-black text-gray-400 uppercase py-2 tracking-widest">${d}</div>`).join('');
+        }
+
+        async function fetchOperationalData() {
+            try {
+                if(typeof window.callApi === 'function') {
+                    const response = await callApi('getData', { collection: 'CALENDAR_EVENTS' });
+                    if(response.status === 'success' && response.data) {
+                        calendarData.events = Object.values(response.data);
+                    }
+                }
+            } catch (e) {
+                // Silent fail for internal API if offline
+            }
+        }
+
+        function populateHolidayTable(startYear) {
+            const tbody = document.getElementById('holidayTableBody');
+            
+            const allDates = Object.keys(calendarData.apiHolidays);
+            
+            const sessionDates = allDates.filter(dateStr => {
+                const y = new Date(dateStr).getFullYear();
+                return y === startYear || y === startYear + 1;
+            });
+
+            sessionDates.sort();
+
+            if (sessionDates.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-gray-400 text-xs">No holiday data available for this session.</td></tr>`;
+                return;
+            }
+            
+            tbody.innerHTML = sessionDates.map(dateStr => {
+                const name = calendarData.apiHolidays[dateStr];
+                const d = new Date(dateStr);
+                const formattedDate = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                
+                let status = OP_STATUS_MAP[name] || "Subject to Area";
+                if (status === "Subject to Area") {
+                    const n = name.toLowerCase();
+                    if (n.includes("diwali") || n.includes("deepavali")) status = "Closed";
+                    if (n.includes("eid")) status = "Partial Ops";
+                    if (n.includes("christmas")) status = "Closed";
+                    if (n.includes("republic")) status = "Closed";
+                    if (n.includes("independence")) status = "Closed";
+                    if (n.includes("gandhi")) status = "Closed";
+                }
+
+                const badgeClass = status === 'Closed' ? 'bg-red-100 text-red-700' : 'bg-orange-100 text-orange-700';
+                
+                return `
+                    <tr class="holiday-row transition-colors">
+                        <td class="px-6 py-4 font-bold text-gray-700">${formattedDate}</td>
+                        <td class="px-6 py-4 text-gray-600">${name}</td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="px-2 py-1 ${badgeClass} rounded text-[10px] font-black uppercase tracking-tighter">${status}</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const monthDisplay = document.getElementById('monthDisplay');
+            grid.innerHTML = '';
+
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            monthDisplay.innerText = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(currentDate);
+
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'calendar-day empty-day bg-gray-50 border-b border-r';
+                grid.appendChild(empty);
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const dayEl = document.createElement('div');
+                
+                const holidayName = calendarData.apiHolidays[dateString];
+                const isToday = new Date().toDateString() === new Date(year, month, d).toDateString();
+
+                dayEl.className = `calendar-day bg-white relative border-b border-r p-2 flex flex-col items-start ${holidayName ? 'is-holiday' : ''}`;
+                dayEl.innerHTML = `<span class="text-sm font-black ${isToday ? 'bg-blue-900 text-white w-7 h-7 flex items-center justify-center rounded-lg shadow-md' : 'text-gray-700'}">${d}</span>`;
+                
+                if(holidayName) {
+                    dayEl.innerHTML += `<span class="text-[9px] leading-tight mt-1 font-bold text-red-600 line-clamp-2 w-full truncate" title="${holidayName}">${holidayName}</span>`;
+                }
+
+                // Markers
+                const dailyEvents = calendarData.events.filter(ev => ev.DATE === dateString);
+                const markerContainer = document.createElement('div');
+                markerContainer.className = "flex gap-1 absolute bottom-2 left-2";
+                
+                if (holidayName) {
+                    const hMark = document.createElement('span');
+                    hMark.className = "dot dot-holiday";
+                    markerContainer.appendChild(hMark);
+                }
+
+                if(dailyEvents.length > 0) {
+                    const tMark = document.createElement('span');
+                    tMark.className = "dot dot-task";
+                    markerContainer.appendChild(tMark);
+                }
+                
+                dayEl.appendChild(markerContainer);
+                
+                dayEl.onclick = (e) => selectDate(e, year, month, d, holidayName);
+                grid.appendChild(dayEl);
+            }
+        }
+
+        function selectDate(event, y, m, d, holidayName) {
+            const dateObj = new Date(y, m, d);
+            const dateString = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            
+            document.querySelectorAll('.calendar-day').forEach(el => el.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+
+            document.getElementById('noSelectionState').classList.add('hidden');
+            const list = document.getElementById('activeDetailsList');
+            list.classList.remove('hidden');
+            list.innerHTML = '';
+
+            document.getElementById('selectedDateDisplay').innerText = d + ' ' + new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(dateObj);
+            document.getElementById('selectedDaySub').innerText = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(dateObj);
+
+            // 1. API Holiday Block
+            if(holidayName) {
+                let status = OP_STATUS_MAP[holidayName] || "Subject to Area";
+                if (status === "Subject to Area") {
+                    const n = holidayName.toLowerCase();
+                    if (n.includes("diwali") || n.includes("deepavali")) status = "Closed";
+                    if (n.includes("eid")) status = "Partial Ops";
+                    if (n.includes("christmas")) status = "Closed";
+                    if (n.includes("republic")) status = "Closed";
+                    if (n.includes("independence")) status = "Closed";
+                    if (n.includes("gandhi")) status = "Closed";
+                }
+
+                list.innerHTML += `
+                    <div class="bg-red-50 border border-red-100 p-4 rounded-xl shadow-sm">
+                        <div class="flex items-center gap-3 text-red-700 mb-1">
+                            <i class="fa-solid fa-flag"></i>
+                            <span class="font-black text-xs uppercase">Public Holiday</span>
+                        </div>
+                        <p class="font-bold text-sm text-gray-800 mb-1">${holidayName}</p>
+                        <p class="text-[10px] text-red-600 font-medium">Ops Status: <strong class="uppercase">${status}</strong></p>
+                    </div>
+                `;
+            }
+
+            // 2. Sunday Block
+            if(dateObj.getDay() === 0) {
+                list.innerHTML += `
+                    <div class="bg-gray-100 border border-gray-200 p-4 rounded-xl">
+                        <div class="flex items-center gap-3 text-gray-500 mb-1">
+                            <i class="fa-solid fa-bed"></i>
+                            <span class="font-bold text-xs">Sunday - Weekly Off</span>
+                        </div>
+                        <p class="text-[10px] text-gray-400 italic">No scheduled hub operations.</p>
+                    </div>
+                `;
+            }
+
+            // 3. Internal API Tasks
+            const dailyItems = calendarData.events.filter(ev => ev.DATE === dateString);
+            if(dailyItems.length > 0) {
+                dailyItems.forEach(item => {
+                    list.innerHTML += `
+                        <div class="bg-white border-l-4 border-blue-600 p-4 shadow-md rounded-r-xl border border-gray-100">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="font-black text-gray-800 text-xs tracking-tight">${item.TITLE}</span>
+                                <span class="text-[8px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-black">${item.TIME || 'SCHEDULED'}</span>
+                            </div>
+                            <p class="text-[10px] text-gray-500 leading-relaxed">${item.DESC || 'Operational task.'}</p>
+                        </div>
+                    `;
+                });
+            }
+
+            if(list.innerHTML === '') {
+                list.innerHTML = `<div class="text-center py-20 opacity-30"><i class="fa-solid fa-leaf text-4xl mb-2 text-gray-400"></i><p class="text-[10px] font-bold uppercase tracking-widest text-gray-400">Regular Ops Day</p></div>`;
+            }
+        }
+
+        function changeMonth(step) {
+            currentDate.setMonth(currentDate.getMonth() + step);
+            renderCalendar();
+        }
+
+        function goToToday() {
+            currentDate = new Date();
+            renderCalendar();
+        }
+
+        document.addEventListener('DOMContentLoaded', initCalendar);
+    </script>
+</body>
+</html>

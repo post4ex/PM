@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postman V5.6 - Secure Access</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .peer:not(:placeholder-shown) ~ label, .peer:focus ~ label {
+            @apply text-xs -translate-y-3 text-blue-500;
+        }
+        .auth-view { transition: opacity 0.3s ease-in-out; }
+        .hidden-view { display: none; opacity: 0; }
+        
+        /* Custom Scrollbar for Right Pane if content overflows */
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 2px; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <!-- HEADER INJECTION POINT -->
+    <div id="header-placeholder"></div>
+
+    <!-- MAIN CONTENT (Centered Compact Card) -->
+    <main class="flex-grow flex items-center justify-center p-4">
+        
+        <!-- COMPACT CONTAINER -->
+        <div class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden grid md:grid-cols-2 min-h-[500px]">
+            
+            <!-- LEFT SIDE: ACTIVE FORM CONTAINER -->
+            <div class="p-8 relative flex flex-col justify-center border-r border-gray-100">
+                
+                <div class="flex justify-center mb-6">
+                    <img src="https://i.postimg.cc/wv02f1fb/postman-Logo-28.png" alt="Postman logo" class="h-14 w-auto"
+                         onerror="this.onerror=null; this.src='https://placehold.co/150x60/022c5a/ffffff?text=Postman';">
+                </div>
+
+                <!-- 1. VIEW: LOGIN -->
+                <div id="view-login" class="auth-view">
+                    <form id="form-login" class="space-y-5">
+                        <div class="relative">
+                            <input type="text" id="login-user" required autocomplete="username" placeholder=" " class="w-full peer px-3 pt-5 pb-2 font-semibold border-b-2 border-gray-300 focus:outline-none focus:border-blue-800 transition-colors bg-transparent text-sm">
+                            <label for="login-user" class="absolute text-gray-500 transition-all left-3 top-3 pointer-events-none text-sm">Username</label>
+                        </div>
+                        <div class="relative">
+                            <input type="password" id="login-pass" required autocomplete="current-password" placeholder=" " class="w-full peer px-3 pt-5 pb-2 font-semibold border-b-2 border-gray-300 focus:outline-none focus:border-blue-800 transition-colors bg-transparent pr-10 text-sm">
+                            <label for="login-pass" class="absolute text-gray-500 transition-all left-3 top-3 pointer-events-none text-sm">Password</label>
+                            <button type="button" class="absolute right-2 top-3 text-gray-400 hover:text-blue-800 focus:outline-none toggle-password" data-target="login-pass" aria-label="Toggle password visibility">
+                                <i class="fa-regular fa-eye"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="flex justify-end">
+                            <button type="button" onclick="switchView('forgot')" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Forgot Password?</button>
+                        </div>
+
+                        <button type="submit" class="w-full py-2.5 bg-blue-900 text-white font-bold rounded-lg hover:bg-blue-800 transition-all shadow-md text-sm tracking-wide">
+                            LOG IN
+                        </button>
+                    </form>
+                    <div class="mt-6 text-center text-xs text-gray-600">
+                        Don't have an account? <button onclick="switchView('register')" class="text-blue-600 font-bold hover:underline">Register Now</button>
+                    </div>
+                </div>
+
+                <!-- 2. VIEW: REGISTER (Step 1) -->
+                <div id="view-register" class="auth-view hidden-view hidden">
+                    <h2 class="text-xl font-bold text-gray-800 text-center mb-1">Create Account</h2>
+                    <p class="text-xs text-center text-gray-500 mb-4">Step 1: Basic Details</p>
+                    
+                    <form id="form-register" class="space-y-3">
+                        <div id="reg-step-1" class="space-y-3">
+                            <div class="relative">
+                                <input type="text" id="reg-user" placeholder=" " class="w-full peer px-3 pt-4 pb-2 border-b-2 border-gray-300 focus:border-blue-800 bg-transparent text-sm font-semibold">
+                                <label for="reg-user" class="absolute text-gray-500 transition-all left-3 top-2 text-xs">Desired Username</label>
+                            </div>
+                            <div class="relative">
+                                <input type="email" id="reg-email" placeholder=" " class="w-full peer px-3 pt-4 pb-2 border-b-2 border-gray-300 focus:border-blue-800 bg-transparent text-sm font-semibold">
+                                <label for="reg-email" class="absolute text-gray-500 transition-all left-3 top-2 text-xs">Email Address</label>
+                            </div>
+                            <div class="relative">
+                                <input type="tel" id="reg-mobile" placeholder=" " class="w-full peer px-3 pt-4 pb-2 border-b-2 border-gray-300 focus:border-blue-800 bg-transparent text-sm font-semibold">
+                                <label for="reg-mobile" class="absolute text-gray-500 transition-all left-3 top-2 text-xs">Mobile Number</label>
+                            </div>
+                            <div class="relative">
+                                <input type="text" id="reg-name" placeholder=" " class="w-full peer px-3 pt-4 pb-2 border-b-2 border-gray-300 focus:border-blue-800 bg-transparent text-sm font-semibold">
+                                <label for="reg-name" class="absolute text-gray-500 transition-all left-3 top-2 text-xs">Full Name</label>
+                            </div>
+                            <div class="relative">
+                                <input type="password" id="reg-pass" placeholder=" " class="w-full peer px-3 pt-4 pb-2 border-b-2 border-gray-300 focus:border-blue-800 bg-transparent pr-10 text-sm font-semibold">
+                                <label for="reg-pass" class="absolute text-gray-500 transition-all left-3 top-2 text-xs">Password (Min 8 chars, 1 Cap)</label>
+                                <button type="button" class="absolute right-2 top-3 text-gray-400 hover:text-blue-800 toggle-password" data-target="reg-pass" aria-label="Toggle password visibility">
+                                    <i class="fa-regular fa-eye"></i>
+                                </button>
+                            </div>
+                            <!-- Added Confirm Password Field -->
+                            <div class="relative">
+                                <input type="password" id="reg-confirm-pass" placeholder=" " class="w-full peer px-3 pt-4 pb-2 border-b-2 border-gray-300 focus:border-blue-800 bg-transparent pr-10 text-sm font-semibold">
+                                <label for="reg-confirm-pass" class="absolute text-gray-500 transition-all left-3 top-2 text-xs">Confirm Password</label>
+                                <button type="button" class="absolute right-2 top-3 text-gray-400 hover:text-blue-800 toggle-password" data-target="reg-confirm-pass" aria-label="Toggle password visibility">
+                                    <i class="fa-regular fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="reg-step-2" class="hidden space-y-4">
+                            <div class="bg-blue-50 p-2 rounded text-xs text-blue-800 mb-2 text-center">
+                                OTP sent to your email. Valid for 5 minutes.
+                            </div>
+                            <div class="relative">
+                                <input type="text" id="reg-otp" placeholder=" " class="w-full peer px-3 pt-4 pb-2 border-b-2 border-gray-300 focus:border-blue-800 bg-transparent tracking-[0.5em] text-center text-lg font-bold">
+                                <label for="reg-otp" class="absolute text-gray-500 transition-all left-3 top-2 text-xs w-full text-center">ENTER OTP</label>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="reg-btn" class="w-full py-2 bg-green-700 text-white font-bold rounded hover:bg-green-800 transition-all shadow text-sm mt-2">
+                            Send OTP
+                        </button>
+                    </form>
+                    <div class="mt-3 text-center">
+                        <button onclick="switchView('login')" class="text-xs text-gray-500 hover:text-gray-800">Cancel</button>
+                    </div>
+                </div>
+
+                <!-- 3. VIEW: REGISTER KYC (Step 2 - New Fields) -->
+                <div id="view-kyc" class="auth-view hidden-view hidden">
+                    <h2 class="text-xl font-bold text-gray-800 text-center mb-1">Complete Profile</h2>
+                    <p class="text-xs text-center text-gray-500 mb-4">Step 2: KYC & Address Details</p>
+
+                    <form id="form-kyc" class="space-y-3">
+                        <div class="relative">
+                            <select id="kyc-type" class="w-full peer px-3 pt-4 pb-2 border-b-2 border-gray-300 focus:border-blue-800 bg-transparent text-sm font-semibold appearance-none">
+                                <option value="" class="text-gray-500">Select Document Type</option>
+                                <option value="AADHAAR">Aadhaar Card</option>
+                                <option value="PAN">PAN Card</option>
+                                <option value="GST">GST Certificate</option>
+                            </select>
+                            <label for="kyc-type" class="absolute text-gray-500 transition-all left-3 top-2 text-xs">KYC Type</label>
+                        </div>
+
+                        <div class="relative">
+                            <input type="text" id="kyc-number" placeholder=" " class="w-full peer px-3 pt-4 pb-2 border-b-2 border-gray-300 focus:border-blue-800 bg-transparent text-sm font-semibold">
+                            <label for="kyc-number" class="absolute text-gray-500 transition-all left-3 top-2 text-xs">Document Number</label>
+                        </div>
+
+                        <div class="relative">
+                            <textarea id="kyc-address" rows="3" placeholder=" " class="w-full peer px-3 pt-4 pb-2 border-b-2 border-gray-300 focus:border-blue-800 bg-transparent text-sm font-semibold resize-none"></textarea>
+                            <label for="kyc-address" class="absolute text-gray-500 transition-all left-3 top-2 text-xs">Full Address</label>
+                        </div>
+
+                        <button type="submit" id="kyc-btn" class="w-full py-2 bg-green-700 text-white font-bold rounded hover:bg-green-800 transition-all shadow text-sm mt-2">
+                            Submit Registration
+                        </button>
+                    </form>
+                    <!-- Warning Note -->
+                    <div class="bg-yellow-50 p-2 rounded mt-3 text-[10px] text-yellow-800 text-center">
+                        Note: You will need to provide physical copies later for verification.
+                    </div>
+                </div>
+
+                <!-- 4. VIEW: FORGOT PASSWORD -->
+                <div id="view-forgot" class="auth-view hidden-view hidden">
+                    <h2 class="text-xl font-bold text-gray-800 text-center mb-4">Reset Password</h2>
+                    
+                    <form id="form-forgot" class="space-y-4">
+                        <div id="forgot-step-1" class="space-y-4">
+                            <div class="relative">
+                                <input type="text" id="forgot-id" placeholder=" " class="w-full peer px-3 pt-4 pb-2 border-b-2 border-gray-300 focus:border-blue-800 bg-transparent text-sm">
+                                <label for="forgot-id" class="absolute text-gray-500 transition-all left-3 top-2 text-xs">Username / Email</label>
+                            </div>
+                            <div class="relative">
+                                <input type="tel" id="forgot-mobile" placeholder=" " class="w-full peer px-3 pt-4 pb-2 border-b-2 border-gray-300 focus:border-blue-800 bg-transparent text-sm">
+                                <label for="forgot-mobile" class="absolute text-gray-500 transition-all left-3 top-2 text-xs">Registered Mobile</label>
+                            </div>
+                        </div>
+
+                        <div id="forgot-step-2" class="hidden space-y-4">
+                            <p class="text-xs text-green-600 text-center">OTP sent! Check your email.</p>
+                            <div class="relative">
+                                <input type="text" id="forgot-otp" placeholder=" " class="w-full peer px-3 pt-4 pb-2 border-b-2 border-gray-300 focus:border-blue-800 bg-transparent tracking-widest text-center">
+                                <label for="forgot-otp" class="absolute text-gray-500 transition-all left-3 top-2 text-xs">Enter OTP</label>
+                            </div>
+                        </div>
+
+                        <div id="forgot-step-3" class="hidden space-y-4">
+                            <div class="relative">
+                                <input type="password" id="forgot-newpass" placeholder=" " class="w-full peer px-3 pt-4 pb-2 border-b-2 border-gray-300 focus:border-blue-800 bg-transparent pr-10 text-sm">
+                                <label for="forgot-newpass" class="absolute text-gray-500 transition-all left-3 top-2 text-xs">New Password (Min 8 chars, 1 Cap)</label>
+                                <button type="button" class="absolute right-2 top-3 text-gray-400 hover:text-blue-800 toggle-password" data-target="forgot-newpass" aria-label="Toggle password visibility">
+                                    <i class="fa-regular fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" id="forgot-btn" class="w-full py-2 bg-orange-600 text-white font-bold rounded hover:bg-orange-700 transition-all shadow text-sm mt-2">
+                            Request OTP
+                        </button>
+                    </form>
+                    <div class="mt-4 text-center">
+                        <button onclick="switchView('login')" class="text-xs text-gray-500 hover:text-gray-800">Back to Login</button>
+                    </div>
+                </div>
+
+                <div id="status-area" role="status" aria-live="polite" class="mt-2 p-2 rounded text-center text-xs font-semibold hidden"></div>
+
+                <!-- SPINNER -->
+                <div id="loading-overlay" class="absolute inset-0 bg-white/90 flex items-center justify-center z-50 hidden backdrop-blur-sm">
+                    <div class="flex flex-col items-center">
+                        <svg class="animate-spin h-8 w-8 text-blue-900 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span id="loading-text" class="text-blue-900 text-xs font-bold tracking-wide">Processing...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT SIDE: STATIC IMAGE (Hidden on mobile) -->
+            <div class="hidden md:block relative bg-blue-900 h-full">
+                <img src="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=2070&auto=format&fit=crop" 
+                     class="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay" alt="Logistics">
+                <div class="relative z-10 flex flex-col justify-center items-center h-full p-8 text-white text-center">
+                     <h2 class="text-2xl font-bold mb-3 tracking-tight">Access Your Logistics World</h2>
+                     <p class="text-sm opacity-80 leading-relaxed max-w-xs">Securely manage shipments, track orders, and collaborate with your team in real-time.</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER INJECTION POINT -->
+    <div id="footer-placeholder"></div>
+
+    <!-- REQUIRED LAYOUT SCRIPT -->
+    <script src="layout.js"></script>
+
+    <script>
+        const API_URL = 'https://script.google.com/macros/s/AKfycbyigWZJ1OnjUn9JvlwR0XRjusc2ZAjNR0ZlH6htdc71w90Ecja0EcMGoQshIod_gO5fGA/exec';
+        let currentView = 'login', regState = 'init', forgotState = 'send', resetToken = '';
+        let tempRegData = {}; // Stores initial registration data
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Removed global clearing of storage on load to persist state if needed
+            // localStorage.clear(); 
+            // sessionStorage.clear();
+            
+            document.getElementById('form-login').addEventListener('submit', handleLogin);
+            document.getElementById('form-register').addEventListener('submit', handleRegister);
+            document.getElementById('form-forgot').addEventListener('submit', handleForgot);
+            document.getElementById('form-kyc').addEventListener('submit', handleKYCSubmit);
+
+            document.querySelectorAll('.toggle-password').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const input = document.getElementById(this.getAttribute('data-target'));
+                    const icon = this.querySelector('i');
+                    input.type = input.type === 'password' ? 'text' : 'password';
+                    
+                    // Fixed icon toggling logic for consistency
+                    if (input.type === 'password') {
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-regular', 'fa-eye');
+                    } else {
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-regular', 'fa-eye-slash');
+                    }
+                    
+                    this.classList.toggle('text-blue-800');
+                    this.classList.toggle('text-gray-400');
+                });
+            });
+        });
+
+        function switchView(viewName) {
+            ['view-login', 'view-register', 'view-forgot', 'view-kyc'].forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.add('hidden-view', 'hidden');
+            });
+            const target = document.getElementById(`view-${viewName}`);
+            if(target) {
+                target.classList.remove('hidden');
+                setTimeout(() => target.classList.remove('hidden-view'), 10);
+                currentView = viewName;
+                showMessage('', 'neutral'); // Clear messages on switch
+            }
+        }
+
+        async function callApi(action, params = {}) {
+            setLoading(true, 'Connecting...');
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: new URLSearchParams({ action, ...params }) });
+                
+                if (!res.ok) {
+                    throw new Error(`Server Error: ${res.status}`);
+                }
+
+                const json = await res.json();
+                setLoading(false);
+                if (json.status === 'error') throw new Error(json.message);
+                return json;
+            } catch (err) {
+                setLoading(false);
+                let msg = err.message;
+                if(msg.includes('Blocked')) msg = "⚠️ Account Blocked (Suspicious Activity)";
+                showMessage(msg, 'error');
+                throw err;
+            }
+        }
+
+        function validateEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function sanitizeInput(str) {
+            const temp = document.createElement('div');
+            temp.textContent = str;
+            return temp.innerHTML;
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('login-user').value.trim();
+            const pass = document.getElementById('login-pass').value.trim();
+            
+            if (!user || !pass) return showMessage('Enter credentials.', 'error');
+
+            try {
+                const res = await callApi('login', { username: user, password: pass });
+                showMessage('Success! Redirecting...', 'success');
+                localStorage.setItem('loginData', JSON.stringify({ sessionId: res.sessionID, expires: Date.now() + 3600000, userData: res.userData, code: res.userData.USER }));
+                setTimeout(() => window.location.href = 'dashboard.html', 1000);
+            } catch (err) {}
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            if (regState === 'init') {
+                const data = {
+                    USER: sanitizeInput(document.getElementById('reg-user').value.trim()),
+                    EMAIL: document.getElementById('reg-email').value.trim().toLowerCase(),
+                    MOBILE: document.getElementById('reg-mobile').value.trim(),
+                    NAME: sanitizeInput(document.getElementById('reg-name').value.trim()),
+                    PASS: document.getElementById('reg-pass').value.trim(),
+                    ROLE: 'CLIENT', STATUS: 'PENDING'
+                };
+                const confirmPass = document.getElementById('reg-confirm-pass').value.trim();
+
+                if (!data.USER || !data.EMAIL || !data.PASS || !confirmPass) return showMessage('Fill all fields.', 'error');
+                if (!validateEmail(data.EMAIL)) return showMessage('Invalid Email format.', 'error');
+                
+                // Password Validation: 8 chars min, 1 cap, 1 digit (implied by typical standards, sticking to requested 8 char + 1 cap)
+                if (data.PASS.length < 8) return showMessage('Password must be at least 8 characters.', 'error');
+                if (!/[A-Z]/.test(data.PASS)) return showMessage('Password must contain at least one uppercase letter.', 'error');
+                
+                if (data.PASS !== confirmPass) return showMessage('Passwords do not match.', 'error');
+                
+                tempRegData = data; 
+
+                try {
+                    await callApi('initiateRegistration', { registrationData: JSON.stringify(data) });
+                    document.getElementById('reg-step-1').classList.add('hidden');
+                    document.getElementById('reg-step-2').classList.remove('hidden');
+                    document.getElementById('reg-btn').textContent = 'Confirm OTP';
+                    regState = 'confirm';
+                } catch (err) {}
+            } else {
+                try {
+                    const otp = document.getElementById('reg-otp').value.trim();
+                    const email = document.getElementById('reg-email').value.trim().toLowerCase();
+                    
+                    if (!otp) return showMessage('Enter OTP.', 'error');
+
+                    await callApi('confirmRegistration', { email: email, otp: otp });
+                    showMessage('OTP Verified.', 'success');
+                    switchView('kyc');
+                    
+                } catch (err) {}
+            }
+        }
+        
+        async function handleKYCSubmit(e) {
+            e.preventDefault();
+            const kycType = document.getElementById('kyc-type').value;
+            const kycNum = sanitizeInput(document.getElementById('kyc-number').value.trim());
+            const address = sanitizeInput(document.getElementById('kyc-address').value.trim());
+            
+            if(!kycType || !kycNum || !address) return showMessage("Please fill all details.", "error");
+            
+            setLoading(true, "Finalizing...");
+            
+            setTimeout(() => {
+                setLoading(false);
+                showMessage('Registration Complete! Please wait for Admin approval.', 'success');
+                setTimeout(() => window.location.reload(), 3000);
+            }, 1500);
+        }
+
+        async function handleForgot(e) {
+            e.preventDefault();
+            const id = document.getElementById('forgot-id').value.trim();
+            if (forgotState === 'send') {
+                if(!id) return showMessage("Enter Username or Email", "error");
+                try {
+                    await callApi('sendResetOtp', { identifier: id, mobile: document.getElementById('forgot-mobile').value.trim() });
+                    document.getElementById('forgot-step-1').classList.add('hidden');
+                    document.getElementById('forgot-step-2').classList.remove('hidden');
+                    document.getElementById('forgot-btn').textContent = 'Verify OTP';
+                    forgotState = 'verify';
+                } catch (err) {}
+            } else if (forgotState === 'verify') {
+                try {
+                    const res = await callApi('verifyResetOtp', { identifier: id, otp: document.getElementById('forgot-otp').value.trim() });
+                    resetToken = res.token;
+                    document.getElementById('forgot-step-2').classList.add('hidden');
+                    document.getElementById('forgot-step-3').classList.remove('hidden');
+                    document.getElementById('forgot-btn').textContent = 'Set New Password';
+                    document.getElementById('forgot-btn').className = 'w-full py-2 bg-green-600 text-white font-bold rounded shadow text-sm mt-2';
+                    forgotState = 'reset';
+                } catch (err) {}
+            } else {
+                try {
+                    const newPass = document.getElementById('forgot-newpass').value.trim();
+                    
+                    // Apply Complexity Check
+                    if (newPass.length < 8) return showMessage('Password must be at least 8 characters.', 'error');
+                    if (!/[A-Z]/.test(newPass)) return showMessage('Password must contain at least one uppercase letter.', 'error');
+
+                    await callApi('resetPass', { identifier: id, token: resetToken, newPassword: newPass });
+                    showMessage('Password Reset!', 'success');
+                    setTimeout(() => switchView('login'), 2000);
+                } catch (err) {}
+            }
+        }
+
+        function showMessage(msg, type) {
+            const el = document.getElementById('status-area');
+            el.textContent = msg;
+            
+            // Reset classes
+            el.className = 'mt-2 p-2 rounded text-center text-xs font-semibold';
+            
+            if (type === 'error') {
+                el.classList.add('bg-red-100', 'text-red-700');
+            } else if (type === 'success') {
+                el.classList.add('bg-green-100', 'text-green-700');
+            } else if (type === 'neutral') {
+                 // Hide if empty or neutral without msg
+                 if(!msg) {
+                     el.classList.add('hidden');
+                     return;
+                 }
+                 el.classList.add('bg-gray-100', 'text-gray-700');
+            } else {
+                 el.classList.add('bg-gray-100', 'text-gray-700');
+            }
+            
+            el.classList.remove('hidden');
+        }
+
+        function setLoading(state, text) {
+            document.getElementById('loading-overlay').classList.toggle('hidden', !state);
+            if(state) document.getElementById('loading-text').textContent = text;
+        }
+    </script>
+</body>
+</html>

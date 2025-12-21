@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postman - Home</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* --- MODAL STYLES --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            backdrop-filter: blur(4px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* --- TRACKING WIDGET OVERRIDES --- */
+        #tracking-content-area .sm\:flex-row {
+            flex-direction: column !important;
+            align-items: stretch !important;
+        }
+        #tracking-content-area .sm\:w-1\/4 {
+            width: 100% !important;
+        }
+        #tracking-content-area .sm\:w-auto {
+            width: 100% !important;
+        }
+
+        /* --- DYNAMIC LAYOUT EXPANSION (CSS :has TRICK) --- */
+        @media (min-width: 1024px) {
+            #main-split-layout:has(#resultsContainer:not(.hidden)),
+            #main-split-layout:has(#results-container:not(.hidden)) {
+                flex-wrap: wrap; 
+            }
+            #main-split-layout:has(#resultsContainer:not(.hidden)) > div:first-child,
+            #main-split-layout:has(#results-container:not(.hidden)) > div:first-child {
+                width: 100%;
+            }
+            #main-split-layout:has(#resultsContainer:not(.hidden)) > #tracking-content-area,
+            #main-split-layout:has(#results-container:not(.hidden)) > #tracking-content-area {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <div id="header-placeholder"></div>
+
+    <!-- FRAUD WARNING BANNER -->
+    <div class="w-full bg-blue-50 border-b border-blue-100 py-2 px-4 flex items-center justify-center gap-3 shadow-sm text-center mt-1">
+        <i class="fa-solid fa-shield-halved text-blue-800 text-xs"></i>
+        <p class="text-[10px] sm:text-xs text-gray-700 font-medium leading-relaxed">
+            We never ask you to pay online or share OTP/UPI pins over Phone calls. Any such request is likely fraud. Never do/share OTP/UPI/Pay over Calls.
+        </p>
+    </div>
+
+    <main class="flex-grow w-full p-4 sm:p-8">
+        <div class="container mx-auto max-w-7xl space-y-4 sm:space-y-8">
+            
+            <!-- SPLIT LAYOUT CONTAINER -->
+            <div id="main-split-layout" class="flex flex-col lg:flex-row gap-6 items-start">
+                
+                <!-- LEFT/TOP CONTAINER: Buttons -->
+                <div class="w-full lg:w-[65%] space-y-4">
+                    <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 w-full">
+                        
+                        <!-- locator, calendar, DGR, Memos, about, awareness -> Replace Services -->
+                        <button onclick="loadService('Pincode.html')" aria-label="Open Pincode Locator" class="flex flex-col items-center justify-center p-3 lg:py-5 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:bg-blue-50 transition-all text-center group w-full">
+                            <i class="fa-solid fa-location-crosshairs text-blue-900 text-xl mb-1 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-semibold text-gray-700 group-hover:text-blue-900">Locator</span>
+                        </button>
+
+                        <!-- Docs -> Standard href -->
+                        <a href="docx.html" aria-label="View Documents" class="flex flex-col items-center justify-center p-3 lg:py-5 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:bg-blue-50 transition-all text-center group">
+                            <i class="fa-solid fa-file-contract text-blue-900 text-xl mb-1 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-semibold text-gray-700 group-hover:text-blue-900">Docs</span>
+                        </a>
+
+                        <button onclick="loadService('dgr.html')" aria-label="Dangerous Goods Regulations" class="flex flex-col items-center justify-center p-3 lg:py-5 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:bg-blue-50 transition-all text-center group w-full">
+                            <i class="fa-solid fa-triangle-exclamation text-blue-900 text-xl mb-1 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-semibold text-gray-700 group-hover:text-blue-900">DGR</span>
+                        </button>
+
+                        <a href="calendar.html" aria-label="View Holiday Calendar" class="flex flex-col items-center justify-center p-3 lg:py-5 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:bg-blue-50 transition-all text-center group">
+                            <i class="fa-regular fa-calendar-days text-blue-900 text-xl mb-1 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-semibold text-gray-700 group-hover:text-blue-900">Calendar</span>
+                        </a>
+
+                        <button onclick="loadService('awareness.html')" aria-label="Security Awareness" class="flex flex-col items-center justify-center p-3 lg:py-5 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:bg-blue-50 transition-all text-center group w-full">
+                            <i class="fa-solid fa-bullhorn text-blue-900 text-xl mb-1 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-semibold text-gray-700 group-hover:text-blue-900">Awareness</span>
+                        </button>
+
+                        <!-- Carrier (Career) -> Standard href -->
+                        <a href="career.html" class="flex flex-col items-center justify-center p-3 lg:py-5 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:bg-blue-50 transition-all text-center group">
+                            <i class="fa-solid fa-briefcase text-blue-900 text-xl mb-1 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-semibold text-gray-700 group-hover:text-blue-900">Carrier</span>
+                        </a>
+
+                        <!-- FAQ -> Standard href -->
+                        <a href="faqs.html" aria-label="Frequently Asked Questions" class="flex flex-col items-center justify-center p-3 lg:py-5 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:bg-blue-50 transition-all text-center group">
+                            <i class="fa-solid fa-circle-question text-blue-900 text-xl mb-1 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-semibold text-gray-700 group-hover:text-blue-900">FAQs</span>
+                        </a>
+
+                        <button onclick="loadService('about.html')" class="flex flex-col items-center justify-center p-3 lg:py-5 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:bg-blue-50 transition-all text-center group w-full">
+                            <i class="fa-solid fa-circle-info text-blue-900 text-xl mb-1 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-semibold text-gray-700 group-hover:text-blue-900">About</span>
+                        </button>
+
+                        <a href="memos.html" aria-label="Internal Memos" class="flex flex-col items-center justify-center p-3 lg:py-5 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:bg-blue-50 transition-all text-center group">
+                            <i class="fa-solid fa-note-sticky text-blue-900 text-xl mb-1 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-semibold text-gray-700 group-hover:text-blue-900">Memos</span>
+                        </a>
+
+                        <!-- Complaint -> Popup Inline -->
+                        <button onclick="window.openComplaintModal()" class="hidden md:flex flex-col items-center justify-center p-3 lg:py-5 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:bg-blue-50 transition-all text-center group w-full">
+                            <i class="fa-solid fa-circle-exclamation text-blue-900 text-xl mb-1 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-semibold text-gray-700 group-hover:text-blue-900">Complaint</span>
+                        </button>
+
+                        <a href="login.html" class="hidden md:flex flex-col items-center justify-center p-3 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:bg-blue-50 transition-all text-center group lg:hidden">
+                            <i class="fa-solid fa-user-plus text-blue-900 text-xl mb-1 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-semibold text-gray-700 group-hover:text-blue-900">Register</span>
+                        </a>
+
+                        <button onclick="window.openContactModal()" class="hidden md:flex flex-col items-center justify-center p-3 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md hover:bg-blue-50 transition-all text-center group lg:hidden w-full">
+                            <i class="fa-solid fa-headset text-blue-900 text-xl mb-1 group-hover:scale-110 transition-transform"></i>
+                            <span class="text-xs font-semibold text-gray-700 group-hover:text-blue-900">Contact</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="tracking-content-area" class="w-full lg:w-[35%]"></div>
+            </div>
+            
+            <div id="services-content-area"></div>
+        </div>
+    </main>
+
+    <!-- COMPLAINT POPUP MODAL -->
+    <div id="complaintModal" class="modal-overlay hidden">
+         <div class="modal-content relative max-w-2xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-circle-exclamation text-red-600"></i> Raise a Complaint
+            </h2>
+            <button id="closeComplaintModalButton" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors p-2">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <div class="space-y-5">
+                <div class="flex gap-3">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-gray-400"></i>
+                        <input type="text" id="complaintSearchInput" placeholder="Enter AWB / Reference No." class="w-full pl-10 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 transition-all text-sm font-semibold">
+                    </div>
+                    <button id="complaintSearchButton" class="px-6 py-3 bg-blue-900 text-white font-bold rounded-lg hover:bg-blue-800 transition-colors shadow-sm text-sm">Find</button>
+                </div>
+                <div id="complaintLoadingIndicator" class="hidden text-center py-4">
+                    <i class="fa-solid fa-circle-notch fa-spin text-blue-900 text-2xl"></i>
+                    <p class="text-xs text-gray-500 mt-2 font-semibold">Locating Consignment...</p>
+                </div>
+                <div id="complaintResultsContainer" class="hidden p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-800"></div>
+                <div id="complaintMessageContainer" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Category</label>
+                            <select id="complaintCategory" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 text-sm bg-white">
+                                <option value="">Select Issue Type...</option>
+                                <option value="Delay">Delivery Delay</option>
+                                <option value="Damaged">Damaged Item</option>
+                                <option value="Status">Incorrect Status</option>
+                                <option value="Lost">Lost Package</option>
+                                <option value="Billing">Billing Dispute</option>
+                                <option value="Other">Other Inquiry</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Mobile</label>
+                            <input type="tel" id="complainantMobile" placeholder="Your Number" class="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Description</label>
+                        <textarea id="complaintMessage" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-900 text-sm resize-none" placeholder="Describe the issue in detail..."></textarea>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between pt-2">
+                    <div id="emailSendingStatus" class="text-xs font-bold text-gray-500 hidden">
+                        <i class="fa-solid fa-spinner fa-spin mr-1"></i> Sending...
+                    </div>
+                    <button id="submitComplaintButton" class="px-8 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition-colors shadow-md text-sm ml-auto">
+                        Submit Complaint
+                    </button>
+                </div>
+            </div>
+            <div id="complaintMessageBox" class="hidden mt-4 p-3 rounded-lg text-sm text-center font-semibold"></div>
+        </div>
+    </div>
+
+    <!-- FAQ POPUP MODAL -->
+    <div id="faqModal" class="modal-overlay hidden">
+        <div class="modal-content relative max-w-2xl">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <i class="fa-solid fa-circle-question text-blue-900"></i> Frequently Asked Questions
+            </h2>
+            <button id="closeFaqModalButton" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors p-2">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+            <div id="faqContentArea" class="space-y-4">
+                <div class="text-center py-8">
+                    <i class="fa-solid fa-spinner fa-spin text-2xl text-blue-900"></i>
+                    <p class="mt-2 text-sm text-gray-500">Loading FAQs...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="footer-placeholder"></div>
+
+    <script src="layout.js"></script>
+    <script>
+        // ============================================================================
+        // 1. INJECTION LOGIC (Replacer)
+        // ============================================================================
+        window.loadService = function(url) {
+            const servicesArea = document.getElementById('services-content-area');
+            const trackingArea = document.getElementById('tracking-content-area');
+
+            // Scenario 2: If a button is clicked, hide current tracking results
+            if (trackingArea) {
+                // Targeting both common ID conventions found in the project
+                const results = trackingArea.querySelector('#resultsContainer') || trackingArea.querySelector('#results-container');
+                if (results) results.classList.add('hidden');
+            }
+
+            if(servicesArea) {
+                servicesArea.classList.remove('hidden');
+                if (typeof window.loadDynamicContent === 'function') {
+                    loadDynamicContent(url, 'services-content-area');
+                }
+                servicesArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        };
+
+        // ============================================================================
+        // 2. MODAL LOGIC (Global Scope)
+        // ============================================================================
+
+        window.openContactModal = function() {
+            const modal = document.getElementById('contactModal');
+            if(modal) {
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.add('active'), 10);
+            } else {
+                console.warn("Contact Modal not found. It might still be loading from the footer.");
+                showNotification("Contact details are loading...", "info");
+            }
+        }
+
+        window.closeContactModal = function() {
+            const modal = document.getElementById('contactModal');
+            if(modal) {
+                modal.classList.remove('active');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+        }
+
+        window.openComplaintModal = function() {
+            const modal = document.getElementById('complaintModal');
+            if(modal) {
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.add('active'), 10);
+                document.getElementById('complaintSearchInput').value = '';
+                document.getElementById('complaintMessageContainer').classList.remove('opacity-50', 'pointer-events-none');
+                document.getElementById('complaintResultsContainer').classList.add('hidden');
+                document.getElementById('complaintMessageBox').classList.add('hidden');
+            }
+        }
+
+        window.closeComplaintModal = function() {
+            const modal = document.getElementById('complaintModal');
+            if(modal) {
+                modal.classList.remove('active');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+        }
+
+        window.openFaqModal = function() {
+            const modal = document.getElementById('faqModal');
+            if(modal) {
+                modal.classList.remove('hidden');
+                setTimeout(() => modal.classList.add('active'), 10);
+                const contentArea = document.getElementById('faqContentArea');
+                if (contentArea && contentArea.innerText.includes('Loading')) {
+                    if (typeof window.loadDynamicContent === 'function') {
+                        loadDynamicContent('faqs.html', 'faqContentArea');
+                    }
+                }
+            }
+        }
+
+        window.closeFaqModal = function() {
+            const modal = document.getElementById('faqModal');
+            if(modal) {
+                modal.classList.remove('active');
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            }
+        }
+
+        // ============================================================================
+        // 3. INITIALIZATION
+        // ============================================================================
+        
+        window.addEventListener('footerLoaded', () => {
+            const contactClose = document.getElementById('closeContactModalButton');
+            const contactModal = document.getElementById('contactModal');
+            if(contactClose) contactClose.addEventListener('click', window.closeContactModal);
+            if(contactModal) {
+                contactModal.addEventListener('click', (e) => {
+                    if (e.target === contactModal) window.closeContactModal();
+                });
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const complaintClose = document.getElementById('closeComplaintModalButton');
+            const complaintModal = document.getElementById('complaintModal');
+            if(complaintClose) complaintClose.addEventListener('click', window.closeComplaintModal);
+            if(complaintModal) {
+                complaintModal.addEventListener('click', (e) => {
+                    if (e.target === complaintModal) window.closeComplaintModal();
+                });
+            }
+
+            const faqClose = document.getElementById('closeFaqModalButton');
+            const faqModal = document.getElementById('faqModal');
+            if(faqClose) faqClose.addEventListener('click', window.closeFaqModal);
+            if(faqModal) {
+                faqModal.addEventListener('click', (e) => {
+                    if (e.target === faqModal) window.closeFaqModal();
+                });
+            }
+
+            const searchBtn = document.getElementById('complaintSearchButton');
+            const submitBtn = document.getElementById('submitComplaintButton');
+
+            if(searchBtn) {
+                searchBtn.addEventListener('click', async () => {
+                    const awb = document.getElementById('complaintSearchInput').value.trim();
+                    const loader = document.getElementById('complaintLoadingIndicator');
+                    const results = document.getElementById('complaintResultsContainer');
+                    if(!awb) return alert("Please enter an AWB number.");
+                    loader.classList.remove('hidden');
+                    results.classList.add('hidden');
+                    
+                    try {
+                        // Real API call to verify AWB existence
+                        const response = await callApi('getData', { collection: 'SHIPMENTS/ORDERS', query: awb, searchType: 'ref' });
+                        loader.classList.add('hidden');
+                        results.classList.remove('hidden');
+                        const order = (response.orders && response.orders.length > 0) ? response.orders[0].order : null;
+                        results.innerHTML = order ? `<strong>Found:</strong> Shipment <span>#${awb}</span> <br> <span class="text-xs text-gray-500">Status: ${order.STATUS || 'Active'}</span>` : `<span class="text-red-500">AWB not found.</span>`;
+                    } catch (e) { loader.classList.add('hidden'); results.classList.remove('hidden'); results.innerHTML = "Error verifying AWB."; }
+                });
+            }
+
+            if(submitBtn) {
+                submitBtn.addEventListener('click', () => {
+                    const cat = document.getElementById('complaintCategory').value;
+                    const msg = document.getElementById('complaintMessage').value;
+                    const box = document.getElementById('complaintMessageBox');
+                    if(!cat || !msg) {
+                        box.textContent = "Please fill all required fields.";
+                        box.className = "mt-4 p-3 rounded-lg text-sm text-center font-semibold bg-red-100 text-red-700";
+                        box.classList.remove('hidden');
+                        return;
+                    }
+                    const status = document.getElementById('emailSendingStatus');
+                    status.classList.remove('hidden');
+                    submitBtn.disabled = true;
+                    submitBtn.classList.add('opacity-50');
+                    setTimeout(() => {
+                        status.classList.add('hidden');
+                        submitBtn.disabled = false;
+                        submitBtn.classList.remove('opacity-50');
+                        box.textContent = "Complaint Registered Successfully! Ticket #8829 created.";
+                        box.className = "mt-4 p-3 rounded-lg text-sm text-center font-semibold bg-green-100 text-green-700";
+                        box.classList.remove('hidden');
+                        setTimeout(() => window.closeComplaintModal(), 2000);
+                    }, 1500);
+                });
+            }
+        });
+    </script>
+</body>
+</html>

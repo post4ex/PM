@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Postman - Wallet</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.rawgit.com/davidshimjs/qrcodejs/gh-pages/qrcode.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        /* Styles for active and inactive tabs */
+        .tab-btn.active {
+            border-color: #1E3A8A; /* Navy Blue */
+            color: #1E3A8A; /* Navy Blue */
+        }
+        .amount-btn.selected {
+            background-color: #1E3A8A;
+            color: white;
+            border-color: #1E3A8A;
+        }
+        /* Custom transition for the success message */
+        #success-message {
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+        /* QR Modal styles */
+        #qr-modal {
+            transition: opacity 0.3s ease;
+        }
+        #qr-modal-content {
+            transition: transform 0.3s ease;
+        }
+        #qrcode canvas {
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+
+    <!-- Header Placeholder -->
+    <div id="header-placeholder"></div>
+
+    <main class="w-full flex-grow p-4 sm:p-8">
+        <div class="container">
+            <div class="card">
+                <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Wallet</h1>
+                
+                <!-- Tabs Navigation -->
+                <div class="border-b border-gray-200">
+                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <button id="recharge-tab" class="tab-btn active whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            Recharge
+                        </button>
+                        <button id="transactions-tab" class="tab-btn whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                            Transactions
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="mt-8">
+                    <!-- Recharge Content -->
+                    <div id="recharge-content">
+                        <h2 class="text-lg font-semibold text-gray-700">Add money to your wallet</h2>
+                        <p class="text-gray-500 mt-2">Select or enter an amount to add.</p>
+                        
+                        <!-- Dynamic Amount Section -->
+                        <div class="mt-6">
+                             <label class="block text-sm font-medium text-gray-700">Amount</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-2">
+                                <button class="amount-btn p-3 border border-gray-300 rounded-md text-center hover:bg-gray-100 transition" data-amount="500">₹500</button>
+                                <button class="amount-btn p-3 border border-gray-300 rounded-md text-center hover:bg-gray-100 transition" data-amount="1000">₹1000</button>
+                                <button class="amount-btn p-3 border border-gray-300 rounded-md text-center hover:bg-gray-100 transition" data-amount="2000">₹2000</button>
+                                <button class="amount-btn p-3 border border-gray-300 rounded-md text-center hover:bg-gray-100 transition" data-amount="5000">₹5000</button>
+                            </div>
+                            
+                            <div class="mt-4 flex items-center border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-blue-800 focus-within:border-blue-800">
+                               <button id="minus-btn" class="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-l-md transition">-</button>
+                               <span class="px-3 text-gray-500">₹</span>
+                               <input type="number" name="amount" id="amount" class="w-full p-2 text-center border-l border-r border-gray-300 focus:outline-none" placeholder="Custom Amount" min="500" step="100">
+                               <button id="plus-btn" class="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-r-md transition">+</button>
+                            </div>
+                             <div id="amount-error" class="text-red-500 text-sm mt-2 hidden"></div>
+                        </div>
+
+                        <button id="recharge-btn" class="mt-6 w-full bg-blue-800 hover:bg-blue-900 text-white font-bold py-3 px-4 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-800 transition transform hover:scale-105">
+                            Recharge Now
+                        </button>
+                        
+                    </div>
+
+                    <!-- Transactions Content (Hidden by default) -->
+                    <div id="transactions-content" class="hidden">
+                         <h2 class="text-lg font-semibold text-gray-700">Your Transactions</h2>
+                         <div class="mt-4 text-center text-gray-500 border-2 border-dashed border-gray-300 p-8 rounded-lg">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                              <path vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            <h3 class="mt-2 text-sm font-medium text-gray-900">No transactions</h3>
+                            <p class="mt-1 text-sm text-gray-500">Get started by recharging your wallet.</p>
+                          </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- QR Code Modal -->
+    <div id="qr-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 opacity-0 pointer-events-none">
+        <div id="qr-modal-content" class="bg-white p-8 rounded-lg shadow-xl text-center w-full max-w-sm transform scale-95">
+            <h3 class="text-xl font-bold text-gray-800">Scan to Pay</h3>
+            <p class="text-gray-600 mt-2">Scan the QR code with any UPI app.</p>
+            <div id="qrcode" class="my-4 p-4 border rounded-lg inline-block"></div>
+            <p class="text-2xl font-bold text-blue-800" id="qr-amount"></p>
+            <p class="text-sm text-gray-500 mt-1">Paying to: 7088551155@upi</p>
+            
+            <!-- Transaction ID Input -->
+            <div class="mt-6 text-left">
+                <label for="txn-id" class="block text-sm font-medium text-gray-700">Enter last 6 digits of Transaction ID</label>
+                <input type="text" id="txn-id" name="txn-id" maxlength="6" class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-800 focus:border-blue-800 sm:text-sm" placeholder="123456">
+                <p id="txn-error" class="text-red-500 text-sm mt-1 hidden">Invalid Transaction ID.</p>
+            </div>
+
+            <div class="mt-4 flex space-x-2">
+                <button id="cancel-modal-btn" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-md">
+                    Cancel
+                </button>
+                <button id="verify-btn" class="w-full bg-blue-800 hover:bg-blue-900 text-white font-bold py-2 px-4 rounded-md">
+                    Verify & Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Message -->
+    <div id="success-message" class="fixed top-5 right-5 bg-green-500 text-white py-3 px-5 rounded-lg shadow-lg opacity-0 transform translate-y-10">
+        <!-- Message content will be set by JS -->
+    </div>
+
+
+    <!-- Footer Placeholder -->
+    <div id="footer-placeholder"></div>
+
+    <!-- Layout script -->
+    <script src="layout.js"></script>
+
+    <script>
+        // Tab switching logic
+        const rechargeTab = document.getElementById('recharge-tab');
+        const transactionsTab = document.getElementById('transactions-tab');
+        const rechargeContent = document.getElementById('recharge-content');
+        const transactionsContent = document.getElementById('transactions-content');
+
+        rechargeTab.addEventListener('click', () => {
+            rechargeContent.classList.remove('hidden');
+            transactionsContent.classList.add('hidden');
+            rechargeTab.classList.add('active');
+            transactionsTab.classList.remove('active');
+        });
+
+        transactionsTab.addEventListener('click', () => {
+            transactionsContent.classList.remove('hidden');
+            rechargeContent.classList.add('hidden');
+            transactionsTab.classList.add('active');
+            rechargeTab.classList.remove('active');
+        });
+
+        // Amount selection logic
+        const amountInput = document.getElementById('amount');
+        const amountButtons = document.querySelectorAll('.amount-btn');
+        const plusBtn = document.getElementById('plus-btn');
+        const minusBtn = document.getElementById('minus-btn');
+        const amountError = document.getElementById('amount-error');
+
+        const setActiveButton = (selectedAmount) => {
+            amountButtons.forEach(button => {
+                button.classList.toggle('selected', button.dataset.amount == selectedAmount);
+            });
+        };
+        
+        amountButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                amountInput.value = button.dataset.amount;
+                setActiveButton(button.dataset.amount);
+                clearErrors();
+            });
+        });
+
+        amountInput.addEventListener('input', () => {
+             setActiveButton(amountInput.value);
+             clearErrors();
+        });
+
+        plusBtn.addEventListener('click', () => {
+            let currentValue = parseInt(amountInput.value) || 400;
+            if(currentValue < 500) currentValue = 400;
+            amountInput.value = currentValue + 100;
+            setActiveButton(amountInput.value);
+            clearErrors();
+        });
+
+        minusBtn.addEventListener('click', () => {
+            let currentValue = parseInt(amountInput.value) || 0;
+            if (currentValue > 500) {
+                amountInput.value = currentValue - 100;
+            } else {
+                amountInput.value = '';
+            }
+            setActiveButton(amountInput.value);
+            clearErrors();
+        });
+
+        const clearErrors = () => {
+             amountError.textContent = '';
+             amountError.classList.add('hidden');
+        }
+
+        // QR Modal and Recharge Logic
+        const rechargeBtn = document.getElementById('recharge-btn');
+        const qrModal = document.getElementById('qr-modal');
+        const qrModalContent = document.getElementById('qr-modal-content');
+        const cancelModalBtn = document.getElementById('cancel-modal-btn');
+        const verifyBtn = document.getElementById('verify-btn');
+        const txnIdInput = document.getElementById('txn-id');
+        const txnError = document.getElementById('txn-error');
+        const qrCodeContainer = document.getElementById('qrcode');
+        const qrAmount = document.getElementById('qr-amount');
+        const successMessage = document.getElementById('success-message');
+        let qrcode = null;
+
+        const showSuccessMessage = (message) => {
+            successMessage.textContent = message;
+            successMessage.classList.remove('opacity-0', 'translate-y-10');
+            setTimeout(() => {
+                successMessage.classList.add('opacity-0', 'translate-y-10');
+            }, 3000); // Hide after 3 seconds
+        };
+
+        const showQrModal = () => {
+            qrModal.classList.remove('opacity-0', 'pointer-events-none');
+            qrModalContent.classList.remove('scale-95');
+        };
+
+        const hideQrModal = () => {
+            qrModal.classList.add('opacity-0', 'pointer-events-none');
+            qrModalContent.classList.add('scale-95');
+            // Reset fields on close
+            txnIdInput.value = '';
+            txnError.classList.add('hidden');
+            txnIdInput.classList.remove('border-red-500');
+        };
+
+        cancelModalBtn.addEventListener('click', hideQrModal);
+        qrModal.addEventListener('click', (e) => {
+            if (e.target === qrModal) {
+                hideQrModal();
+            }
+        });
+        
+        verifyBtn.addEventListener('click', () => {
+            const txnId = txnIdInput.value;
+            txnError.classList.add('hidden');
+            txnIdInput.classList.remove('border-red-500');
+
+            // Validate: 6 digits only
+            if (txnId.length !== 6 || !/^\d{6}$/.test(txnId)) {
+                txnError.textContent = 'Please enter the last 6 digits of the ID.';
+                txnError.classList.remove('hidden');
+                txnIdInput.classList.add('border-red-500');
+            } else {
+                // On successful validation
+                hideQrModal();
+                showSuccessMessage('Recharge successful & verified!');
+                // In a real app, you would now verify the transaction on the backend.
+            }
+        });
+
+        rechargeBtn.addEventListener('click', () => {
+            const amount = parseInt(amountInput.value, 10);
+            
+            clearErrors();
+
+            if (isNaN(amount) || amount < 500) {
+                amountError.textContent = 'Minimum recharge amount is ₹500.';
+                amountError.classList.remove('hidden');
+                return;
+            }
+
+            if (amount % 100 !== 0) {
+                amountError.textContent = 'Amount must be in multiples of 100.';
+                amountError.classList.remove('hidden');
+                return;
+            }
+
+            // Generate UPI string and QR code
+            const upiId = '7088551155@upi';
+            const payeeName = 'Postman Wallet';
+            const upiString = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(payeeName)}&am=${amount}.00&cu=INR`;
+            
+            qrCodeContainer.innerHTML = ''; // Clear previous QR code
+            qrcode = new QRCode(qrCodeContainer, {
+                text: upiString,
+                width: 200,
+                height: 200,
+                colorDark : "#000000",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+
+            qrAmount.textContent = `₹${amount}`;
+            showQrModal();
+            
+            amountInput.value = ''; // Clear input
+            setActiveButton(null);
+        });
+    </script>
+
+</body>
+</html>
+

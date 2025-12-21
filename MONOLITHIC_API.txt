@@ -1,0 +1,959 @@
+/**
+ * ============================================================================
+ * MONOLITHIC GOOGLE APPS SCRIPT API (PLATINUM CERTIFIED EDITION)
+ * ============================================================================
+ * * OVERVIEW:
+ * This script functions as a secure, serverless backend using Google Apps Script (GAS)
+ * to manage data, authentication, and security for the "Ipostex" application.
+ * * * * ARCHITECTURAL PILLARS:
+ * 1. STATELESS SESSION: Uses GAS CacheService. No DB hits for valid sessions.
+ * 2. WRITE FIREWALL: Strict Role-Based Access Control (RBAC) for Create/Update/Delete.
+ * 3. SMART SYNC: Bandwidth-optimized data fetching (Delta Sync + Dynamic Filtering).
+ * 4. DOOMSDAY PROTOCOL: Master-only "Kill Switch" to lock the API.
+ * 5. FUNCTION FIREWALL: Permission checks for every API action.
+ * * * * TABLE OF CONTENTS:
+ * 1. Constants & Configuration  - Settings, Credentials, Permissions.
+ * 2. Main Dispatcher            - Routing, Kill Switch, Error Handling.
+ * 3. Authentication             - Login, Logout, Recovery.
+ * 4. Registration Workflow      - Signup, OTP.
+ * 5. Admin User Management      - User Admin, Sudo Mode (2FA).
+ * 6. Core Data Fetching         - Master Sync, Delta Sync.
+ * 7. Utilities & Security       - Kill Switch Logic, Session Helpers.
+ * 8. Custom Functions           - Write Firewall, Uploads.
+ * ============================================================================
+ */
+
+// ============================================================================
+// SECTION 1: CONSTANTS & CONFIGURATION
+// ============================================================================
+
+/**
+ * FIREBASE CONNECTION & CREDENTIALS
+ * Fetched from Script Properties for security.
+ */
+const scriptProps = PropertiesService.getScriptProperties();
+const FIREBASE_URL = scriptProps.getProperty("FIREBASE_URL");
+const FIREBASE_SECRET = scriptProps.getProperty("FIREBASE_SECRET");
+const UPLOAD_FOLDER_ID = scriptProps.getProperty("UPLOAD_FOLDER_ID");
+
+if (!FIREBASE_URL || !FIREBASE_SECRET) {
+  console.error("CRITICAL: Script Properties missing. API will fail.");
+}
+
+const DEBUG_MODE = true; 
+
+// --- SYSTEM CONSTANTS ---
+const SYSTEM_STATES = {
+    LIVE: "LIVE",
+    DEAD: "DEAD",
+    RECOVERY: "RECOVERY_MODE"
+};
+
+const PROP_KEYS = {
+    STATUS: "SYSTEM_STATUS",
+    RECOVERY_KEY: "SYSTEM_RECOVERY_KEY"
+};
+
+/**
+ * SECURITY THRESHOLDS
+ */
+const SESSION_TIMEOUT = 1800;   // 30 Minutes
+const SESSION_EXTENSION = 900;  // +15 Minutes
+const RATE_LIMIT_SECONDS = 10;  
+const API_GRACE_PERIOD = 60;    
+
+const ENABLE_IP_CHECK = false; 
+const ENABLE_UA_CHECK = false; 
+
+const ENABLE_LOGIN_RATELIMIT = true; 
+const LOGIN_MAX_ATTEMPTS = 5;   
+const LOGIN_BLOCK_DURATION = 900; 
+
+const ENABLE_SUCCESS_LOGIN_LIMIT = true; 
+const SUCCESS_LOGIN_LIMIT_COUNT = 3; 
+const SUCCESS_LOGIN_LIMIT_WINDOW = 60; 
+
+const ENABLE_REG_SECURITY = true; 
+const REG_MAX_ATTEMPTS = 5;     
+const REG_BLOCK_DURATION = 86400; 
+const REG_MIN_INTERVAL = 60;    
+
+const OTP_EXPIRATION_SECONDS = 300; 
+const RESET_MAX_ATTEMPTS = 3;       
+const RESET_BLOCK_DURATION = 86400; 
+const ADMIN_ACCESS_DURATION = 300;  
+
+/**
+ * EMAIL TEMPLATES
+ */
+const EMAIL_TEMPLATES = {
+  RESET_OTP: { subject: "Reset Password OTP", body: "Your OTP is: " },
+  REG_OTP: { subject: "Registration OTP", body: "Code: " },
+  ADMIN_ADD_OTP: { subject: "Admin Add User OTP", body: "OTP: " },
+  SUDO_OTP: { subject: "Sudo Access OTP", body: "Code: " },
+  TOGGLE_OTP: { subject: "System Toggle OTP", body: "OTP to switch to " },
+  KILL_KEY: { subject: "SYSTEM KILLED - RECOVERY KEY", body: "System is DEAD.\nRestore Key: " }
+};
+
+/**
+ * ACCESS CONTROL ROLES & HIERARCHY
+ */
+const ROLE_MASTER     = "MASTER";
+const ROLE_ADMIN      = "ADMIN";
+const ROLE_AUDITOR    = "AUDITOR";    // Read-Only Reviewer
+const ROLE_ACCOUNTANT = "ACCOUNTANT"; // Financial Ops
+const ROLE_MANAGER    = "MANAGER";
+const ROLE_STAFF      = "STAFF";
+const ROLE_CLIENT     = "CLIENT";
+const ROLE_GUEST      = "GUEST"; 
+
+const ROLE_LEVELS = {
+  [ROLE_MASTER]:     100,
+  [ROLE_ADMIN]:      90,
+  [ROLE_AUDITOR]:    70,
+  [ROLE_ACCOUNTANT]: 60,
+  [ROLE_MANAGER]:    50,
+  [ROLE_STAFF]:      10,
+  [ROLE_CLIENT]:     1,
+  [ROLE_GUEST]:      0
+};
+
+const ENABLE_DOMAIN_CHECK = false; 
+const ALLOWED_DOMAINS = ["post4ex.github.io", "ipostex.web.app"]; 
+
+/**
+ * DATA SYNC CONFIGURATION (READ RULES)
+ */
+const DATA_SYNC_CONFIG = {
+  "SHIPMENTS/ORDERS":   { type: "DELTASYNC", filterable: true },
+  "SHIPMENTS/PRODUCT":  { type: "DELTASYNC", filterable: true },
+  "SHIPMENTS/MULTIBOX": { type: "DELTASYNC", filterable: true },
+  "SHIPMENTS/UPLOADS":  { type: "DELTASYNC", filterable: true },
+  "HRM/STAFF":          { type: "SYNC", filterable: true },
+  "HRM/ATTENDANCE":     { type: "DELTASYNC", filterable: true },
+  "HRM/BRANCHES":       { type: "SYNC", filterable: false },
+  "SERVICES/MODE":      { type: "SYNC", filterable: false },
+  "SERVICES/CARRIER":   { type: "SYNC", filterable: false },
+  "CHANNEL/B2B":        { type: "SYNC", filterable: true },
+  "CHANNEL/B2B2C":      { type: "DELTASYNC", filterable: true },
+  "CHANNEL/RATES":      { type: "SYNC", filterable: true },
+  "NETWORK/PINCODE":    { type: "IGNORE" },    
+  "LOGS/LOGS":          { type: "REQUEST", adminOnly: true },   
+  "LEDGER":             { type: "REQUEST", filterable: true },
+  "CRM":                { type: "REQUEST", filterable: true }
+};
+
+/**
+ * DATA PERMISSION MATRIX (WRITE RULES)
+ * C=Create, U=Update, D=Delete
+ */
+const DATA_PERMISSION_CONFIG = {
+  // SYSTEM CORE
+  "USERS":              { C: ROLE_MASTER, U: ROLE_MASTER, D: ROLE_MASTER },
+  "REGISTRATIONS":      { C: ROLE_GUEST,  U: ROLE_ADMIN,  D: ROLE_ADMIN },
+
+  // CLIENTS & RATES
+  "CHANNEL/B2B":        { C: ROLE_ADMIN,  U: ROLE_ADMIN,  D: ROLE_MASTER },
+  "CHANNEL/B2B2C":      { C: ROLE_STAFF,  U: ROLE_STAFF,  D: ROLE_ADMIN },
+  "CHANNEL/RATES":      { C: ROLE_ADMIN,  U: ROLE_ADMIN,  D: ROLE_MASTER },
+
+  // OPERATIONS
+  "SHIPMENTS/ORDERS":   { C: ROLE_CLIENT, U: ROLE_STAFF,  D: ROLE_ADMIN },
+  "SHIPMENTS/PRODUCT":  { C: ROLE_CLIENT, U: ROLE_CLIENT, D: ROLE_STAFF },
+  "SHIPMENTS/MULTIBOX": { C: ROLE_STAFF,  U: ROLE_STAFF,  D: ROLE_ADMIN },
+  "SHIPMENTS/UPLOADS":  { C: ROLE_STAFF,  U: ROLE_STAFF,  D: ROLE_ADMIN },
+
+  // HR & INFRASTRUCTURE
+  "HRM/STAFF":          { C: ROLE_ADMIN,  U: ROLE_ADMIN,  D: ROLE_MASTER },
+  "HRM/ATTENDANCE":     { C: ROLE_STAFF,  U: ROLE_MANAGER,D: ROLE_ADMIN },
+  "HRM/BRANCHES":       { C: ROLE_MASTER, U: ROLE_MASTER, D: ROLE_MASTER },
+
+  // SETTINGS
+  "SERVICES/MODE":      { C: ROLE_MASTER, U: ROLE_MASTER, D: ROLE_MASTER },
+  "SERVICES/CARRIER":   { C: ROLE_ADMIN,  U: ROLE_ADMIN,  D: ROLE_MASTER },
+  "NETWORK/PINCODE":    { C: ROLE_ADMIN,  U: ROLE_ADMIN,  D: ROLE_MASTER },
+
+  // FINANCE & SUPPORT
+  "CRM":                { C: ROLE_STAFF,  U: ROLE_STAFF,  D: ROLE_MANAGER },
+  "LEDGER":             { C: ROLE_ACCOUNTANT, U: ROLE_MASTER, D: ROLE_MASTER }, 
+  "LOGS/LOGS":          { C: ROLE_MASTER, U: ROLE_MASTER, D: ROLE_MASTER } 
+};
+
+/**
+ * CUSTOM FUNCTION PERMISSION MATRIX
+ */
+const FUNCTION_PERMISSION_CONFIG = {
+  // Admin Management
+  "fetchRegistrations":   ROLE_ADMIN,
+  "declineRegistration":  ROLE_ADMIN,
+  "fetchAllUsers":        ROLE_ADMIN,
+  "initiateAddUser":      ROLE_ADMIN,
+  "confirmAddUser":       ROLE_ADMIN,
+  
+  // Sudo Actions
+  "initiateAdminAccess":  ROLE_ADMIN,
+  "verifyAdminAccess":    ROLE_ADMIN,
+  "adminUpdateUser":      ROLE_ADMIN,
+  "adminDeleteUser":      ROLE_ADMIN,
+
+  // Data Operations
+  "getData":              ROLE_CLIENT,
+  "verifyAndFetchAppData":ROLE_CLIENT,
+  "getPincodeData":       ROLE_CLIENT,
+  "getPublicMemos":       ROLE_GUEST,
+  "getMemos":             ROLE_CLIENT,
+  "upload":               ROLE_STAFF,  // Files (PODs)
+  "fbWrite":              ROLE_MASTER, // Raw DB Write (Dangerous)
+
+  // Master Control
+  "toggleSystemStatus":   ROLE_MASTER,
+  "verifySystemToggle":   ROLE_MASTER,
+  "confirmSystemRecovery":ROLE_MASTER,
+  
+  // Utilities
+  "ping":                 ROLE_GUEST
+};
+
+// ============================================================================
+// SECTION 2: MAIN DISPATCHER
+// ============================================================================
+
+function doGet(e) { return handleRequest(e); }
+function doPost(e) { return handleRequest(e); }
+
+function handleRequest(e) {
+  const lock = LockService.getScriptLock();
+  lock.tryLock(5000); 
+  
+  try {
+    if (!e || !e.parameter) return responseError("No parameters provided.");
+    
+    const params = e.parameter;
+    const action = params.action;
+
+    if (!action) return responseError("Missing 'action' parameter.");
+
+    // --- KILL SWITCH GATEKEEPER ---
+    const systemStatus = PropertiesService.getScriptProperties().getProperty(PROP_KEYS.STATUS) || SYSTEM_STATES.LIVE;
+    const allowedInDead = ["login", "toggleSystemStatus", "verifySystemToggle", "confirmSystemRecovery"];
+    
+    if (systemStatus !== SYSTEM_STATES.LIVE && !allowedInDead.includes(action)) {
+        throw new Error("SYSTEM OFFLINE. Maintenance in progress.");
+    }
+
+    // Domain Check
+    if (ENABLE_DOMAIN_CHECK) {
+      const clientDomain = params.domain || "";
+      if (!ALLOWED_DOMAINS.includes(clientDomain)) throw new Error("Unauthorized Domain.");
+    }
+
+    // Session Middleware
+    const publicActions = [
+      'login', 'logout', 'ping', 'sendResetOtp', 'verifyResetOtp', 'resetPass',
+      'initiateRegistration', 'confirmRegistration'
+    ]; 
+
+    let sessionUser = null;
+    
+    if (!publicActions.includes(action)) {
+      sessionUser = validateSession(params);
+      
+      // Function Firewall Check
+      if (FUNCTION_PERMISSION_CONFIG[action]) {
+          const requiredRole = FUNCTION_PERMISSION_CONFIG[action];
+          const userLevel = ROLE_LEVELS[sessionUser.role] || 0;
+          const reqLevel = ROLE_LEVELS[requiredRole] || 100;
+          
+          if (userLevel < reqLevel) {
+              throw new Error(`Access Denied. ${action} requires ${requiredRole}.`);
+          }
+      }
+
+      // Kill Switch Authenticated Check
+      if (systemStatus !== SYSTEM_STATES.LIVE && sessionUser.role !== ROLE_MASTER) {
+          throw new Error("SYSTEM OFFLINE. Access Restricted to Master.");
+      }
+    }
+
+    // Routing
+    let result;
+    switch (action) {
+      case "login":   result = handleLogin(params); break;
+      case "logout":  result = handleLogout(params); break;
+      case "sendResetOtp":    result = handleSendResetOtp(params); break;
+      case "verifyResetOtp":  result = handleVerifyResetOtp(params); break;
+      case "resetPass":       result = handleResetPassword(params); break;
+
+      case "initiateRegistration": result = handleInitiateRegistration(params); break;
+      case "confirmRegistration":  result = handleConfirmRegistration(params); break;
+      
+      case "fetchRegistrations":   result = handleFetchRegistrations(params, sessionUser); break; 
+      case "declineRegistration":  result = handleDeclineRegistration(params, sessionUser); break;
+      case "fetchAllUsers":        result = handleFetchAllUsers(params, sessionUser); break; 
+      case "initiateAddUser":      result = handleInitiateAddUser(params, sessionUser); break;
+      case "confirmAddUser":       result = handleConfirmAddUser(params, sessionUser); break;
+      
+      case "initiateAdminAccess":  result = handleInitiateAdminAccess(params, sessionUser); break;
+      case "verifyAdminAccess":    result = handleVerifyAdminAccess(params, sessionUser); break;
+      case "adminUpdateUser":      result = handleAdminUpdateUser(params, sessionUser); break;
+      case "adminDeleteUser":      result = handleAdminDeleteUser(params, sessionUser); break;
+
+      case "getData":              result = fetchAppData(params, sessionUser); break;
+      case "verifyAndFetchAppData":result = verifyAndFetchAppData(params, sessionUser); break;
+      case "getPincodeData":       result = handleGetPincodeData(params, sessionUser); break;
+      case "getPublicMemos":       result = handleGetMemos(params, null, true); break;
+      case "getMemos":             result = handleGetMemos(params, sessionUser, false); break;
+      
+      case "toggleSystemStatus":   result = handleToggleSystemStatus(params, sessionUser); break;
+      case "verifySystemToggle":   result = handleVerifySystemToggle(params, sessionUser); break;
+      case "confirmSystemRecovery":result = handleConfirmSystemRecovery(params, sessionUser); break;
+
+      case "upload":  result = handleFileUpload(params); break;
+      case "fbWrite": result = handleFirebaseWrite(params, sessionUser); break;
+      
+      case "ping":    result = { status: "success", message: "pong" }; break;
+
+      default: return responseError("Invalid action: " + action);
+    }
+
+    return responseJSON(result);
+
+  } catch (error) {
+    return responseError(error.toString(), DEBUG_MODE ? error.stack : null);
+  } finally {
+    lock.releaseLock(); 
+  }
+}
+
+// ============================================================================
+// SECTION 3: AUTHENTICATION
+// ============================================================================
+
+function handleLogin(params) {
+  const username = params.username;
+  const password = params.password;
+  const clientIp = params.ip || "0.0.0.0";
+  const cache = CacheService.getScriptCache();
+  
+  const systemStatus = PropertiesService.getScriptProperties().getProperty(PROP_KEYS.STATUS) || SYSTEM_STATES.LIVE;
+
+  if (ENABLE_LOGIN_RATELIMIT && cache.get(`login_block_${clientIp}`)) {
+    throw new Error(`Blocked due to excessive failures.`);
+  }
+
+  if (ENABLE_SUCCESS_LOGIN_LIMIT) {
+    const recentLogins = parseInt(cache.get(`login_success_freq_${clientIp}`) || "0");
+    if (recentLogins >= SUCCESS_LOGIN_LIMIT_COUNT) throw new Error(`Too many logins. Wait 1 minute.`);
+  }
+
+  if (!username || !password) throw new Error("Missing credentials.");
+
+  const safeKey = sanitizeKey(username);
+  const user = readFromFirebase("USERS/" + safeKey);
+  const hashedPassword = hashString(password);
+
+  if (user && user.PASS === hashedPassword) {
+    
+    if (systemStatus !== SYSTEM_STATES.LIVE && user.ROLE !== ROLE_MASTER) {
+        throw new Error("SYSTEM OFFLINE. Login Restricted.");
+    }
+    
+    if (user.STATUS && user.STATUS !== "ACTIVE") throw new Error("Account inactive.");
+
+    if (ENABLE_LOGIN_RATELIMIT) cache.remove(`login_fail_${clientIp}`);
+    
+    if (ENABLE_SUCCESS_LOGIN_LIMIT) {
+      let recent = parseInt(cache.get(`login_success_freq_${clientIp}`) || "0") + 1;
+      cache.put(`login_success_freq_${clientIp}`, recent.toString(), SUCCESS_LOGIN_LIMIT_WINDOW);
+    }
+
+    const sessionID = Utilities.getUuid();
+    const sessionData = {
+      username: user.USER,
+      role: user.ROLE,
+      colFilter: user.COL_FILTER || "",   
+      filterValue: user.FILTER_VALUE || "", 
+      ip: clientIp,
+      userAgent: params.userAgent || "unknown",
+      loginTime: new Date().toISOString() 
+    };
+
+    cache.put(sessionID, JSON.stringify(sessionData), SESSION_TIMEOUT);
+
+    return {
+      status: "success",
+      message: "Login successful",
+      sessionID: sessionID,
+      userData: {
+        USER: user.USER,
+        ROLE: user.ROLE,
+        NAME: user.NAME,
+        BRANCH: user.BRANCH || "",
+        FILTER_VALUE: user.FILTER_VALUE || ""
+      }
+    };
+  } else {
+    if (ENABLE_LOGIN_RATELIMIT) {
+      const failKey = `login_fail_${clientIp}`;
+      let failures = parseInt(cache.get(failKey) || "0") + 1;
+      if (failures >= LOGIN_MAX_ATTEMPTS) {
+        cache.put(`login_block_${clientIp}`, "BLOCKED", LOGIN_BLOCK_DURATION);
+        cache.remove(failKey);
+        throw new Error(`Too many failed attempts. Blocked for 15 mins.`);
+      } else {
+        cache.put(failKey, failures.toString(), LOGIN_BLOCK_DURATION);
+      }
+    }
+    throw new Error("Invalid credentials.");
+  }
+}
+
+function handleLogout(params) {
+  if (params.sessionID) {
+    const cache = CacheService.getScriptCache();
+    cache.remove(params.sessionID);
+    cache.remove(`ratelimit_${params.sessionID}`); 
+    cache.remove(`admin_mode_${params.sessionID}`); 
+  }
+  return { status: "success", message: "Logged out." };
+}
+
+// --- PASSWORD RECOVERY FLOW ---
+
+function handleSendResetOtp(params) {
+  const identifier = params.identifier; 
+  const mobile = params.mobile;         
+  const clientIp = params.ip || "0.0.0.0";
+  const cache = CacheService.getScriptCache();
+
+  if (cache.get(`reset_block_${clientIp}`)) throw new Error(`Password reset blocked.`);
+  if (!identifier || !mobile) throw new Error("Missing details.");
+
+  const safeKey = sanitizeKey(identifier);
+  const user = readFromFirebase("USERS/" + safeKey);
+  if (!user || String(user.MOBILE) !== String(mobile)) throw new Error("Details mismatch.");
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  cache.put('otp_' + identifier, otp, OTP_EXPIRATION_SECONDS);
+
+  try {
+    GmailApp.sendEmail(user.EMAIL, EMAIL_TEMPLATES.RESET_OTP.subject, `${EMAIL_TEMPLATES.RESET_OTP.body}${otp}`);
+  } catch (e) { throw new Error("Failed to send OTP email."); }
+
+  return { status: "success", message: `OTP sent.` };
+}
+
+function handleVerifyResetOtp(params) {
+  const identifier = params.identifier;
+  const otp = params.otp;
+  const clientIp = params.ip || "0.0.0.0";
+  const cache = CacheService.getScriptCache();
+  
+  if (cache.get(`reset_block_${clientIp}`)) throw new Error(`Password reset blocked.`);
+
+  if (cache.get('otp_' + identifier) !== otp) {
+    let failures = parseInt(cache.get(`reset_fail_${clientIp}`) || "0") + 1;
+    if (failures >= RESET_MAX_ATTEMPTS) {
+      cache.put(`reset_block_${clientIp}`, "BLOCKED", RESET_BLOCK_DURATION);
+      throw new Error(`Too many failed attempts. Blocked.`);
+    } else {
+      cache.put(`reset_fail_${clientIp}`, failures.toString(), 3600);
+    }
+    throw new Error("Invalid OTP.");
+  }
+
+  const resetToken = Utilities.getUuid();
+  const safeKey = sanitizeKey(identifier);
+  writeToFirebase(`USERS/${safeKey}/RESET_TOKEN`, resetToken);
+  cache.remove('otp_' + identifier);
+  
+  return { status: "success", token: resetToken };
+}
+
+function handleResetPassword(params) {
+  const { identifier, token, newPassword } = params;
+  if (!identifier || !token || !newPassword) throw new Error("Missing fields.");
+
+  const safeKey = sanitizeKey(identifier);
+  const user = readFromFirebase(`USERS/${safeKey}`);
+
+  if (!user || user.RESET_TOKEN !== token) throw new Error("Invalid token.");
+
+  const updates = { PASS: hashString(newPassword), RESET_TOKEN: "" };
+  UrlFetchApp.fetch(`${FIREBASE_URL}USERS/${safeKey}.json?auth=${FIREBASE_SECRET}`, { method: "patch", payload: JSON.stringify(updates) });
+
+  return { status: "success", message: "Password updated." };
+}
+
+// ============================================================================
+// SECTION 4: REGISTRATION WORKFLOW
+// ============================================================================
+
+function handleInitiateRegistration(params) {
+  const ip = params.ip || "0.0.0.0";
+  if (ENABLE_REG_SECURITY) {
+    const cache = CacheService.getScriptCache();
+    if (cache.get(`reg_block_${ip}`)) throw new Error(`Blocked.`);
+    if (cache.get(`reg_last_${ip}`)) throw new Error(`Please wait before trying again.`);
+  }
+
+  const regData = JSON.parse(params.registrationData || "{}");
+  if (!regData.USER || !regData.EMAIL) throw new Error("Missing fields.");
+
+  const safeUserKey = sanitizeKey(regData.USER);
+  if (readFromFirebase(`USERS/${safeUserKey}`)) throw new Error("Username taken.");
+
+  const safeEmailKey = sanitizeKey(regData.EMAIL);
+  if (readFromFirebase(`REGISTRATIONS/${safeEmailKey}`)) throw new Error("Already pending.");
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const cacheKey = `reg_pending_${safeEmailKey}`;
+  CacheService.getScriptCache().put(cacheKey, JSON.stringify({ otp: otp, data: regData, ip: ip }), OTP_EXPIRATION_SECONDS);
+
+  try {
+    GmailApp.sendEmail(regData.EMAIL, EMAIL_TEMPLATES.REG_OTP.subject, `${EMAIL_TEMPLATES.REG_OTP.body}${otp}`);
+  } catch (e) { throw new Error("Failed to send OTP."); }
+
+  return { status: "success", message: `OTP sent.` };
+}
+
+function handleConfirmRegistration(params) {
+  const { email, otp } = params;
+  if (!email || !otp) throw new Error("Missing info.");
+
+  const safeEmailKey = sanitizeKey(email);
+  const cacheKey = `reg_pending_${safeEmailKey}`;
+  const cachedStr = CacheService.getScriptCache().get(cacheKey);
+
+  if (!cachedStr) throw new Error("Session expired.");
+  const cached = JSON.parse(cachedStr);
+
+  if (cached.otp !== otp) {
+    if (ENABLE_REG_SECURITY) {
+      const cache = CacheService.getScriptCache();
+      const ip = cached.ip;
+      let failures = parseInt(cache.get(`reg_fail_${ip}`) || "0") + 1;
+      if (failures >= REG_MAX_ATTEMPTS) {
+        cache.put(`reg_block_${ip}`, "BLOCKED", REG_BLOCK_DURATION);
+        throw new Error(`Blocked for 24 hours.`);
+      } else {
+        cache.put(`reg_fail_${ip}`, failures.toString(), 3600);
+      }
+    }
+    throw new Error("Invalid OTP.");
+  }
+
+  writeToFirebase(`REGISTRATIONS/${safeEmailKey}`, cached.data);
+  CacheService.getScriptCache().remove(cacheKey);
+  
+  if (ENABLE_REG_SECURITY) {
+    CacheService.getScriptCache().put(`reg_last_${cached.ip}`, "DONE", REG_MIN_INTERVAL); 
+  }
+
+  return { status: "success", message: "Request submitted." };
+}
+
+// ============================================================================
+// SECTION 5: ADMIN USER MANAGEMENT
+// ============================================================================
+
+function checkAdminAccess(sessionUser) {
+  if (ROLE_LEVELS[sessionUser.role] < ROLE_LEVELS[ROLE_ADMIN]) throw new Error("Access Denied.");
+}
+
+function handleFetchRegistrations(params, sessionUser) {
+  checkAdminAccess(sessionUser);
+  const data = readFromFirebase("REGISTRATIONS");
+  return { status: "success", requests: data ? Object.values(data) : [] };
+}
+
+function handleDeclineRegistration(params, sessionUser) {
+  checkAdminAccess(sessionUser);
+  const safeKey = sanitizeKey(params.targetEmail);
+  UrlFetchApp.fetch(`${FIREBASE_URL}REGISTRATIONS/${safeKey}.json?auth=${FIREBASE_SECRET}`, { method: "delete" });
+  return { status: "success", message: "Request removed." };
+}
+
+function handleFetchAllUsers(params, sessionUser) {
+  checkAdminAccess(sessionUser);
+  const data = readFromFirebase("USERS");
+  const list = data ? Object.values(data) : [];
+  const safeList = list.map(u => ({
+    USER: u.USER, NAME: u.NAME, ROLE: u.ROLE, BRANCH: u.BRANCH, STATUS: u.STATUS, EMAIL: u.EMAIL
+  }));
+  return { status: "success", users: safeList };
+}
+
+function handleInitiateAddUser(params, sessionUser) {
+  checkAdminAccess(sessionUser);
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const pendingKey = `adduser_pending_${params.sessionID}`;
+  
+  const newUser = JSON.parse(params.newUserData);
+  if (!newUser.USER || !newUser.ROLE) throw new Error("User and Role are required.");
+  
+  CacheService.getScriptCache().put(pendingKey, JSON.stringify({ otp: otp, newUser: newUser }), OTP_EXPIRATION_SECONDS);
+
+  const adminUser = readFromFirebase(`USERS/${sessionUser.username}`);
+  if (!adminUser.EMAIL) throw new Error("Admin email missing.");
+  GmailApp.sendEmail(adminUser.EMAIL, EMAIL_TEMPLATES.ADMIN_ADD_OTP.subject, `${EMAIL_TEMPLATES.ADMIN_ADD_OTP.body}${otp}`);
+
+  return { status: "success", message: "OTP sent." };
+}
+
+function handleConfirmAddUser(params, sessionUser) {
+  const cache = CacheService.getScriptCache();
+  const pendingKey = `adduser_pending_${params.sessionID}`;
+  const cachedData = JSON.parse(cache.get(pendingKey));
+
+  if (!cachedData || cachedData.otp !== params.otp) throw new Error("Invalid or expired OTP.");
+
+  const newUser = cachedData.newUser;
+  const safeUserKey = sanitizeKey(newUser.USER);
+  if (readFromFirebase(`USERS/${safeUserKey}`)) throw new Error("User exists.");
+
+  writeToFirebase(`USERS/${safeUserKey}`, newUser);
+  if (newUser.EMAIL) {
+    UrlFetchApp.fetch(`${FIREBASE_URL}REGISTRATIONS/${sanitizeKey(newUser.EMAIL)}.json?auth=${FIREBASE_SECRET}`, { method: "delete" });
+  }
+  cache.remove(pendingKey);
+  return { status: "success", message: "User added." };
+}
+
+// --- SUDO MODE ---
+
+function handleInitiateAdminAccess(params, sessionUser) {
+  const { adminUsername, adminPassword } = params;
+  const user = readFromFirebase(`USERS/${sanitizeKey(adminUsername)}`);
+  
+  if (!user || user.PASS !== hashString(adminPassword)) throw new Error("Invalid credentials.");
+  if (ROLE_LEVELS[user.ROLE] < ROLE_LEVELS[ROLE_ADMIN]) throw new Error("Unauthorized.");
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  CacheService.getScriptCache().put(`admin_otp_${params.sessionID}`, otp, OTP_EXPIRATION_SECONDS);
+  
+  GmailApp.sendEmail(user.EMAIL, EMAIL_TEMPLATES.SUDO_OTP.subject, `${EMAIL_TEMPLATES.SUDO_OTP.body}${otp}`);
+  return { status: "success", message: "OTP sent." };
+}
+
+function handleVerifyAdminAccess(params, sessionUser) {
+  const cache = CacheService.getScriptCache();
+  if (cache.get(`admin_otp_${params.sessionID}`) !== params.otp) throw new Error("Invalid OTP.");
+  
+  cache.put(`admin_mode_${params.sessionID}`, "ACTIVE", ADMIN_ACCESS_DURATION);
+  cache.remove(`admin_otp_${params.sessionID}`);
+  return handleFetchAllUsers(params, sessionUser);
+}
+
+function checkSudo(sessionID) {
+  if (!CacheService.getScriptCache().get(`admin_mode_${sessionID}`)) throw new Error("Sudo Access Required.");
+}
+
+function handleAdminUpdateUser(params, sessionUser) {
+  checkAdminAccess(sessionUser);
+  checkSudo(params.sessionID);
+  
+  const safeKey = sanitizeKey(params.targetUser);
+  const updates = JSON.parse(params.updatedData || "{}");
+  const safeUpdates = {};
+  ["NAME", "MOBILE", "ROLE", "BRANCH", "EMAIL", "STATUS", "COL_FILTER", "FILTER_VALUE"].forEach(f => {
+    if (updates[f] !== undefined) safeUpdates[f] = updates[f];
+  });
+
+  UrlFetchApp.fetch(`${FIREBASE_URL}USERS/${safeKey}.json?auth=${FIREBASE_SECRET}`, { method: "patch", payload: JSON.stringify(safeUpdates) });
+  return { status: "success", message: "User updated." };
+}
+
+function handleAdminDeleteUser(params, sessionUser) {
+  checkAdminAccess(sessionUser);
+  checkSudo(params.sessionID);
+  UrlFetchApp.fetch(`${FIREBASE_URL}USERS/${sanitizeKey(params.targetUser)}.json?auth=${FIREBASE_SECRET}`, { method: "delete" });
+  return { status: "success", message: "User deleted." };
+}
+
+// ============================================================================
+// SECTION 6: CORE DATA FETCHING
+// ============================================================================
+
+function verifyAndFetchAppData(params, sessionUser) {
+  const lastSyncTime = params.lastSyncTime ? params.lastSyncTime.trim() : null;
+  const currentServerTime = new Date().getTime().toString();
+  const responseData = {};
+  const userLevel = ROLE_LEVELS[sessionUser.role];
+
+  for (const [path, config] of Object.entries(DATA_SYNC_CONFIG)) {
+    if (config.type === "IGNORE" || config.type === "REQUEST") continue;
+    if (config.adminOnly && userLevel < ROLE_LEVELS[ROLE_ADMIN]) continue;
+
+    if (lastSyncTime && config.type === "SYNC") continue; 
+
+    let query = "";
+    let isDeltaFetch = false;
+    
+    if (config.type === "DELTASYNC" && lastSyncTime) {
+      isDeltaFetch = true;
+      const orderBy = encodeURIComponent('"TIME_STAMP"');
+      const isNumeric = /^\d+$/.test(lastSyncTime);
+      const startAtVal = isNumeric ? lastSyncTime : encodeURIComponent(`"${lastSyncTime}"`);
+      query = `orderBy=${orderBy}&startAt=${startAtVal}`; 
+    } else if (config.filterable && sessionUser.colFilter && sessionUser.filterValue && userLevel < ROLE_LEVELS[ROLE_ADMIN]) {
+      const orderBy = encodeURIComponent(`"${sessionUser.colFilter}"`);
+      const equalTo = encodeURIComponent(`"${sessionUser.filterValue}"`);
+      query = `orderBy=${orderBy}&equalTo=${equalTo}`;
+    }
+    
+    let fetchedData = readFromFirebase(path, query);
+
+    if (isDeltaFetch && config.filterable && userLevel < ROLE_LEVELS[ROLE_ADMIN]) {
+        const filteredObj = {};
+        if (fetchedData) {
+            Object.keys(fetchedData).forEach(key => {
+                const item = fetchedData[key];
+                if (item[sessionUser.colFilter] === sessionUser.filterValue) {
+                    filteredObj[key] = item;
+                }
+            });
+            fetchedData = filteredObj;
+        }
+    }
+
+    if (fetchedData && Object.keys(fetchedData).length > 0) {
+      const parts = path.split('/'); 
+      if (!responseData[parts[0]]) responseData[parts[0]] = {};
+      responseData[parts[0]][parts[1]] = fetchedData;
+    }
+  }
+
+  return {
+    status: "success",
+    syncTimestamp: currentServerTime,
+    updates: responseData,
+    meta: { type: lastSyncTime ? "DELTA" : "FULL" }
+  };
+}
+
+function fetchAppData(params, sessionUser) {
+  let path = params.collection.replace(/[^a-zA-Z0-9_\/]/g, "");
+  const data = readFromFirebase(path);
+  return { status: "success", data: data };
+}
+
+function handleGetPincodeData(params, sessionUser) {
+  const { searchType, query } = params;
+  if (!query) throw new Error("Missing query.");
+
+  const path = "NETWORK/PINCODE";
+  
+  if (searchType === 'pincode') {
+    const data = readFromFirebase(`${path}/${sanitizeKey(query)}`);
+    return { status: "success", data: data };
+  } else if (searchType === 'city') {
+    // Query Firebase for the first matching city name
+    const orderBy = encodeURIComponent('"DestinationName"');
+    const equalTo = encodeURIComponent(`"${query.toUpperCase()}"`);
+    const data = readFromFirebase(path, `orderBy=${orderBy}&equalTo=${equalTo}&limitToFirst=1`);
+    
+    const keys = data ? Object.keys(data) : [];
+    return { status: "success", data: keys.length > 0 ? data[keys[0]] : null };
+  }
+  
+  throw new Error("Invalid search type.");
+}
+
+function handleGetMemos(params, sessionUser, publicOnly) {
+  const publicMemos = readFromFirebase("MEMOS/PUBLIC") || {};
+  if (publicOnly) return { status: "success", data: Object.values(publicMemos) };
+  
+  const privateMemos = readFromFirebase("MEMOS/PRIVATE") || {};
+  // Combine both for authenticated users
+  const allMemos = [...Object.values(publicMemos), ...Object.values(privateMemos)];
+  return { status: "success", data: allMemos };
+}
+
+// ============================================================================
+// SECTION 7: UTILITIES & DOOMSDAY PROTOCOL
+// ============================================================================
+
+function handleToggleSystemStatus(params, sessionUser) {
+    if (sessionUser.role !== ROLE_MASTER) throw new Error("Unauthorized.");
+    
+    const requestedStatus = params.status; 
+    if (requestedStatus !== SYSTEM_STATES.LIVE && requestedStatus !== SYSTEM_STATES.DEAD) throw new Error("Invalid Status.");
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const requestKey = `toggle_req_${sessionUser.username}`;
+    CacheService.getScriptCache().put(requestKey, JSON.stringify({ status: requestedStatus, otp: otp }), 300);
+
+    const masterUser = readFromFirebase(`USERS/${sessionUser.username}`);
+    GmailApp.sendEmail(masterUser.EMAIL, EMAIL_TEMPLATES.TOGGLE_OTP.subject, `${EMAIL_TEMPLATES.TOGGLE_OTP.body}${requestedStatus}: ${otp}`);
+    return { status: "success", message: "OTP sent." };
+}
+
+function handleVerifySystemToggle(params, sessionUser) {
+    if (sessionUser.role !== ROLE_MASTER) throw new Error("Unauthorized.");
+    
+    const requestKey = `toggle_req_${sessionUser.username}`;
+    const cachedDataStr = CacheService.getScriptCache().get(requestKey);
+    if (!cachedDataStr) throw new Error("Request expired.");
+    
+    const requestData = JSON.parse(cachedDataStr);
+    if (requestData.otp !== params.otp) throw new Error("Invalid OTP.");
+    
+    const scriptProps = PropertiesService.getScriptProperties();
+
+    if (requestData.status === SYSTEM_STATES.DEAD) {
+        const recoveryKey = Utilities.getUuid().replace(/-/g, '').substring(0, 16).toUpperCase();
+        scriptProps.setProperty(PROP_KEYS.STATUS, SYSTEM_STATES.DEAD);
+        scriptProps.setProperty(PROP_KEYS.RECOVERY_KEY, recoveryKey);
+        
+        const masterUser = readFromFirebase(`USERS/${sessionUser.username}`);
+        GmailApp.sendEmail(masterUser.EMAIL, EMAIL_TEMPLATES.KILL_KEY.subject, `${EMAIL_TEMPLATES.KILL_KEY.body}${recoveryKey}`);
+        CacheService.getScriptCache().remove(requestKey);
+        return { status: "success", message: "System DEAD. Key emailed." };
+    } else {
+        scriptProps.setProperty(PROP_KEYS.STATUS, SYSTEM_STATES.RECOVERY);
+        CacheService.getScriptCache().remove(requestKey);
+        return { status: "success", message: "Recovery Mode. Enter Key." };
+    }
+}
+
+function handleConfirmSystemRecovery(params, sessionUser) {
+    if (sessionUser.role !== ROLE_MASTER) throw new Error("Unauthorized.");
+    
+    const scriptProps = PropertiesService.getScriptProperties();
+    if (scriptProps.getProperty(PROP_KEYS.STATUS) !== SYSTEM_STATES.RECOVERY) throw new Error("Not in Recovery Mode.");
+    
+    if (params.recoveryKey !== scriptProps.getProperty(PROP_KEYS.RECOVERY_KEY)) throw new Error("Invalid Key.");
+    
+    scriptProps.setProperty(PROP_KEYS.STATUS, SYSTEM_STATES.LIVE);
+    scriptProps.deleteProperty(PROP_KEYS.RECOVERY_KEY);
+    return { status: "success", message: "System LIVE." };
+}
+
+function validateSession(params) {
+  const sessionID = params.sessionID;
+  const cache = CacheService.getScriptCache();
+  const cachedSessionStr = sessionID ? cache.get(sessionID) : null;
+  
+  if (!cachedSessionStr) throw new Error("Session expired.");
+  
+  const sessionData = JSON.parse(cachedSessionStr);
+  // Extend session on activity
+  cache.put(sessionID, cachedSessionStr, SESSION_TIMEOUT);
+  
+  return sessionData;
+}
+
+function readFromFirebase(path, queryString = "") {
+  let url = `${FIREBASE_URL}${path.startsWith('/') ? path.substring(1) : path}.json?auth=${FIREBASE_SECRET}`;
+  if (queryString) url += "&" + queryString;
+  const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+  if (response.getResponseCode() !== 200) {
+    throw new Error(`Firebase Read Error (${response.getResponseCode()}): ${response.getContentText()}`);
+  }
+  return JSON.parse(response.getContentText());
+}
+
+function writeToFirebase(path, data, method = "put") {
+  const url = `${FIREBASE_URL}${path.startsWith('/') ? path.substring(1) : path}.json?auth=${FIREBASE_SECRET}`;
+  const response = UrlFetchApp.fetch(url, { 
+    method: method, 
+    contentType: "application/json", 
+    payload: JSON.stringify(data),
+    muteHttpExceptions: true
+  });
+  if (response.getResponseCode() >= 400) {
+    throw new Error(`Firebase Write Error (${response.getResponseCode()}): ${response.getContentText()}`);
+  }
+}
+
+function sanitizeKey(str) { return str ? String(str).replace(/[.#$\[\]]/g, "_") : "unknown"; }
+
+function hashString(str) {
+  const rawHash = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, str);
+  let txtHash = '';
+  for (let i = 0; i < rawHash.length; i++) {
+    let hashVal = rawHash[i];
+    if (hashVal < 0) hashVal += 256;
+    if (hashVal.toString(16).length == 1) txtHash += '0';
+    txtHash += hashVal.toString(16);
+  }
+  return txtHash;
+}
+
+function hideEmail(email) {
+  if (!email) return "...";
+  const parts = email.split("@");
+  if (parts.length === 2) {
+    return parts[0].substring(0, 2) + "***@" + parts[1];
+  }
+  return email;
+}
+
+function responseJSON(data) { return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON); }
+function responseError(message, stack = null) { return ContentService.createTextOutput(JSON.stringify({ status: "error", message: message, stack: stack })).setMimeType(ContentService.MimeType.JSON); }
+
+function forceAuth() {
+  console.log("Authorizing services...");
+  try { DriveApp.getRootFolder(); } catch(e) {}
+  try { GmailApp.getAliases(); } catch(e) {}
+  try { UrlFetchApp.fetch("https://www.google.com"); } catch(e) {}
+  try { CacheService.getScriptCache(); } catch(e) {}
+  try { LockService.getScriptLock(); } catch(e) {}
+  console.log("Services authorized.");
+}
+
+// ============================================================================
+// SECTION 8: SECURE WRITE OPERATIONS (THE FIREWALL)
+// ============================================================================
+
+function handleFirebaseWrite(params, sessionUser) {
+  const path = params.path;
+  const data = JSON.parse(params.data || "{}");
+  const method = (params.method || "POST").toUpperCase(); 
+
+  if (!path) throw new Error("Missing path.");
+
+  let configKey = null;
+  for (const key in DATA_PERMISSION_CONFIG) {
+    if (path === key || path.startsWith(key + "/")) {
+      configKey = key;
+      break;
+    }
+  }
+
+  if (!configKey) throw new Error("Write denied: Unknown Path.");
+  const permissions = DATA_PERMISSION_CONFIG[configKey];
+
+  let requiredRole = ROLE_MASTER; 
+  
+  if (method === "POST" || method === "PUT") requiredRole = permissions.C; // Create
+  else if (method === "PATCH") requiredRole = permissions.U;               // Update
+  else if (method === "DELETE") requiredRole = permissions.D;              // Delete
+  else throw new Error("Invalid Method.");
+
+  const userLevel = ROLE_LEVELS[sessionUser.role] || 0;
+  const reqLevel = ROLE_LEVELS[requiredRole] || 100;
+
+  // BLOCK AUDITOR (The "Read-Only" Reviewer)
+  // Even though Auditor (70) > Staff (10), they must not write.
+  if (sessionUser.role === ROLE_AUDITOR) {
+      throw new Error("Access Denied. Auditors are Read-Only.");
+  }
+
+  if (userLevel < reqLevel) {
+    throw new Error(`Access Denied. Required Level: ${reqLevel}, Your Level: ${userLevel}`);
+  }
+
+  writeToFirebase(path, data, method);
+  return { status: "success", message: "Write successful." };
+}
+
+function handleFileUpload(params) {
+  if (!params.data || !params.filename || !params.mimeType) throw new Error("Missing params.");
+  const folder = DriveApp.getFolderById(UPLOAD_FOLDER_ID);
+  const rawBase64 = params.data.replace(/^data:.*,/, '');
+  const file = folder.createFile(Utilities.newBlob(Utilities.base64Decode(rawBase64), params.mimeType, params.filename)); 
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  return { status: "success", url: file.getUrl(), downloadUrl: file.getDownloadUrl() };
+}
