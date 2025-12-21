@@ -20,6 +20,21 @@
  * ============================================================================
  */
 
+// --- GLOBAL UI HELPERS ---
+/**
+ * Injects the application favicon dynamically if not present.
+ */
+(function() {
+    let link = document.querySelector("link[rel*='icon']");
+    if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        link.type = 'image/png';
+        document.head.appendChild(link);
+    }
+    link.href = 'https://i.postimg.cc/wv02f1fb/postman-Logo-28.png';
+})();
+
 // ============================================================================
 // SECTION 1: GLOBAL CONFIGURATION & MAPS
 // ============================================================================
