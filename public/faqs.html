@@ -1,0 +1,79 @@
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="p-6 border-b border-gray-100 bg-gray-50/50">
+        <h3 class="text-xl font-bold text-blue-900">General Questions</h3>
+        <p class="text-sm text-gray-500">Find quick answers to common queries.</p>
+    </div>
+    <div class="divide-y divide-gray-100">
+        <!-- FAQ Item 1 -->
+        <div class="faq-item">
+            <button class="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors group" onclick="toggleFaq(this)">
+                <span class="font-semibold text-gray-800 group-hover:text-blue-900">How do I track my shipment?</span>
+                <i class="fa-solid fa-chevron-down text-gray-400 group-hover:text-blue-900 transition-transform duration-300"></i>
+            </button>
+            <div class="faq-answer hidden px-6 pb-6 text-sm text-gray-600 leading-relaxed">
+                You can track your shipment by entering your AWB (Air Waybill) or Reference Number in the tracking widget located on the home page. Our real-time tracking system provides updates on the current location and status of your parcel.
+            </div>
+        </div>
+
+        <!-- FAQ Item 2 -->
+        <div class="faq-item">
+            <button class="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors group" onclick="toggleFaq(this)">
+                <span class="font-semibold text-gray-800 group-hover:text-blue-900">What are the restricted items for shipping?</span>
+                <i class="fa-solid fa-chevron-down text-gray-400 group-hover:text-blue-900 transition-transform duration-300"></i>
+            </button>
+            <div class="faq-answer hidden px-6 pb-6 text-sm text-gray-600 leading-relaxed">
+                Restricted items include explosives, flammable gases, toxic substances, and illegal goods. For a detailed list, please refer to our <button onclick="loadService('dgr.html')" class="text-blue-600 hover:underline font-medium">DGR (Dangerous Goods Regulations)</button> section.
+            </div>
+        </div>
+
+        <!-- FAQ Item 3 -->
+        <div class="faq-item">
+            <button class="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors group" onclick="toggleFaq(this)">
+                <span class="font-semibold text-gray-800 group-hover:text-blue-900">What do I do if my package is delayed?</span>
+                <i class="fa-solid fa-chevron-down text-gray-400 group-hover:text-blue-900 transition-transform duration-300"></i>
+            </button>
+            <div class="faq-answer hidden px-6 pb-6 text-sm text-gray-600 leading-relaxed">
+                Delays can occur due to weather, customs clearance, or technical issues. If your package is significantly delayed beyond the estimated delivery date, please <button onclick="window.openComplaintModal()" class="text-blue-600 hover:underline font-medium">raise a complaint</button> so our team can investigate immediately.
+            </div>
+        </div>
+
+        <!-- FAQ Item 4 -->
+        <div class="faq-item">
+            <button class="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors group" onclick="toggleFaq(this)">
+                <span class="font-semibold text-gray-800 group-hover:text-blue-900">How can I estimate shipping costs?</span>
+                <i class="fa-solid fa-chevron-down text-gray-400 group-hover:text-blue-900 transition-transform duration-300"></i>
+            </button>
+            <div class="faq-answer hidden px-6 pb-6 text-sm text-gray-600 leading-relaxed">
+                You can use our online Rate Calculator (if available) or contact our sales team. Costs are generally based on the weight, dimensions, and destination of the shipment.
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleFaq(button) {
+        const answer = button.nextElementSibling;
+        const icon = button.querySelector('i');
+        
+        // Close all other answers in this container (optional but cleaner)
+        const allItems = button.closest('.divide-y').querySelectorAll('.faq-answer');
+        const allIcons = button.closest('.divide-y').querySelectorAll('i.fa-chevron-down');
+        
+        allItems.forEach(item => {
+            if (item !== answer) item.classList.add('hidden');
+        });
+        allIcons.forEach(i => {
+            if (i !== icon) i.classList.remove('rotate-180');
+        });
+
+        // Toggle current answer
+        answer.classList.toggle('hidden');
+        icon.classList.toggle('rotate-180');
+    }
+</script>
+
+<style>
+    .rotate-180 {
+        transform: rotate(180deg);
+    }
+</style>

@@ -173,6 +173,11 @@ const DATA_PERMISSION_CONFIG = {
   "SERVICES/CARRIER":   { C: ROLE_ADMIN,  U: ROLE_ADMIN,  D: ROLE_MASTER },
   "NETWORK/PINCODE":    { C: ROLE_ADMIN,  U: ROLE_ADMIN,  D: ROLE_MASTER },
 
+  // COMMUNICATIONS
+  "MEMOS/PUBLIC":       { C: ROLE_ADMIN, U: ROLE_ADMIN, D: ROLE_ADMIN },
+  "MEMOS/PRIVATE":      { C: ROLE_ADMIN, U: ROLE_ADMIN, D: ROLE_ADMIN },
+  "EXTERNAL_NEWS":      { C: ROLE_ADMIN, U: ROLE_ADMIN, D: ROLE_ADMIN },
+
   // FINANCE & SUPPORT
   "CRM":                { C: ROLE_STAFF,  U: ROLE_STAFF,  D: ROLE_MANAGER },
   "LEDGER":             { C: ROLE_ACCOUNTANT, U: ROLE_MASTER, D: ROLE_MASTER }, 
@@ -202,6 +207,7 @@ const FUNCTION_PERMISSION_CONFIG = {
   "getPincodeData":       ROLE_CLIENT,
   "getPublicMemos":       ROLE_GUEST,
   "getMemos":             ROLE_CLIENT,
+  "getExternalNews":      ROLE_GUEST,
   "upload":               ROLE_STAFF,  // Files (PODs)
   "fbWrite":              ROLE_MASTER, // Raw DB Write (Dangerous)
 
@@ -303,6 +309,7 @@ function handleRequest(e) {
       case "getPincodeData":       result = handleGetPincodeData(params, sessionUser); break;
       case "getPublicMemos":       result = handleGetMemos(params, null, true); break;
       case "getMemos":             result = handleGetMemos(params, sessionUser, false); break;
+      case "getExternalNews":      result = handleGetExternalNews(params); break;
       
       case "toggleSystemStatus":   result = handleToggleSystemStatus(params, sessionUser); break;
       case "verifySystemToggle":   result = handleVerifySystemToggle(params, sessionUser); break;
@@ -768,6 +775,11 @@ function handleGetMemos(params, sessionUser, publicOnly) {
   // Combine both for authenticated users
   const allMemos = [...Object.values(publicMemos), ...Object.values(privateMemos)];
   return { status: "success", data: allMemos };
+}
+
+function handleGetExternalNews(params) {
+  const data = readFromFirebase("EXTERNAL_NEWS");
+  return { status: "success", data: data ? Object.values(data) : [] };
 }
 
 // ============================================================================
