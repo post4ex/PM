@@ -32,7 +32,7 @@
         link.type = 'image/png';
         document.head.appendChild(link);
     }
-    link.href = 'https://i.postimg.cc/wv02f1fb/postman-Logo-28.png';
+    link.href = 'https://i.postimg.cc/dt2sBP8v/postman-fevicon.png';
 })();
 
 // ============================================================================
