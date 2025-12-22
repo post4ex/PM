@@ -420,14 +420,7 @@ function renderDocumentWorkspace(schema) {
             formHtml += fieldWrapper;
         });
 
-        formHtml += `
-            <div class="w-full px-2 mt-4 pt-4 border-t flex justify-end gap-3">
-                <button type="button" class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded font-medium transition-colors">Reset</button>
-                <button type="button" onclick="handleGenerate('${schema.id}')" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium shadow-sm transition-all transform active:scale-95">
-                    <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Generate Document
-                </button>
-            </div>
-        </form>`;
+        formHtml += `</form>`;
     } else {
         formHtml = `
             <div class="flex flex-col items-center justify-center py-12 text-gray-400 bg-gray-50 rounded border border-dashed border-gray-300">
@@ -450,10 +443,14 @@ function renderDocumentWorkspace(schema) {
                 </div>
             </div>
             
-            <div class="flex flex-wrap justify-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-200">
-                <button onclick="handleGenerate('${schema.id}')" class="p-2 text-gray-600 hover:text-blue-700 hover:bg-white rounded-md transition-all shadow-sm" title="Print / Generate">
-                    <i class="fa-solid fa-print"></i>
+            <div class="flex flex-wrap justify-center items-center gap-3">
+                <button onclick="document.getElementById('doc-form').reset()" class="px-4 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md font-medium text-sm transition-colors">
+                    Reset
                 </button>
+                <button onclick="handleGenerate('${schema.id}')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md font-semibold shadow-sm transition-all transform active:scale-95 flex items-center gap-2 text-sm">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Document
+                </button>
+                <div class="flex flex-wrap justify-center gap-1 bg-gray-50 p-1 rounded-lg border border-gray-200">
                 <button onclick="togglePreview()" class="p-2 text-gray-600 hover:text-blue-700 hover:bg-white rounded-md transition-all shadow-sm" title="Toggle Live Preview">
                     <i id="preview-toggle-icon" class="fa-regular ${isPreviewOpen ? 'fa-eye' : 'fa-eye-slash'}"></i>
                 </button>
@@ -466,10 +463,6 @@ function renderDocumentWorkspace(schema) {
                 </button>
                 <button onclick="showDocInfo('${schema.title.replace(/'/g, "\\'")}', '${schema.desc.replace(/'/g, "\\'")}')" class="p-2 text-gray-600 hover:text-yellow-600 hover:bg-white rounded-md transition-all shadow-sm" title="Info">
                     <i class="fa-solid fa-circle-info"></i>
-                </button>
-                <div class="w-px h-6 bg-gray-300 mx-1 self-center"></div>
-                <button onclick="document.getElementById('doc-form').reset()" class="p-2 text-gray-600 hover:text-orange-600 hover:bg-white rounded-md transition-all shadow-sm" title="Reset">
-                    <i class="fa-solid fa-rotate-right"></i>
                 </button>
                 <button onclick="saveLocalDraft('${schema.id}')" class="p-2 text-gray-600 hover:text-green-600 hover:bg-white rounded-md transition-all shadow-sm" title="Save Local">
                     <i class="fa-solid fa-floppy-disk"></i>
