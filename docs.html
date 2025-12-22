@@ -53,9 +53,6 @@
                 <div>
                     <h3 class="px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Category 1: Core Documents</h3>
                     <div class="space-y-1 pr-2">
-                        <button data-doc-code="DOM_INV" data-doc-title="Domestic Invoice / Challan" data-doc-desc="Required for all domestic shipping and local transport." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Domestic Invoice / Challan</span>
-                        </button>
                         <button data-doc-code="COM_INV" data-doc-title="Commercial Invoice" data-doc-desc="Standard document for all commercial export shipments." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Commercial Invoice</span>
                         </button>
@@ -76,6 +73,19 @@
                         </button>
                         <button data-doc-code="LOA" data-doc-title="Letter of Authority" data-doc-desc="Authorizes a Customs House Agent (CHA) to act on your behalf." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Letter of Authority (CHA)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Category 1.5: Domestic Shipping -->
+                <div>
+                    <h3 class="px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Category 1.5: Domestic Shipping</h3>
+                    <div class="space-y-1 pr-2">
+                        <button data-doc-code="TAX_CHALLAN" data-doc-title="Tax Invoice cum Delivery Challan" data-doc-desc="GST compliant domestic invoice for inter-state supply of goods." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Tax Invoice cum Delivery Challan</span>
+                        </button>
+                        <button data-doc-code="DELIVERY_CHALLAN" data-doc-title="Delivery Challan & Packaging List" data-doc-desc="Document for goods dispatch and receipt with detailed packaging information." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
+                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Delivery Challan & Packaging List</span>
                         </button>
                     </div>
                 </div>
@@ -102,8 +112,11 @@
                         <button data-doc-code="ARE1" data-doc-title="ARE-1 Form" data-doc-desc="For removal of goods for export without payment of Central Excise duty." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">ARE-1 Form</span>
                         </button>
-                        <button data-doc-code="ANN_1_2" data-doc-title="Annexure I & II (Garments)" data-doc-desc="Specific drawback claims for Woven Garments (Exporter & Manufacturer)." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Annexure I & II for Drawback</span>
+                        <button data-doc-code="ANN_1" data-doc-title="Annexure I (Drawback)" data-doc-desc="Exporter's declaration for higher All Industry Rate." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Annexure I (Drawback)</span>
+                        </button>
+                        <button data-doc-code="ANN_2" data-doc-title="Annexure II (DBK)" data-doc-desc="Supporting manufacturer's declaration for drawback claims." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Annexure II (DBK)</span>
                         </button>
                     </div>
                 </div>
