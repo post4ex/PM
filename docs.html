@@ -3,468 +3,797 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Postman - Document Center</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>Export Document Pro - Postman</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .doc-item { transition: all 0.2s ease; border-left: 3px solid transparent; }
-        .doc-item:hover { background-color: #f1f5f9; }
-        .doc-item.active { background-color: #eff6ff; border-left-color: #1e3a8a; font-weight: 600; color: #1e3a8a; }
-        .form-section-header { border-bottom: 1px solid #e2e8f0; margin-bottom: 1.5rem; padding-bottom: 0.5rem; }
-        .category-header { position: sticky; top: 0; z-index: 10; background-color: white; }
+        :root { --primary: #1e3a8a; --bg: #f3f4f6; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); }
+        .glass-card { background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.5); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .doc-item.active { background: #eff6ff; border-left: 4px solid var(--primary); font-weight: 600; color: var(--primary); }
+        .input-std { width: 100%; padding: 0.5rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; font-size: 0.875rem; background: white; transition: all 0.2s; }
+        .input-std:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 2px rgba(30,58,138,0.1); }
+        .input-std[readonly] { background-color: #f8fafc; color: #64748b; cursor: not-allowed; }
+        .tab-btn { padding: 0.5rem; font-size: 0.7rem; font-weight: 600; background: #f8fafc; border: 1px solid #e2e8f0; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .signature-pad { border: 2px dashed #cbd5e1; border-radius: 0.5rem; background: #fff; cursor: crosshair; touch-action: none; }
+        .animate-slide { animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        @media print { 
+            .no-print { display: none !important; } 
+            body { background: white; } 
+            .glass-card { box-shadow: none; border: none; } 
+            .input-std { border: none; padding: 0; background: transparent; }
+            textarea { border: none; padding: 0; background: transparent; resize: none; }
+            .signature-pad { border: none !important; }
+            
+            /* Blank Print Mode Overrides */
+            body.print-blank .input-std { border: 1px solid #e2e8f0 !important; color: transparent !important; padding: 0.25rem !important; }
+            body.print-blank textarea { border: 1px solid #e2e8f0 !important; color: transparent !important; padding: 0.25rem !important; }
+            body.print-blank .signature-pad { border: 1px dashed #cbd5e1 !important; }
+            body.print-blank select { color: transparent !important; }
+            body.print-blank button[onclick*="clearSig"] { display: none !important; }
+        }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col text-slate-900">
+<body class="min-h-screen text-slate-900 flex flex-col">
 
+    <!-- HEADER HOOK -->
     <div id="header-placeholder"></div>
 
-    <div class="flex flex-col md:flex-row flex-grow w-full md:h-[calc(100vh-88px)] overflow-hidden">
+    <div class="flex flex-col lg:flex-row flex-grow relative h-[calc(100vh-64px)]">
         
-        <!-- LEFT SIDEBAR: Search & Categories -->
-        <aside class="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
-            <div class="p-4 border-b bg-slate-50">
-                <h2 class="text-lg font-bold text-blue-900 mb-3 flex items-center gap-2">
-                    <i class="fa-solid fa-folder-open"></i> Document Library
-                </h2>
-                <div class="relative">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-sm"></i>
-                    <input type="text" id="docSearch" placeholder="Search forms..." 
-                           class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-900 text-sm transition-all">
+        <!-- SIDEBAR -->
+        <aside class="lg:w-72 w-full bg-white border-r border-slate-200 flex flex-col z-20 h-full no-print">
+            <div class="p-4 border-b border-slate-100 bg-white sticky top-0 z-10">
+                <div class="relative mb-3">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                    <input type="text" id="docSearch" placeholder="Search templates..." class="input-std pl-8" onkeyup="filterDocs()">
+                </div>
+                <!-- 2x2 GRID FOR TABS -->
+                <div class="grid grid-cols-2 gap-1 rounded overflow-hidden border border-slate-200">
+                    <button onclick="filterCat('all')" class="tab-btn active" id="tab-all">All</button>
+                    <button onclick="filterCat('shipping')" class="tab-btn" id="tab-shipping">Shipping</button>
+                    <button onclick="filterCat('customs')" class="tab-btn" id="tab-customs">Customs</button>
+                    <button onclick="filterCat('declarations')" class="tab-btn" id="tab-declarations">Declare</button>
                 </div>
             </div>
-
-            <div class="overflow-y-auto flex-grow custom-scrollbar p-2 space-y-6" id="sidebarContent">
-                
-                <!-- Core Shipping & Registration -->
-                <div class="space-y-4">
-                    <h3 class="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Core Shipping</h3>
-                    <nav class="space-y-1">
-                        <button onclick="selectDoc('KYC_Form')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-id-card text-blue-600"></i> KYC Form
-                        </button>
-                        <button onclick="selectDoc('Commercial-Invoice')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-file-invoice text-blue-600"></i> Commercial Invoice
-                        </button>
-                        <button onclick="selectDoc('Packing-List')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-boxes-stacked text-blue-600"></i> Packing List
-                        </button>
-                        <button onclick="selectDoc('Shippers-Letter-of-Instructions')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-file-signature text-blue-600"></i> Shippers Letter (SLI)
-                        </button>
-                    </nav>
-                </div>
-
-                <!-- Customs Annexures & Appendices -->
-                <div class="space-y-4">
-                    <h3 class="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Customs & Export</h3>
-                    <nav class="space-y-1">
-                        <button onclick="selectDoc('SDF-Form')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-building-columns text-emerald-600"></i> SDF Form
-                        </button>
-                        <button onclick="selectDoc('Annexure-C1-for-EOU')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-file-contract text-emerald-600"></i> Annexure C1 (EOU)
-                        </button>
-                        <button onclick="selectDoc('Annexure-D-for-DEPB')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-file-contract text-emerald-600"></i> Annexure D (DEPB)
-                        </button>
-                        <button onclick="selectDoc('Annexure-I-for-Drawback')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-money-bill-transfer text-emerald-600"></i> Annexure I (DBK)
-                        </button>
-                        <button onclick="selectDoc('Annexure-II-for-Drawback')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-money-bill-transfer text-emerald-600"></i> Annexure II (DBK)
-                        </button>
-                        <button onclick="selectDoc('Appendix-II-for-DEEC')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-shield-halved text-emerald-600"></i> Appendix II (DEEC)
-                        </button>
-                        <button onclick="selectDoc('Appendix-III-for-Drawback')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-money-bill-transfer text-emerald-600"></i> Appendix III (DBK)
-                        </button>
-                        <button onclick="selectDoc('Appendix-IV-for-Drawback')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-money-bill-transfer text-emerald-600"></i> Appendix IV (DBK)
-                        </button>
-                    </nav>
-                </div>
-
-                <!-- Declarations & Certificates -->
-                <div class="space-y-4">
-                    <h3 class="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Declarations</h3>
-                    <nav class="space-y-1">
-                        <button onclick="selectDoc('Non-DG-Declaration')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-circle-check text-indigo-600"></i> Non-DG Declaration
-                        </button>
-                        <button onclick="selectDoc('Negative-Declaration')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-circle-minus text-indigo-600"></i> Negative Declaration
-                        </button>
-                        <button onclick="selectDoc('TSCA-Certificate')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-certificate text-indigo-600"></i> TSCA Certificate
-                        </button>
-                        <button onclick="selectDoc('Single-Country-Declaration')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-flag text-indigo-600"></i> Single Country Dec.
-                        </button>
-                        <button onclick="selectDoc('Multiple-Country-Declaration')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-earth-americas text-indigo-600"></i> Multiple Country Dec.
-                        </button>
-                        <button onclick="selectDoc('Quota-Charge-Statement')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-percent text-indigo-600"></i> Quota Statement
-                        </button>
-                        <button onclick="selectDoc('GR-Waiver-Form-(for-Free-Trade-Sample)')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-gift text-indigo-600"></i> GR Waiver (Sample)
-                        </button>
-                        <button onclick="selectDoc('GR-Waiver-Form-(for-Repair-&-Return)')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-screwdriver-wrench text-indigo-600"></i> GR Waiver (Repair)
-                        </button>
-                    </nav>
-                </div>
-
-                <!-- Safety & Legal -->
-                <div class="space-y-4">
-                    <h3 class="px-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Safety & Legal</h3>
-                    <nav class="space-y-1">
-                        <button onclick="selectDoc('MSDS')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-flask-vial text-rose-600"></i> MSDS (Safety Sheet)
-                        </button>
-                        <button onclick="selectDoc('Letter of Authority')" class="doc-item w-full text-left px-3 py-2 text-sm rounded-md flex items-center gap-3">
-                            <i class="fa-solid fa-stamp text-rose-600"></i> Letter of Authority
-                        </button>
-                    </nav>
-                </div>
+            <div class="overflow-y-auto flex-grow p-2 space-y-1" id="docList"></div>
+            <!-- Progress Footer -->
+            <div class="p-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500">
+                <div class="flex justify-between mb-1"><span>System Status</span><span class="text-emerald-600 font-bold">Online</span></div>
+                <div class="h-1 w-full bg-slate-200 rounded overflow-hidden"><div class="h-full bg-blue-900 w-full"></div></div>
             </div>
         </aside>
 
-        <!-- RIGHT PANEL: Info or Form -->
-        <main class="flex-grow overflow-y-auto bg-slate-50 p-6 md:p-10" id="mainPanel">
+        <!-- MAIN CONTENT -->
+        <main class="flex-grow p-4 lg:p-8 bg-slate-50 overflow-y-auto h-full" id="mainContent">
             
-            <!-- INITIAL INFO VIEW -->
-            <div id="infoView" class="max-w-4xl mx-auto space-y-10">
-                <div class="text-center space-y-4">
-                    <div class="w-20 h-20 bg-blue-100 text-blue-900 rounded-full flex items-center justify-center mx-auto shadow-sm">
-                        <i class="fa-solid fa-file-circle-plus text-4xl"></i>
+            <!-- WELCOME / DASHBOARD -->
+            <div id="welcomeScreen" class="max-w-4xl mx-auto">
+                <!-- QUICK FILL SECTION -->
+                <div class="glass-card p-6 rounded-xl mb-8 border-l-4 border-blue-900 relative overflow-hidden group hover:shadow-lg transition-all">
+                    <i class="fa-solid fa-bolt absolute right-[-20px] top-[-20px] text-9xl text-yellow-400 opacity-10 transform rotate-12 group-hover:rotate-0 transition-transform"></i>
+                    <h3 class="font-bold text-lg mb-2 flex items-center gap-2 text-blue-900">
+                        <div class="p-2 bg-blue-100 rounded-lg"><i class="fa-solid fa-wand-magic-sparkles text-blue-600"></i></div>
+                        Quick Fill from Shipment
+                    </h3>
+                    <p class="text-sm text-slate-500 mb-4 max-w-md">Enter a Reference Number or AWB to automatically fetch Consignor, Consignee, and Weight details.</p>
+                    <div class="flex flex-col sm:flex-row gap-2 relative z-10">
+                        <input type="text" id="refSearch" placeholder="REF/2025/001" class="input-std uppercase font-bold text-lg sm:w-64">
+                        <button onclick="fetchData()" class="px-6 py-2 bg-blue-900 text-white rounded-lg font-bold hover:bg-blue-800 shadow-md transition-colors flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-download"></i> Fetch
+                        </button>
                     </div>
-                    <h1 class="text-3xl font-black text-slate-800">Document Generation Center</h1>
-                    <p class="text-slate-500 max-w-lg mx-auto">Select a document from the library to generate, fill, or download official shipping and compliance forms.</p>
+                    <div id="fetchMsg" class="mt-2 text-xs font-bold hidden pl-1"></div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                        <h3 class="font-bold text-slate-800 mb-2 flex items-center gap-2">
-                            <i class="fa-solid fa-circle-info text-blue-600"></i> How it works
-                        </h3>
-                        <p class="text-sm text-slate-600 leading-relaxed">Choose a form from the sidebar. You can then fill in the required details directly in the panel to generate a professional PDF or download the blank template.</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                    <div class="glass-card p-5 rounded-xl text-center cursor-pointer hover:-translate-y-1 transition-transform" onclick="loadDoc('Commercial_Invoice')">
+                        <div class="w-12 h-12 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-3 text-blue-600 text-xl"><i class="fa-solid fa-file-invoice"></i></div>
+                        <h4 class="font-bold text-slate-700">Invoice</h4>
+                        <p class="text-xs text-slate-500 mt-1">Commercial & Tax</p>
                     </div>
-                    <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-                        <h3 class="font-bold text-slate-800 mb-2 flex items-center gap-2">
-                            <i class="fa-solid fa-shield-halved text-emerald-600"></i> Compliance Ready
-                        </h3>
-                        <p class="text-sm text-slate-600 leading-relaxed">All documents provided here are updated according to the latest IATA DGR and Indian Customs regulations for Session 2025-26.</p>
+                    <div class="glass-card p-5 rounded-xl text-center cursor-pointer hover:-translate-y-1 transition-transform" onclick="loadDoc('Packing_List')">
+                        <div class="w-12 h-12 mx-auto bg-emerald-100 rounded-full flex items-center justify-center mb-3 text-emerald-600 text-xl"><i class="fa-solid fa-boxes-stacked"></i></div>
+                        <h4 class="font-bold text-slate-700">Packing List</h4>
+                        <p class="text-xs text-slate-500 mt-1">Weights & Dims</p>
+                    </div>
+                    <div class="glass-card p-5 rounded-xl text-center cursor-pointer hover:-translate-y-1 transition-transform" onclick="loadDoc('Non_DG_Declaration')">
+                        <div class="w-12 h-12 mx-auto bg-amber-100 rounded-full flex items-center justify-center mb-3 text-amber-600 text-xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <h4 class="font-bold text-slate-700">Non-DG</h4>
+                        <p class="text-xs text-slate-500 mt-1">IATA Declaration</p>
                     </div>
                 </div>
             </div>
 
-            <!-- DYNAMIC FORM VIEW (Hidden initially) -->
-            <div id="formView" class="hidden max-w-3xl mx-auto bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
-                <div class="bg-blue-900 p-6 text-white flex justify-between items-center">
-                    <div>
-                        <h2 id="formTitle" class="text-xl font-bold">Document Form</h2>
-                        <p class="text-xs text-blue-200 opacity-80 mt-1">Fill the details below to generate your document.</p>
+            <!-- DOCUMENT VIEW -->
+            <div id="docView" class="hidden max-w-5xl mx-auto pb-20">
+                <!-- COMPACT STATIC HEADER -->
+                <div class="glass-card rounded-xl mb-6 bg-blue-900 text-white p-3 flex flex-wrap justify-between items-center no-print gap-3 shadow-lg">
+                    <div class="flex items-center gap-3">
+                        <h2 id="docTitle" class="text-lg font-bold truncate max-w-[150px] md:max-w-none"></h2>
+                        <span id="docRef" class="text-[10px] bg-yellow-400 text-blue-900 px-2 py-0.5 rounded font-bold hidden shadow-sm"></span>
                     </div>
-                    <button onclick="resetView()" class="text-blue-300 hover:text-white transition-colors">
-                        <i class="fa-solid fa-circle-xmark text-2xl"></i>
-                    </button>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="validate()" title="Check" class="p-2 bg-white/10 hover:bg-white/20 rounded text-xs font-bold transition-colors"><i class="fa-solid fa-check-double"></i></button>
+                        <button onclick="printDoc()" title="Print / PDF" class="p-2 bg-white/10 hover:bg-white/20 rounded text-xs font-bold transition-colors"><i class="fa-solid fa-print"></i></button>
+                        <button onclick="printBlank()" title="Print Blank" class="p-2 bg-white/10 hover:bg-white/20 rounded text-xs font-bold transition-colors"><i class="fa-regular fa-file"></i></button>
+                        <button onclick="showDocInfo()" title="Document Info" class="p-2 bg-white/10 hover:bg-white/20 rounded text-xs font-bold transition-colors"><i class="fa-solid fa-circle-info"></i></button>
+                        <button onclick="exportJSON()" title="Export JSON" class="p-2 bg-white/10 hover:bg-white/20 rounded text-xs font-bold transition-colors"><i class="fa-solid fa-code"></i></button>
+                        <button onclick="exportExcel()" title="Export Excel" class="p-2 bg-white/10 hover:bg-white/20 rounded text-xs font-bold transition-colors"><i class="fa-solid fa-file-excel"></i></button>
+                        <button onclick="exportDOC()" title="Export Word" class="p-2 bg-white/10 hover:bg-white/20 rounded text-xs font-bold transition-colors"><i class="fa-solid fa-file-word"></i></button>
+                        <button onclick="clearForm()" title="Clear" class="p-2 bg-red-500/20 hover:bg-red-500/40 text-red-200 rounded text-xs font-bold transition-colors"><i class="fa-solid fa-trash"></i></button>
+                        <button onclick="closeDoc()" title="Close" class="p-2 bg-white/10 hover:bg-white/20 rounded text-xs font-bold transition-colors"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
                 </div>
-                
-                <form id="docGenerationForm" class="p-8 space-y-6">
-                    <!-- COMPANY HEADER (Professional Branding) -->
-                    <div class="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
-                        <img src="https://i.postimg.cc/wv02f1fb/postman-Logo-28.png" class="h-12 w-auto" alt="Postman">
+
+                <div class="glass-card rounded-xl p-8 bg-white shadow-sm min-h-[800px] relative">
+                    <!-- Letterhead -->
+                    <div class="border-b-2 border-slate-800 pb-6 mb-8 flex justify-between items-start no-print">
                         <div>
-                            <h4 class="font-bold text-slate-800">Postman Logistics Pvt Ltd</h4>
-                            <p class="text-[10px] text-slate-500 uppercase tracking-wider">Shivlok Colony, Haripur, Dehradun - 248001</p>
+                            <h1 class="text-2xl font-black text-slate-900">POSTMAN LOGISTICS</h1>
+                            <p class="text-sm text-slate-500">Global Shipping & Freight Forwarding</p>
+                            <div class="text-xs text-slate-400 mt-1">GSTIN: 05AABCP1234M1Z5 • IEC: 0512345678</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="bg-slate-100 px-3 py-1 rounded text-xs font-bold text-slate-600 uppercase tracking-widest">Original</div>
                         </div>
                     </div>
 
-                    <!-- DYNAMIC FIELDS INJECTED HERE -->
-                    <div id="dynamicFieldsContainer" class="space-y-8"></div>
-
-                    <!-- FORM ACTIONS -->
-                    <div class="flex flex-col sm:flex-row gap-4 pt-4 border-t">
-                        <button type="button" onclick="downloadFile('Generated_Form.pdf')" class="flex-1 bg-blue-900 text-white font-bold py-3 rounded-lg hover:bg-blue-800 transition-all flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-file-pdf"></i> Generate PDF
-                        </button>
-                        <button type="button" onclick="downloadFile('Template.pdf')" class="flex-1 border border-slate-300 text-slate-700 font-bold py-3 rounded-lg hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-download"></i> Download Blank
-                        </button>
-                    </div>
-                </form>
+                    <form id="docForm" class="space-y-8"></form>
+                </div>
             </div>
         </main>
     </div>
 
-    <div id="footer-placeholder"></div>
+    <!-- INFO MODAL -->
+    <div id="infoModal" class="fixed inset-0 bg-black bg-opacity-50 z-[100] hidden items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl transform transition-all">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h3 class="text-xl font-bold text-blue-900 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info"></i> Document Information
+                </h3>
+                <button onclick="closeInfoModal()" class="text-gray-400 hover:text-red-500 transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <p id="infoModalContent" class="text-slate-600 leading-relaxed text-sm"></p>
+            </div>
+            <div class="p-4 bg-slate-50 rounded-b-2xl flex justify-end">
+                <button onclick="closeInfoModal()" class="px-6 py-2 bg-blue-900 text-white rounded-lg font-bold hover:bg-blue-800 transition-colors">Got it</button>
+            </div>
+        </div>
+    </div>
 
+    <!-- Layout Hooks -->
+    <div id="footer-placeholder"></div>
+    <div id="toast" class="fixed top-24 right-4 z-50 transition-all duration-300 transform translate-x-full"></div>
     <script src="layout.js"></script>
+
     <script>
         // ============================================================================
-        // DOCUMENT CONFIGURATION ENGINE
+        // 1. ENGINE: SCHEMA PARSER & RENDERER
         // ============================================================================
-        const COMMON_SECTIONS = {
-            IDENTITY: { title: 'Shipment Identity', fields: [
-                { label: 'AWB / Reference No.', type: 'text', key: 'awb', placeholder: 'Enter Number', full: false },
-                { label: 'Date of Issue', type: 'date', key: 'date', full: false }
-            ]},
-            PARTIES: { title: 'Parties Involved', fields: [
-                { label: 'Consignor (Exporter) Name', type: 'text', key: 'consignor_name', full: true },
-                { label: 'Consignor Address', type: 'textarea', key: 'consignor_address', full: true },
-                { label: 'Consignee (Importer) Name', type: 'text', key: 'consignee_name', full: true },
-                { label: 'Consignee Address', type: 'textarea', key: 'consignee_address', full: true }
-            ]},
-            BANK: { title: 'Financial & Banking Details', fields: [
-                { label: 'Bank Name', type: 'text', key: 'bank_name', full: false },
-                { label: 'Branch Address', type: 'text', key: 'bank_branch', full: false },
-                { label: 'Account Number', type: 'text', key: 'bank_acc', full: false },
-                { label: 'IFSC Code', type: 'text', key: 'bank_ifsc', full: false },
-                { label: 'AD Code', type: 'text', key: 'ad_code', placeholder: 'Authorized Dealer Code', full: true }
-            ]}
+        
+        const parseField = (str) => {
+            const parts = str.split('|');
+            return {
+                label: parts[0] || '',
+                key: parts[1] || '',
+                type: parts[2] || 'text',
+                full: parts[3]?.includes('full'),
+                req: parts[3]?.includes('*'),
+                lock: parts[3]?.includes('lock'),
+                opts: parts[2] === 'select' ? (parts[4] ? parts[4].split(',') : []) : null,
+                ph: (parts[2] !== 'select' && parts[4]) ? parts[4] : ''
+            };
         };
 
-        const DOC_CONFIG = {
-            'KYC_Form': { sections: [
-                COMMON_SECTIONS.IDENTITY,
-                { title: 'KYC Details', fields: [
-                    { label: 'Entity Type', type: 'select', options: ['Individual', 'Proprietorship', 'Partnership', 'Private Limited'], full: false },
-                    { label: 'Document Type', type: 'select', options: ['Aadhaar', 'PAN', 'GST', 'Passport'], full: false },
-                    { label: 'Document Number', type: 'text', placeholder: 'Enter ID Number', full: true },
-                    { label: 'Authorized Signatory', type: 'text', placeholder: 'Name of person signing', full: true }
-                ]}
-            ]},
-            'Commercial-Invoice': { sections: [
-                COMMON_SECTIONS.IDENTITY,
-                COMMON_SECTIONS.PARTIES,
-                { title: 'Invoice Details', fields: [
-                    { label: 'Invoice Number', type: 'text', placeholder: 'INV/2025/001', full: false },
-                    { label: 'Incoterms', type: 'select', options: ['FOB', 'CIF', 'EXW', 'DDP', 'DAP'], full: false },
-                    { label: 'Currency', type: 'select', options: ['INR', 'USD', 'EUR', 'GBP'], full: false },
-                    { label: 'Total Invoice Value', type: 'number', placeholder: '0.00', full: false }
-                ]},
-                { title: 'Itemized Products', type: 'table', columns: [
-                    { label: 'Description', type: 'text', placeholder: 'Item name...' },
-                    { label: 'HSN Code', type: 'text', placeholder: '8-digit' },
-                    { label: 'Qty', type: 'number', placeholder: '0' },
-                    { label: 'Unit Price', type: 'number', placeholder: '0.00' },
-                    { label: 'Total', type: 'number', placeholder: '0.00', readonly: true }
-                ]}
-            ]},
-            'Packing-List': { sections: [
-                COMMON_SECTIONS.IDENTITY,
-                COMMON_SECTIONS.PARTIES,
-                { title: 'Packing Details', type: 'table', columns: [
-                    { label: 'Box No', type: 'text', placeholder: '1' },
-                    { label: 'Description', type: 'text', placeholder: 'Contents...' },
-                    { label: 'Dimensions (LxWxH)', type: 'text', placeholder: 'cm' },
-                    { label: 'Net Wt', type: 'number', placeholder: 'kg' },
-                    { label: 'Gross Wt', type: 'number', placeholder: 'kg' }
-                ]}
-            ]},
-            'MSDS': { sections: [
-                COMMON_SECTIONS.IDENTITY,
-                { title: 'Safety & Hazard Info', fields: [
-                    { label: 'Technical Name', type: 'text', placeholder: 'Chemical/Product Name', full: true },
-                    { label: 'UN Number', type: 'text', placeholder: 'e.g. UN1263', full: false },
-                    { label: 'Hazard Class', type: 'text', placeholder: 'e.g. Class 3', full: false },
-                    { label: 'Emergency Contact', type: 'tel', placeholder: '24/7 Phone Number', full: true }
-                ]}
-            ]},
-            'SDF-Form': { sections: [
-                COMMON_SECTIONS.IDENTITY,
-                COMMON_SECTIONS.BANK,
-                { title: 'Declaration', fields: [
-                    { label: 'Export Value Declaration', type: 'number', placeholder: 'FOB Value', full: true }
-                ]}
-            ]},
-            'Annexure-I-for-Drawback': { sections: [
-                COMMON_SECTIONS.IDENTITY,
-                COMMON_SECTIONS.BANK,
-                { title: 'Drawback Details', fields: [
-                    { label: 'DBK Schedule No', type: 'text', placeholder: 'Serial Number', full: false },
-                    { label: 'Shipping Bill No', type: 'text', full: false }
-                ]}
-            ]},
-            'TSCA-Certificate': { sections: [
-                COMMON_SECTIONS.IDENTITY,
-                COMMON_SECTIONS.PARTIES,
-                { title: 'TSCA Statement', fields: [
-                    { label: 'Statement Type', type: 'select', options: ['Positive Certification', 'Negative Certification'], full: true },
-                    { label: 'Product Description', type: 'text', placeholder: 'As per TSCA guidelines', full: true }
-                ]}
-            ]},
-            'GR-Waiver-Form-(for-Repair-&-Return)': { sections: [
-                COMMON_SECTIONS.IDENTITY,
-                COMMON_SECTIONS.PARTIES,
-                { title: 'Original Import Details', fields: [
-                    { label: 'Original Import AWB', type: 'text', full: false },
-                    { label: 'Original Import Date', type: 'date', full: false },
-                    { label: 'Bill of Entry (BE) No', type: 'text', full: false },
-                    { label: 'Reason for Return', type: 'text', full: true }
-                ]}
-            ]},
-            'DEFAULT': { sections: [
-                COMMON_SECTIONS.IDENTITY,
-                COMMON_SECTIONS.PARTIES,
-                { title: 'Additional Information', fields: [
-                    { label: 'Remarks', type: 'textarea', placeholder: 'Any specific instructions...', full: true }
-                ]}
-            ]}
-        };
-
-        function renderDynamicForm(docName) {
-            const container = document.getElementById('dynamicFieldsContainer');
-            container.innerHTML = '';
+        const renderSection = (title, icon, schema) => {
+            let html = `
+            <div class="animate-slide section-container mb-8">
+                <div class="flex items-center gap-2 border-b-2 border-slate-100 pb-2 mb-4">
+                    <div class="w-8 h-8 rounded bg-blue-50 flex items-center justify-center"><i class="fa-solid ${icon} text-blue-900"></i></div>
+                    <h3 class="font-bold text-slate-800 text-lg uppercase tracking-tight">${title}</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">`;
             
-            const config = DOC_CONFIG[docName] || DOC_CONFIG['DEFAULT'];
-
-            config.sections.forEach(section => {
-                const sectionDiv = document.createElement('div');
-                sectionDiv.innerHTML = `<h5 class="form-section-header text-xs font-black text-blue-900 uppercase tracking-widest">${section.title}</h5>`;
-                
-                if (section.type === 'table') {
-                    const tableWrapper = document.createElement('div');
-                    tableWrapper.className = 'overflow-x-auto border border-slate-200 rounded-lg';
-                    
-                    const table = document.createElement('table');
-                    table.className = 'w-full text-left border-collapse';
-                    
-                    let thead = '<thead><tr class="bg-slate-50 border-b border-slate-200">';
-                    section.columns.forEach(col => {
-                        thead += `<th class="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">${col.label}</th>`;
-                    });
-                    thead += '<th class="w-10"></th></tr></thead>';
-                    table.innerHTML = thead;
-                    
-                    const tbody = document.createElement('tbody');
-                    tbody.className = 'divide-y divide-slate-200';
-                    table.appendChild(tbody);
-                    
-                    const addRow = () => {
-                        const tr = document.createElement('tr');
-                        section.columns.forEach(col => {
-                            const td = document.createElement('td');
-                            const input = document.createElement('input');
-                            input.type = col.type || 'text';
-                            input.className = 'w-full px-4 py-2 text-sm focus:bg-blue-50 outline-none transition-colors';
-                            if (col.placeholder) input.placeholder = col.placeholder;
-                            if (col.readonly) {
-                                input.readOnly = true;
-                                input.classList.add('bg-slate-50', 'text-slate-400');
-                            }
-                            td.appendChild(input);
-                            tr.appendChild(td);
-                        });
-                        
-                        const actionsTd = document.createElement('td');
-                        actionsTd.className = 'px-2 text-center';
-                        actionsTd.innerHTML = `<button type="button" class="text-slate-300 hover:text-red-600 transition-colors"><i class="fa-solid fa-trash-can text-xs"></i></button>`;
-                        actionsTd.querySelector('button').onclick = () => tr.remove();
-                        tr.appendChild(actionsTd);
-                        tbody.appendChild(tr);
-                    };
-                    
-                    addRow(); // Initial row
-                    tableWrapper.appendChild(table);
-                    sectionDiv.appendChild(tableWrapper);
-                    
-                    const addBtn = document.createElement('button');
-                    addBtn.type = 'button';
-                    addBtn.className = 'mt-3 text-xs font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1 transition-colors';
-                    addBtn.innerHTML = `<i class="fa-solid fa-plus-circle"></i> Add Row`;
-                    addBtn.onclick = addRow;
-                    sectionDiv.appendChild(addBtn);
-                } else if (section.fields) {
-                    const gridDiv = document.createElement('div');
-                    gridDiv.className = 'grid grid-cols-1 md:grid-cols-2 gap-6';
-
-                    section.fields.forEach(field => {
-                        const fieldDiv = document.createElement('div');
-                        if (field.full) fieldDiv.classList.add('md:col-span-2');
-                        fieldDiv.classList.add('space-y-1');
-
-                        const label = document.createElement('label');
-                        label.className = 'text-[10px] font-bold text-slate-500 uppercase tracking-tight';
-                        label.innerText = field.label;
-                        fieldDiv.appendChild(label);
-
-                        let input;
-                        if (field.type === 'select') {
-                            input = document.createElement('select');
-                            field.options.forEach(opt => {
-                                const o = document.createElement('option');
-                                o.value = opt; o.text = opt;
-                                input.add(o);
-                            });
-                        } else if (field.type === 'textarea') {
-                            input = document.createElement('textarea');
-                            input.rows = 3;
-                        } else {
-                            input = document.createElement('input');
-                            input.type = field.type;
-                        }
-
-                        input.className = 'w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none text-sm transition-all bg-slate-50 focus:bg-white';
-                        if (field.placeholder) input.placeholder = field.placeholder;
-                        if (field.type === 'date' && !input.value) {
-                            input.value = new Date().toISOString().split('T')[0];
-                        }
-
-                        fieldDiv.appendChild(input);
-                        gridDiv.appendChild(fieldDiv);
-                    });
-                    sectionDiv.appendChild(gridDiv);
+            schema.forEach(fieldStr => {
+                if(fieldStr.startsWith('TABLE:')) {
+                    html += `</div>${renderTable(fieldStr)}<div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-4">`;
+                    return;
                 }
+                const f = parseField(fieldStr);
+                const width = f.full ? 'md:col-span-2' : '';
+                const reqHtml = f.req ? '<span class="text-red-500">*</span>' : '';
+                const roAttr = f.lock ? 'readonly tabindex="-1"' : '';
+                
+                const inputTemplates = {
+                    select: () => `<div class="relative"><select name="${f.key}" class="input-std appearance-none" ${f.req?'required':''} ${roAttr}><option value="">Select...</option>${f.opts.map(o=>`<option>${o}</option>`).join('')}</select><i class="fa-solid fa-chevron-down absolute right-3 top-3 text-xs text-slate-400 pointer-events-none"></i></div>`,
+                    textarea: () => `<textarea name="${f.key}" rows="2" class="input-std" ${f.req?'required':''} ${roAttr} placeholder="${f.ph}"></textarea>`,
+                    checkbox: () => `<div class="${width} flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg"><input type="checkbox" name="${f.key}" class="w-5 h-5 accent-blue-900"> <label class="text-sm font-bold text-slate-700">${f.label}</label></div>`,
+                    signature: () => `<div class="${width}"><label class="block text-xs font-bold text-slate-500 mb-1 uppercase">${f.label} ${reqHtml}</label><div class="relative border-2 dashed border-slate-300 rounded bg-slate-50 hover:bg-white transition-colors"><canvas id="sig-${f.key}" class="signature-pad w-full" height="120"></canvas><button type="button" onclick="clearSig('sig-${f.key}')" class="absolute bottom-2 right-2 text-xs bg-white border px-2 py-1 rounded shadow text-red-500 hover:bg-red-50 z-10">Reset</button><input type="hidden" name="${f.key}" id="val-sig-${f.key}"></div></div>`,
+                    default: () => `<input type="${f.type}" name="${f.key}" placeholder="${f.ph}" class="input-std" ${f.req?'required':''} ${roAttr} step="any">`
+                };
 
-                container.appendChild(sectionDiv);
+                const renderInput = inputTemplates[f.type] || inputTemplates.default;
+                
+                if (['checkbox', 'signature'].includes(f.type)) {
+                    html += renderInput();
+                } else {
+                    html += `<div class="${width}"><label class="block text-xs font-bold text-slate-500 mb-1 uppercase">${f.label} ${reqHtml}</label>${renderInput()}</div>`;
+                }
             });
-        }
+            return html + '</div></div>';
+        };
 
-        // Search Logic
-        document.getElementById('docSearch').addEventListener('input', function(e) {
-            const term = e.target.value.toLowerCase();
-            document.querySelectorAll('.doc-item').forEach(item => {
-                const text = item.innerText.toLowerCase();
-                item.style.display = text.includes(term) ? 'flex' : 'none';
+        const renderTable = (str) => {
+            const [def, colsStr] = str.replace('TABLE:', '').split('|');
+            const tableKey = def;
+            const cols = colsStr.split(',').map(c => {
+                const [l, w, t, k] = c.split(':');
+                return { l, w: w||'w-auto', t: t||'text', k: k||l.toLowerCase().replace(/\s/g,'_') };
             });
+            
+            let th = cols.map(c => `<th class="p-3 ${c.w}">${c.l}</th>`).join('');
+            
+            return `
+            <div class="md:col-span-2 border border-slate-200 rounded-lg overflow-hidden mb-6 shadow-sm">
+                <table class="w-full text-sm text-left" id="tbl-${tableKey}">
+                    <thead class="bg-slate-100 text-slate-600 font-bold border-b"><tr>${th}<th class="w-10"></th></tr></thead>
+                    <tbody class="divide-y divide-slate-100 bg-white" id="tbody-${tableKey}"></tbody>
+                </table>
+                <div class="p-2 bg-slate-50 border-t flex justify-center">
+                    <button type="button" onclick="addRow('${tableKey}')" class="text-blue-600 text-xs font-bold uppercase tracking-wider hover:bg-blue-100 px-3 py-1 rounded transition-colors"><i class="fa-solid fa-plus mr-1"></i> Add Line Item</button>
+                </div>
+            </div>`;
+        };
+
+        // ============================================================================
+        // 2. CONFIGURATION: ALL 23 DOCUMENTS
+        // ============================================================================
+        
+        // Reusable Constants (Renamed to avoid collision errors)
+        const DOC_SCHEMA_BLOCKS = {
+            ID: ["Reference No.|ref|text|*|Auto-filled", "Invoice No.|inv|text|*", "Date|date|date|*", "AWB/BL No.|awb|text"],
+            PARTIES: ["Exporter (Shipper)|shipper|text|full|*", "Address|s_addr|textarea|full|*", "Consignee (Buyer)|consignee|text|full|*", "Address|c_addr|textarea|full|*"],
+            TRANS: ["Mode|mode|select||Air,Sea,Road,Rail", "Port of Loading|pol|text", "Port of Discharge|pod|text", "Final Destination|dest|text"],
+            SIG: ["Authorized Signatory|sig_name|text|*", "Designation|sig_desg|text", "Signature|sig_img|signature|full|*"]
+        };
+
+        // ============================================================================
+        // CONFIGURATION: INTEGRATED FROM docsprintlib.json
+        // ============================================================================
+        
+        const DOC_LIBRARY = {
+            "1_COMMERCIAL_INVOICE": { "name": "Commercial Invoice", "category": "COMMERCIAL_CORE", "static_text": { "title": "COMMERCIAL INVOICE" } },
+            "2_PACKING_LIST": { "name": "Packing List", "category": "COMMERCIAL_CORE", "static_text": { "title": "PACKING LIST" } },
+            "3_KYC_FORM": { "name": "Know Your Customer Form", "category": "REGULATORY_CUSTOMS", "static_text": { "title": "Form KYC" } },
+            "4_SDF_FORM": { "name": "Statutory Declaration Form (FEMA)", "category": "BANKING_FOREX", "static_text": { "title": "APPENDIX I - FORM SDF" } },
+            "5_ANNEXURE_I_DRAWBACK": { "name": "Annexure I (DBK)", "category": "DRAWBACK_SCHEME", "static_text": { "title": "ANNEXURE-I" } },
+            "6_ANNEXURE_II_DRAWBACK": { "name": "Annexure II (DBK)", "category": "DRAWBACK_SCHEME", "static_text": { "title": "ANNEXURE-II" } },
+            "7_APPENDIX_III_DRAWBACK": { "name": "Appendix III (DBK)", "category": "DRAWBACK_SCHEME", "static_text": { "title": "APPENDIX III" } },
+            "8_APPENDIX_IV_DRAWBACK": { "name": "Appendix IV (DBK)", "category": "DRAWBACK_SCHEME", "static_text": { "title": "APPENDIX IV" } },
+            "9_ANNEXURE_D_DEPB": { "name": "Annexure D (DEPB)", "category": "DEPB_SCHEME", "static_text": { "title": "APPENDIX – 11 (ANNEXURE D)" } },
+            "10_APPENDIX_II_DEEC": { "name": "Appendix II (DEEC)", "category": "DEEC_SCHEME", "static_text": { "title": "APPENDIX II" } },
+            "11_ANNEXURE_C1_EOU": { "name": "Annexure C1 (EOU)", "category": "EOU_SCHEME", "static_text": { "title": "APPENDIX -C1" } },
+            "12_SHIPPERS_LETTER_INSTRUCTIONS": { "name": "Shipper's Letter (SLI)", "category": "LOGISTICS", "static_text": { "title": "SHIPPER'S LETTER OF INSTRUCTIONS" } },
+            "13_SINGLE_COUNTRY_DECLARATION": { "name": "Single Country Dec.", "category": "ORIGIN_CERTIFICATION", "static_text": { "title": "Single Country Declaration" } },
+            "14_MULTIPLE_COUNTRY_DECLARATION": { "name": "Multiple Country Dec.", "category": "ORIGIN_CERTIFICATION", "static_text": { "title": "Multiple Country Declaration" } },
+            "15_NEGATIVE_DECLARATION_SILK": { "name": "Negative Declaration", "category": "PRODUCT_SPECIFIC", "static_text": { "title": "Negative Declaration" } },
+            "16_QUOTA_CHARGE_STATEMENT": { "name": "Quota Charge Stmt", "category": "TEXTILE_REGULATORY", "static_text": { "title": "Quota Charge Statement" } },
+            "17_NON_DG_DECLARATION": { "name": "Non-DG Declaration", "category": "SAFETY_IATA", "static_text": { "title": "Shipper's Certification for Non-Hazardous Cargo" } },
+            "18_TSCA_CERTIFICATE": { "name": "TSCA Certificate", "category": "CHEMICAL_REGULATORY", "static_text": { "title": "TSCA CERTIFICATION" } },
+            "19_GR_WAIVER_FREE_SAMPLE": { "name": "GR Waiver (Sample)", "category": "BANKING_CERTIFICATE", "static_text": { "title": "GR WAIVER - FREE TRADE SAMPLE" } },
+            "20_GR_WAIVER_REPAIR_RETURN": { "name": "GR Waiver (Repair)", "category": "BANKING_CERTIFICATE", "static_text": { "title": "GR WAIVER - REPAIR AND RETURN" } },
+            "21_MSDS_TEMPLATE": { "name": "MSDS", "category": "SAFETY_CHEMICAL", "static_text": { "title": "MATERIAL SAFETY DATA SHEET" } },
+            "22_DOMESTIC_CHALLAN": { "name": "Domestic Challan", "category": "DOMESTIC_SHIPPING", "static_text": { "title": "TAX INVOICE CUM DELIVERY CHALLAN" } },
+            "23_LETTER_OF_AUTHORITY_CHA": { "name": "Letter of Authority", "category": "AUTHORIZATION", "static_text": { "title": "Letter of Authority" } },
+            "24_CERTIFICATE_OF_ORIGIN": { "name": "Certificate of Origin", "category": "ORIGIN_CERTIFICATION", "static_text": { "title": "CERTIFICATE OF ORIGIN" } },
+            "25_ARE1_FORM": { "name": "ARE-1 Form", "category": "CENTRAL_EXCISE", "static_text": { "title": "APPLICATION FOR REMOVAL OF EXCISABLE GOODS" } },
+            "26_AIR_WAYBILL_TEMPLATE": { "name": "Air Waybill", "category": "TRANSPORT_DOCUMENT", "static_text": { "title": "AIR WAYBILL" } }
+        };
+
+        // --- UI SCHEMAS (Form Definitions) ---
+        const DOC_DEFINITIONS = {
+            'Commercial_Invoice': {
+                jsonId: '1_COMMERCIAL_INVOICE',
+                icon: 'fa-file-invoice',
+                desc: 'The primary document used by customs authorities for import control, valuation, and duty determination.',
+                schema: [
+                    { t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID },
+                    { t: 'Parties', i: 'fa-users', f: DOC_SCHEMA_BLOCKS.PARTIES },
+                    { t: 'Transport', i: 'fa-plane', f: DOC_SCHEMA_BLOCKS.TRANS },
+                    { t: 'Financials', i: 'fa-coins', f: ["Incoterm|term|select|*|FOB,CIF,EXW,DAP", "Currency|curr|select|*|USD,EUR,INR,GBP", "Exchange Rate|ex_rate|number", "Total Value|total_val|number|lock"] },
+                    { t: 'Goods', i: 'fa-box', f: ["TABLE:items|Desc:w-64:text:desc,HSN:w-24:text:hsn,Qty:w-20:number:qty,Rate:w-24:number:rate,Amount:w-32:number:amt"] },
+                    { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }
+                ],
+                calc: (rows) => {
+                    let total = 0;
+                    rows.forEach(r => {
+                        const qty = parseFloat(r.querySelector('[name*="_qty"]').value) || 0;
+                        const rate = parseFloat(r.querySelector('[name*="_rate"]').value) || 0;
+                        const amt = (qty * rate).toFixed(2);
+                        r.querySelector('[name*="_amt"]').value = amt;
+                        total += parseFloat(amt);
+                    });
+                    const target = document.querySelector('[name="total_val"]');
+                    if(target) target.value = total.toFixed(2);
+                }
+            },
+            'Packing_List': {
+                jsonId: '2_PACKING_LIST',
+                icon: 'fa-boxes-stacked',
+                desc: 'Provides detailed information about the contents of each package, including weights and dimensions.',
+                schema: [
+                    { t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID },
+                    { t: 'Parties', i: 'fa-users', f: DOC_SCHEMA_BLOCKS.PARTIES },
+                    { t: 'Packages', i: 'fa-box-open', f: ["TABLE:pkgs|Pkg No:w-24:text:no,Description:w-64:text:desc,Dims:w-32:text:dim,Net Wt:w-24:number:nw,Gross Wt:w-24:number:gw"] },
+                    { t: 'Summary', i: 'fa-scale-balanced', f: ["Total Packages|tot_pkg|number|lock", "Total Net Wt|tot_nw|number|lock", "Total Gross Wt|tot_gw|number|lock"] },
+                    { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }
+                ],
+                calc: (rows) => {
+                    let tn = 0, tg = 0;
+                    rows.forEach(r => {
+                        tn += parseFloat(r.querySelector('[name*="_nw"]').value) || 0;
+                        tg += parseFloat(r.querySelector('[name*="_gw"]').value) || 0;
+                    });
+                    const tp = document.querySelector('[name="tot_pkg"]');
+                    const tnv = document.querySelector('[name="tot_nw"]');
+                    const tgv = document.querySelector('[name="tot_gw"]');
+                    if(tp) tp.value = rows.length;
+                    if(tnv) tnv.value = tn.toFixed(3);
+                    if(tgv) tgv.value = tg.toFixed(3);
+                }
+            },
+            'Shippers_Letter_of_Instruction': {
+                jsonId: '12_SHIPPERS_LETTER_INSTRUCTIONS',
+                icon: 'fa-file-signature',
+                desc: 'Instructions from shipper to freight forwarder regarding shipment handling.',
+                schema: [
+                    { t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID },
+                    { t: 'Parties', i: 'fa-users', f: DOC_SCHEMA_BLOCKS.PARTIES },
+                    { t: 'Instructions', i: 'fa-list-check', f: ["Insurance Required?|ins|checkbox|full", "Freight Terms|pay|select|full|Prepaid,Collect", "Special Instructions|instr|textarea|full"] },
+                    { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }
+                ]
+            },
+            'KYC_Form': {
+                jsonId: '3_KYC_FORM',
+                icon: 'fa-id-card',
+                desc: 'Mandatory regulatory requirement to verify the identity and address of the exporter/importer.',
+                schema: [
+                    { t: 'Entity Details', i: 'fa-building', f: ["Entity Name|name|text|full|*", "Type|type|select|*|Pvt Ltd,Proprietor,LLP", "GSTIN|gst|text|*", "IEC Code|iec|text|*"] },
+                    { t: 'Bank Details', i: 'fa-bank', f: ["Bank Name|bank|text|full", "Account No|ac|text|*", "AD Code|ad|text|*", "IFSC|ifsc|text|*"] },
+                    { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }
+                ]
+            },
+            'SDF_Form': {
+                jsonId: '4_SDF_FORM',
+                icon: 'fa-building-columns',
+                desc: 'FEMA declaration by exporter regarding realization of export value.',
+                schema: [
+                    { t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID },
+                    { t: 'Declaration', i: 'fa-hand', f: ["Shipping Bill No|sb|text", "Port|port|text", "FOB Value|fob|number", "Realization in 9 Months|dec1|checkbox|full"] },
+                    { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }
+                ]
+            },
+            'Non_DG_Declaration': {
+                jsonId: '17_NON_DG_DECLARATION',
+                icon: 'fa-triangle-exclamation',
+                desc: 'Certification that items are not hazardous materials under IATA DGR.',
+                schema: [
+                    { t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID },
+                    { t: 'Declaration', i: 'fa-shield-halved', f: ["Not Restricted per IATA DGR|chk1|checkbox|full", "No Lithium Batteries|chk2|checkbox|full", "No Hidden DG|chk3|checkbox|full"] },
+                    { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }
+                ]
+            },
+            'Annexure_I_Drawback': { jsonId: '5_ANNEXURE_I_DRAWBACK', icon: 'fa-percent', desc: 'Used to claim Duty Drawback (refund of duties paid on inputs) for export products.', schema: [{ t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID }, { t: 'Parties', i: 'fa-users', f: DOC_SCHEMA_BLOCKS.PARTIES }, { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }] },
+            'Annexure_II_Drawback': { jsonId: '6_ANNEXURE_II_DRAWBACK', icon: 'fa-percent', desc: 'Supplementary declaration for Duty Drawback claims, detailing inputs used and duties paid.', schema: [{ t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID }, { t: 'Parties', i: 'fa-users', f: DOC_SCHEMA_BLOCKS.PARTIES }, { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }] },
+            'Appendix_III_Drawback': { jsonId: '7_APPENDIX_III_DRAWBACK', icon: 'fa-percent', desc: 'Specific format required for drawback claims under certain categories of the Drawback Schedule.', schema: [{ t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID }, { t: 'Parties', i: 'fa-users', f: DOC_SCHEMA_BLOCKS.PARTIES }, { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }] },
+            'Appendix_IV_Drawback': { jsonId: '8_APPENDIX_IV_DRAWBACK', icon: 'fa-percent', desc: 'Used for claiming drawback on specific goods where brand rate fixation is required.', schema: [{ t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID }, { t: 'Parties', i: 'fa-users', f: DOC_SCHEMA_BLOCKS.PARTIES }, { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }] },
+            'Annexure_D_DEPB': { jsonId: '9_ANNEXURE_D_DEPB', icon: 'fa-file', desc: 'Required for the Duty Entitlement Pass Book scheme to get credit for duties paid on fuel/oil used in production.', schema: [{ t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID }, { t: 'Parties', i: 'fa-users', f: DOC_SCHEMA_BLOCKS.PARTIES }, { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }] },
+            'Appendix_II_DEEC': { jsonId: '10_APPENDIX_II_DEEC', icon: 'fa-file', desc: 'Used for the Duty Exemption Entitlement Certificate under the Advance Authorization scheme for duty-free input imports.', schema: [{ t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID }, { t: 'Parties', i: 'fa-users', f: DOC_SCHEMA_BLOCKS.PARTIES }, { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }] },
+            'Annexure_C1_EOU': { jsonId: '11_ANNEXURE_C1_EOU', icon: 'fa-industry', desc: 'Used by Export Oriented Units for duty-free removal of goods for export or inter-unit transfer.', schema: [{ t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID }, { t: 'Parties', i: 'fa-users', f: DOC_SCHEMA_BLOCKS.PARTIES }, { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }] },
+            'TSCA_Certificate': { jsonId: '18_TSCA_CERTIFICATE', icon: 'fa-flask', desc: 'Certifies compliance with the US Toxic Substances Control Act for chemical exports to the USA.', schema: [{ t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID }, { t: 'Chemicals', i: 'fa-flask', f: ["Positive Certification|chk1|checkbox|full", "Negative Certification|chk2|checkbox|full"] }, { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }] },
+            'Single_Country_Declaration': { jsonId: '13_SINGLE_COUNTRY_DECLARATION', icon: 'fa-flag', desc: 'Certifies that goods were produced in one specific country, often for preferential tariff claims.', schema: [{ t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID }, { t: 'Origin', i: 'fa-globe', f: ["Country of Origin|origin|text|full|*"] }, { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }] },
+            'Multiple_Country_Declaration': { jsonId: '14_MULTIPLE_COUNTRY_DECLARATION', icon: 'fa-globe', desc: 'Used when a shipment contains goods originating from different countries.', schema: [{ t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID }, { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }] },
+            'Negative_Declaration': { jsonId: '15_NEGATIVE_DECLARATION_SILK', icon: 'fa-ban', desc: 'Confirms the absence of specific restricted items like wildlife products or banned chemicals.', schema: [{ t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID }, { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }] },
+            'Quota_Charge_Statement': { jsonId: '16_QUOTA_CHARGE_STATEMENT', icon: 'fa-chart-pie', desc: 'Required for textile exports to countries with import quotas to manage trade volume.', schema: [{ t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID }, { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }] },
+            'GR_Waiver_Sample': { jsonId: '19_GR_WAIVER_FREE_SAMPLE', icon: 'fa-gift', desc: 'Authorization to export free trade samples without the requirement of foreign exchange realization.', schema: [{ t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID }, { t: 'Reason', i: 'fa-comment', f: ["Free Trade Sample - No Foreign Exchange Involved|reason|checkbox|full"] }, { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }] },
+            'GR_Waiver_Repair': { jsonId: '20_GR_WAIVER_REPAIR_RETURN', icon: 'fa-wrench', desc: 'Used for goods exported for repair and return, ensuring the transaction is recognized as non-commercial.', schema: [{ t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID }, { t: 'Reason', i: 'fa-comment', f: ["Defective Return for Repair|reason|checkbox|full"] }, { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }] },
+            'MSDS': { jsonId: '21_MSDS_TEMPLATE', icon: 'fa-book-medical', desc: 'Provides safety information about a chemical product’s properties and hazards for safe handling and transport.', schema: [{ t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID }, { t: 'Safety', i: 'fa-shield', f: ["Product Name|prod|text|full", "UN Number|un|text", "Class|class|text"] }, { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }] },
+            'Letter_of_Authority': { jsonId: '23_LETTER_OF_AUTHORITY_CHA', icon: 'fa-stamp', desc: 'Authorizes a Customs House Agent (CHA) to represent the exporter and handle customs formalities.', schema: [{ t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID }, { t: 'Authority', i: 'fa-gavel', f: ["We authorize CHA to handle clearance|auth|checkbox|full"] }, { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }] },
+            'Certificate_of_Origin': {
+                jsonId: '24_CERTIFICATE_OF_ORIGIN',
+                icon: 'fa-certificate',
+                desc: 'Certificate of Origin',
+                schema: [
+                    { t: 'Identity', i: 'fa-tag', f: DOC_SCHEMA_BLOCKS.ID },
+                    { t: 'Parties', i: 'fa-users', f: DOC_SCHEMA_BLOCKS.PARTIES },
+                    { t: 'Transport', i: 'fa-plane', f: DOC_SCHEMA_BLOCKS.TRANS },
+                    { t: 'Goods Details', i: 'fa-box', f: ["TABLE:goods|Item No:w-16:text:item,Marks & Nos:w-32:text:marks,Description:w-64:text:desc,Origin Criterion:w-32:text:origin,Gross Wt:w-24:number:wt,Invoice No/Date:w-32:text:inv"] },
+                    { t: 'Certification', i: 'fa-stamp', f: ["Certifying Authority|auth|text|full", "Place|place|text", "Date|cert_date|date"] },
+                    { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }
+                ]
+            },
+            'ARE1_Form': {
+                jsonId: '25_ARE1_FORM',
+                icon: 'fa-file-contract',
+                desc: 'Application for Removal of Excisable Goods',
+                schema: [
+                    { t: 'Assessee Details', i: 'fa-user-tie', f: ["Name & Address|assessee_name|textarea|full", "Registration No.|reg_no|text", "Range/Division|range|text"] },
+                    { t: 'Goods Details', i: 'fa-boxes', f: ["Description|desc|textarea|full", "Tariff Heading|heading|text", "Quantity|qty|number", "Assessable Value|val|number", "Total Duty|duty|number"] },
+                    { t: 'Removal Details', i: 'fa-truck', f: ["Mode of Transport|mode|text", "Vehicle/Receipt No.|vehicle|text", "Destination|dest|text", "Invoice No & Date|inv_details|text"] },
+                    { t: 'Export Details', i: 'fa-ship', f: ["Shipping Bill No|sb_no|text", "SB Date|sb_date|date", "Customs Port|port|text"] },
+                    { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }
+                ]
+            },
+            'Air_Waybill': {
+                jsonId: '26_AIR_WAYBILL_TEMPLATE',
+                icon: 'fa-plane-departure',
+                desc: 'Air Waybill Template',
+                schema: [
+                    { t: 'Header', i: 'fa-heading', f: ["AWB Number|awb_no|text|*", "Airport of Departure|dep_airport|text", "Airport of Destination|dest_airport|text"] },
+                    { t: 'Parties', i: 'fa-users', f: DOC_SCHEMA_BLOCKS.PARTIES },
+                    { t: 'Routing & Flight', i: 'fa-route', f: ["Requested Routing|routing|text", "Flight/Date|flight|text"] },
+                    { t: 'Charges', i: 'fa-money-bill', f: ["Currency|curr|text", "Chgs Code|chgs_code|text", "WT/VAL (PP/CC)|wt_val|select|*|PP,CC", "Other (PP/CC)|other_chgs|select|*|PP,CC", "Declared Value Carriage|val_carriage|text", "Declared Value Customs|val_customs|text"] },
+                    { t: 'Goods', i: 'fa-box-open', f: ["TABLE:goods|Pieces:w-16:number:pcs,Gross Wt:w-20:number:gw,Kg/Lb:w-16:text:unit,Rate Class:w-16:text:class,Item No:w-20:text:item,Chg Wt:w-20:number:cw,Rate:w-20:number:rate,Total:w-24:number:total,Nature of Goods:w-64:text:desc"] },
+                    { t: 'Signatory', i: 'fa-signature', f: DOC_SCHEMA_BLOCKS.SIG }
+                ]
+            }
+        };
+
+        // --- GENERATE DOCS OBJECT ---
+        const DOCS = {};
+        
+        const CAT_MAPPING = {
+            'COMMERCIAL_CORE': 'shipping',
+            'REGULATORY_CUSTOMS': 'customs',
+            'BANKING_FOREX': 'customs',
+            'DRAWBACK_SCHEME': 'customs',
+            'DEPB_SCHEME': 'customs',
+            'DEEC_SCHEME': 'customs',
+            'EOU_SCHEME': 'customs',
+            'LOGISTICS': 'shipping',
+            'ORIGIN_CERTIFICATION': 'declarations',
+            'PRODUCT_SPECIFIC': 'declarations',
+            'TEXTILE_REGULATORY': 'declarations',
+            'SAFETY_IATA': 'declarations',
+            'CHEMICAL_REGULATORY': 'declarations',
+            'BANKING_CERTIFICATE': 'customs',
+            'SAFETY_CHEMICAL': 'shipping',
+            'AUTHORIZATION': 'declarations',
+            'DOMESTIC_SHIPPING': 'shipping',
+            'CENTRAL_EXCISE': 'customs',
+            'TRANSPORT_DOCUMENT': 'shipping'
+        };
+
+        Object.keys(DOC_DEFINITIONS).forEach(key => {
+            const def = DOC_DEFINITIONS[key];
+            const libEntry = DOC_LIBRARY[def.jsonId];
+            
+            DOCS[key] = {
+                name: libEntry ? libEntry.name : key.replace(/_/g, ' '),
+                cat: libEntry ? (CAT_MAPPING[libEntry.category] || 'shipping') : 'shipping',
+                icon: def.icon,
+                desc: def.desc || (libEntry ? (libEntry.static_text?.title || libEntry.name) : ''),
+                schema: def.schema,
+                calc: def.calc
+            };
         });
 
-        // Selection Logic
-        function selectDoc(docName) {
-            // Update Sidebar UI
-            document.querySelectorAll('.doc-item').forEach(item => item.classList.remove('active'));
-            const activeBtn = Array.from(document.querySelectorAll('.doc-item')).find(btn => btn.getAttribute('onclick').includes(docName));
-            if (activeBtn) activeBtn.classList.add('active');
+        // ============================================================================
+        // 3. APP LOGIC
+        // ============================================================================
+        let currentDocKey = null;
+        let fetchedData = null;
+        const colDefinitions = {}; 
 
-            // Update Main Panel
-            document.getElementById('infoView').classList.add('hidden');
-            document.getElementById('formView').classList.remove('hidden');
-            document.getElementById('formTitle').innerText = docName.replace(/-/g, ' ');
-            renderDynamicForm(docName);
+        document.addEventListener('DOMContentLoaded', () => {
+            renderSidebar();
+        });
+
+        function renderSidebar() {
+            const list = document.getElementById('docList');
+            list.innerHTML = '';
+            Object.entries(DOCS).forEach(([key, doc]) => {
+                const btn = document.createElement('button');
+                btn.className = `doc-item w-full text-left px-4 py-3 border-b border-slate-50 hover:bg-slate-50 flex items-center justify-between group cat-${doc.cat}`;
+                btn.onclick = () => loadDoc(key);
+                btn.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid ${doc.icon} text-slate-300 group-hover:text-blue-600 transition-colors"></i>
+                        <span class="text-slate-600 group-hover:text-blue-900 font-medium text-sm">${doc.name}</span>
+                    </div>
+                `;
+                list.appendChild(btn);
+            });
+        }
+
+        function loadDoc(key) {
+            currentDocKey = key;
+            const doc = DOCS[key];
+            if(!doc) return;
             
-            // Scroll to top of panel
-            document.getElementById('mainPanel').scrollTop = 0;
-        }
+            document.getElementById('welcomeScreen').classList.add('hidden');
+            document.getElementById('docView').classList.remove('hidden');
+            document.getElementById('docTitle').innerText = doc.name;
+            
+            const form = document.getElementById('docForm');
+            form.innerHTML = doc.schema.map(s => {
+                s.f.forEach(f => {
+                    if(f.startsWith('TABLE:')) {
+                        const [def, colsStr] = f.replace('TABLE:', '').split('|');
+                        const tableKey = def;
+                        colDefinitions[tableKey] = colsStr.split(',').map(c => { 
+                            const [l, w, t, k] = c.split(':'); 
+                            return { width: w||'w-auto', type: t||'text', key: k||l.toLowerCase() }; 
+                        });
+                    }
+                });
+                return renderSection(s.t, s.i, s.f);
+            }).join('');
+            
+            Object.keys(colDefinitions).forEach(k => { for(let i=0; i<3; i++) addRow(k); });
+            document.querySelectorAll('canvas.signature-pad').forEach(c => initSigPad(c));
 
-        function resetView() {
-            document.getElementById('infoView').classList.remove('hidden');
-            document.getElementById('formView').classList.add('hidden');
-            document.querySelectorAll('.doc-item').forEach(item => item.classList.remove('active'));
-        }
-
-        function downloadFile(fileName) {
-            if (window.showNotification) {
-                showNotification(`Preparing download for ${fileName}...`, 'info');
-            } else {
-                alert(`Download started for: ${fileName} (Placeholder)`);
+            if(fetchedData) {
+                document.getElementById('docRef').innerText = `Ref: ${fetchedData.ref}`;
+                document.getElementById('docRef').classList.remove('hidden');
+                Object.keys(fetchedData).forEach(k => {
+                    const el = form.querySelector(`[name="${k}"]`);
+                    if(el && !el.value) { el.value = fetchedData[k]; el.classList.add('bg-blue-50', 'border-blue-200'); }
+                });
             }
+
+            if(doc.calc) {
+                form.addEventListener('input', () => {
+                    const rows = Array.from(document.querySelectorAll('tbody tr'));
+                    doc.calc(rows);
+                });
+                triggerCalc(); 
+            }
+
+            document.getElementById('mainContent').scrollTop = 0;
+            document.querySelectorAll('.doc-item').forEach(b => b.classList.remove('active'));
+        }
+
+        function addRow(tableKey) {
+            const tbody = document.getElementById(`tbody-${tableKey}`);
+            if(!tbody) return;
+            const cols = colDefinitions[tableKey];
+            const tr = document.createElement('tr');
+            
+            tr.innerHTML = cols.map(c => `
+                <td class="p-2 border-b border-slate-50">
+                    <input type="${c.type}" name="${tableKey}_${c.key}[]" class="input-std" step="any" oninput="triggerCalc()">
+                </td>
+            `).join('') + `<td class="p-2 border-b border-slate-50 text-center"><button type="button" onclick="this.closest('tr').remove(); triggerCalc()" class="text-slate-300 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash"></i></button></td>`;
+            
+            tbody.appendChild(tr);
+        }
+
+        function triggerCalc() {
+            const form = document.getElementById('docForm');
+            if(form) form.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+
+        function initSigPad(canvas) {
+            const ctx = canvas.getContext('2d');
+            let isDrawing = false;
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            ctx.scale(ratio, ratio);
+            ctx.lineWidth = 2; ctx.strokeStyle = "#1e3a8a";
+            const start = (e) => { isDrawing=true; ctx.beginPath(); draw(e); };
+            const end = () => { isDrawing=false; ctx.beginPath(); updateSig(canvas); };
+            const draw = (e) => {
+                if(!isDrawing) return;
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX||e.touches[0].clientX) - rect.left;
+                const y = (e.clientY||e.touches[0].clientY) - rect.top;
+                ctx.lineTo(x, y); ctx.stroke();
+            };
+            canvas.addEventListener('mousedown', start); canvas.addEventListener('mouseup', end); canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('touchstart', (e)=>{e.preventDefault();start(e)}); canvas.addEventListener('touchend', (e)=>{e.preventDefault();end()}); canvas.addEventListener('touchmove', (e)=>{e.preventDefault();draw(e)});
+        }
+
+        function updateSig(canvas) {
+            const id = canvas.id.replace('sig-', '');
+            const val = document.getElementById(`val-sig-${id}`);
+            if(val) val.value = canvas.toDataURL();
+        }
+
+        function clearSig(id) {
+            const c = document.getElementById(id);
+            if(!c) return;
+            c.getContext('2d').clearRect(0,0,c.width,c.height);
+            updateSig(c);
+        }
+
+        function showDocInfo() {
+            const doc = DOCS[currentDocKey];
+            if(!doc) return;
+            const modal = document.getElementById('infoModal');
+            const content = document.getElementById('infoModalContent');
+            content.innerText = doc.desc || "No additional information available for this document.";
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeInfoModal() {
+            const modal = document.getElementById('infoModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function fetchData() {
+            const ref = document.getElementById('refSearch').value.trim();
+            const msg = document.getElementById('fetchMsg');
+            if(!ref) return showToast("Please enter a reference", "error");
+            msg.innerText = "Searching..."; msg.classList.remove('hidden', 'text-red-500', 'text-emerald-600');
+            try {
+                const appData = JSON.parse(localStorage.getItem('appData') || '{}');
+                const orders = appData.SHIPMENTS?.ORDERS || {};
+                let order = orders[ref] || Object.values(orders).find(o => o.AWB_NUMBER === ref || o.REFERENCE === ref);
+                if(order) {
+                    fetchedData = {
+                        ref: order.REFERENCE, awb: order.AWB_NUMBER, date: order.ORDER_DATE,
+                        shipper: order.CONSIGNOR, s_addr: (order.ORIGIN_CITY||'') + ' ' + (order.ORIGIN_PINCODE||''),
+                        consignee: order.CONSIGNEE, c_addr: (order.DEST_CITY||'') + ' ' + (order.DEST_PINCODE||''),
+                        mode: order.MODE, inv: order.DOC_NUMBER
+                    };
+                    msg.innerText = "Found! Select a document."; msg.classList.add('text-emerald-600');
+                    showToast("Shipment Found!", "success");
+                } else {
+                    msg.innerText = "Not found in local database."; msg.classList.add('text-red-500');
+                }
+            } catch(e) { msg.innerText = "Error reading data."; msg.classList.add('text-red-500'); }
+        }
+
+        function filterDocs() {
+            const term = document.getElementById('docSearch').value.toLowerCase();
+            document.querySelectorAll('.doc-item').forEach(el => {
+                el.style.display = el.innerText.toLowerCase().includes(term) ? 'flex' : 'none';
+            });
+        }
+
+        function filterCat(cat) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${cat}`).classList.add('active');
+            document.querySelectorAll('.doc-item').forEach(el => {
+                if(cat === 'all' || el.classList.contains(`cat-${cat}`)) el.classList.remove('hidden');
+                else el.classList.add('hidden');
+            });
+        }
+
+        function closeDoc() {
+            document.getElementById('docView').classList.add('hidden');
+            document.getElementById('welcomeScreen').classList.remove('hidden');
+            currentDocKey = null;
+        }
+
+        function clearForm() {
+            if(confirm("Clear current form?")) {
+                document.getElementById('docForm').reset();
+                document.querySelectorAll('canvas').forEach(c => clearSig(c.id));
+                Object.keys(colDefinitions).forEach(k => {
+                    const tb = document.getElementById(`tbody-${k}`);
+                    if(tb) {
+                        tb.innerHTML = '';
+                        for(let i=0; i<3; i++) addRow(k);
+                    }
+                });
+            }
+        }
+
+        function validate() {
+            const invalid = document.querySelectorAll('#docForm :invalid');
+            if(invalid.length > 0) {
+                invalid[0].focus();
+                showToast("Please fill required fields", "error");
+            } else {
+                showToast("Validation Passed", "success");
+            }
+        }
+
+        function printDoc() {
+            if(document.querySelectorAll('#docForm :invalid').length > 0) return showToast("Validation Failed", "error");
+            window.print();
+        }
+
+        function printBlank() {
+            document.body.classList.add('print-blank');
+            window.print();
+            // Remove class after print dialog is handled
+            setTimeout(() => document.body.classList.remove('print-blank'), 500);
+        }
+        
+        function getFormData() {
+            const form = document.getElementById('docForm');
+            const formData = new FormData(form);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                if (key.endsWith('[]')) {
+                    const cleanKey = key.slice(0, -2);
+                    if (!data[cleanKey]) data[cleanKey] = [];
+                    data[cleanKey].push(value);
+                } else {
+                    data[key] = value;
+                }
+            }
+            return data;
+        }
+
+        function exportJSON() {
+            const data = getFormData();
+            const blob = new Blob([JSON.stringify(data, null, 2)], {type : 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `${currentDocKey || 'doc'}.json`; a.click();
+        }
+
+        function exportCSV() {
+            const data = getFormData();
+            const ws = XLSX.utils.json_to_sheet([data]);
+            const csv = XLSX.utils.sheet_to_csv(ws);
+            const blob = new Blob([csv], {type: 'text/csv;charset=utf-8;'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `${currentDocKey || 'doc'}.csv`; a.click();
+        }
+
+        function exportExcel() {
+            const data = getFormData();
+            const ws = XLSX.utils.json_to_sheet([data]);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Document Data");
+            XLSX.writeFile(wb, `${currentDocKey || 'doc'}.xlsx`);
+        }
+
+        function exportDOC() {
+            const formClone = document.getElementById('docForm').cloneNode(true);
+            const originals = document.getElementById('docForm').querySelectorAll('input, select, textarea');
+            const clones = formClone.querySelectorAll('input, select, textarea');
+            
+            originals.forEach((el, i) => {
+                if (el.tagName === 'SELECT') {
+                    const text = el.options[el.selectedIndex]?.text || '';
+                    const span = document.createElement('span');
+                    span.innerText = text;
+                    if(clones[i].parentNode) clones[i].parentNode.replaceChild(span, clones[i]);
+                } else {
+                    clones[i].setAttribute('value', el.value);
+                    if(el.tagName === 'TEXTAREA') clones[i].innerText = el.value;
+                }
+            });
+
+            const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export</title></head><body>";
+            const footer = "</body></html>";
+            const sourceHTML = header + formClone.innerHTML + footer;
+            const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+            const fileDownload = document.createElement("a");
+            document.body.appendChild(fileDownload);
+            fileDownload.href = source;
+            fileDownload.download = `${currentDocKey || 'doc'}.doc`;
+            fileDownload.click();
+            document.body.removeChild(fileDownload);
+        }
+
+        function showToast(msg, type) {
+            const t = document.getElementById('toast');
+            if(!t) return;
+            t.className = `fixed top-24 right-4 z-50 w-72 p-4 rounded-lg shadow-lg text-white font-bold transition-transform duration-300 ${type=='error'?'bg-red-500':'bg-emerald-600'}`;
+            t.innerHTML = `<i class="fa-solid fa-${type=='error'?'circle-exclamation':'check-circle'} mr-2"></i> ${msg}`;
+            t.style.transform = "translateX(0)";
+            setTimeout(() => t.style.transform = "translateX(120%)", 3000);
         }
     </script>
 </body>
