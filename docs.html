@@ -53,28 +53,28 @@
                 <div>
                     <h3 class="px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Category 1: Core Documents</h3>
                     <div class="space-y-1 pr-2">
-                        <button onclick="selectDoc(this, 'DOM_INV', 'Domestic Invoice / Challan', 'Required for all domestic shipping and local transport.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="DOM_INV" data-doc-title="Domestic Invoice / Challan" data-doc-desc="Required for all domestic shipping and local transport." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Domestic Invoice / Challan</span>
                         </button>
-                        <button onclick="selectDoc(this, 'COM_INV', 'Commercial Invoice', 'Standard document for all commercial export shipments.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="COM_INV" data-doc-title="Commercial Invoice" data-doc-desc="Standard document for all commercial export shipments." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Commercial Invoice</span>
                         </button>
-                        <button onclick="selectDoc(this, 'PKL', 'Packing List', 'Detailed breakdown of shipment contents, weights, and dimensions.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="PKL" data-doc-title="Packing List" data-doc-desc="Detailed breakdown of shipment contents, weights, and dimensions." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Packing List</span>
                         </button>
-                        <button onclick="selectDoc(this, 'KYC', 'KYC Form', 'Mandatory Indian Customs declaration for new or first-time exporters.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="KYC" data-doc-title="KYC Form" data-doc-desc="Mandatory Indian Customs declaration for new or first-time exporters." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">KYC Form</span>
                         </button>
-                        <button onclick="selectDoc(this, 'SLI', 'Shippers Letter of Instructions', 'Formal instructions provided to the freight forwarder.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="SLI" data-doc-title="Shippers Letter of Instructions" data-doc-desc="Formal instructions provided to the freight forwarder." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Shippers Letter of Instructions</span>
                         </button>
-                        <button onclick="selectDoc(this, 'BL_AWB', 'Bill of Lading / Air Waybill', 'Contract of carriage issued by the carrier, detailing shipment terms.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
+                        <button data-doc-code="BL_AWB" data-doc-title="Bill of Lading / Air Waybill" data-doc-desc="Contract of carriage issued by the carrier, detailing shipment terms." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Bill of Lading / Air Waybill</span>
                         </button>
-                        <button onclick="selectDoc(this, 'INS_CERT', 'Insurance Certificate', 'Proof of insurance coverage for the shipment.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
+                        <button data-doc-code="INS_CERT" data-doc-title="Insurance Certificate" data-doc-desc="Proof of insurance coverage for the shipment." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Insurance Certificate</span>
                         </button>
-                        <button onclick="selectDoc(this, 'LOA', 'Letter of Authority', 'Authorizes a Customs House Agent (CHA) to act on your behalf.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
+                        <button data-doc-code="LOA" data-doc-title="Letter of Authority" data-doc-desc="Authorizes a Customs House Agent (CHA) to act on your behalf." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Letter of Authority (CHA)</span>
                         </button>
                     </div>
@@ -84,25 +84,25 @@
                 <div>
                     <h3 class="px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Category 2: Export Incentives</h3>
                     <div class="space-y-1 pr-2">
-                        <button onclick="selectDoc(this, 'ANN_D', 'Annexure D (DEPB)', 'Required for claims under the Duty Entitlement Pass Book scheme.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="ANN_D" data-doc-title="Annexure D (DEPB)" data-doc-desc="Required for claims under the Duty Entitlement Pass Book scheme." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Annexure D for DEPB</span>
                         </button>
-                        <button onclick="selectDoc(this, 'APP_3', 'Appendix III (Drawback)', 'For Duty Drawback claims under the standard all-industry rate.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="APP_3" data-doc-title="Appendix III (Drawback)" data-doc-desc="For Duty Drawback claims under the standard all-industry rate." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Appendix III for Drawback</span>
                         </button>
-                        <button onclick="selectDoc(this, 'APP_4', 'Appendix IV (Drawback)', 'For specific items where CENVAT has not been availed.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="APP_4" data-doc-title="Appendix IV (Drawback)" data-doc-desc="For specific items where CENVAT has not been availed." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Appendix IV for Drawback</span>
                         </button>
-                        <button onclick="selectDoc(this, 'APP_2', 'Appendix II (DEEC)', 'Required for exports under the Advance License (DEEC) scheme.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="APP_2" data-doc-title="Appendix II (DEEC)" data-doc-desc="Required for exports under the Advance License (DEEC) scheme." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Appendix II for DEEC</span>
                         </button>
-                        <button onclick="selectDoc(this, 'ANN_C1', 'Annexure C1 (EOU)', 'Mandatory for 100% Export Oriented Units (EOU).')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="ANN_C1" data-doc-title="Annexure C1 (EOU)" data-doc-desc="Mandatory for 100% Export Oriented Units (EOU)." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Annexure C1 for EOU</span>
                         </button>
-                        <button onclick="selectDoc(this, 'ARE1', 'ARE-1 Form', 'For removal of goods for export without payment of Central Excise duty.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
+                        <button data-doc-code="ARE1" data-doc-title="ARE-1 Form" data-doc-desc="For removal of goods for export without payment of Central Excise duty." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">ARE-1 Form</span>
                         </button>
-                        <button onclick="selectDoc(this, 'ANN_1_2', 'Annexure I & II (Garments)', 'Specific drawback claims for Woven Garments (Exporter & Manufacturer).')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="ANN_1_2" data-doc-title="Annexure I & II (Garments)" data-doc-desc="Specific drawback claims for Woven Garments (Exporter & Manufacturer)." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Annexure I & II for Drawback</span>
                         </button>
                     </div>
@@ -112,13 +112,13 @@
                 <div>
                     <h3 class="px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Category 3: Shipment Type</h3>
                     <div class="space-y-1 pr-2">
-                        <button onclick="selectDoc(this, 'GR_SAMPLE', 'GR Waiver (Sample)', 'For commercial samples with no commercial value.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="GR_SAMPLE" data-doc-title="GR Waiver (Sample)" data-doc-desc="For commercial samples with no commercial value." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">GR Waiver (Free Sample)</span>
                         </button>
-                        <button onclick="selectDoc(this, 'GR_REPAIR', 'GR Waiver (Repair)', 'For goods exported for repair and subsequent re-import.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="GR_REPAIR" data-doc-title="GR Waiver (Repair)" data-doc-desc="For goods exported for repair and subsequent re-import." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">GR Waiver (Repair & Return)</span>
                         </button>
-                        <button onclick="selectDoc(this, 'SDF', 'SDF Form', 'Mandatory FEMA declaration for all exports from India.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="SDF" data-doc-title="SDF Form" data-doc-desc="Mandatory FEMA declaration for all exports from India." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">SDF Form</span>
                         </button>
                     </div>
@@ -128,28 +128,28 @@
                 <div>
                     <h3 class="px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Category 4: Product & Destination</h3>
                     <div class="space-y-1 pr-2">
-                        <button onclick="selectDoc(this, 'MSDS', 'MSDS', 'Required for shipping chemicals, pharmaceuticals, or any hazardous substances.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="MSDS" data-doc-title="MSDS" data-doc-desc="Required for shipping chemicals, pharmaceuticals, or any hazardous substances." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">MSDS</span>
                         </button>
-                        <button onclick="selectDoc(this, 'TSCA', 'TSCA Certificate', 'Required for chemical shipments to the USA.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="TSCA" data-doc-title="TSCA Certificate" data-doc-desc="Required for chemical shipments to the USA." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">TSCA Certificate</span>
                         </button>
-                        <button onclick="selectDoc(this, 'NEG_DEC', 'Negative Declaration', 'Required for Silk products (>70% silk) exported to the USA.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="NEG_DEC" data-doc-title="Negative Declaration" data-doc-desc="Required for Silk products (>70% silk) exported to the USA." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Negative Declaration</span>
                         </button>
-                        <button onclick="selectDoc(this, 'NON_DG', 'Non-DG Declaration', 'Certifies cargo is non-hazardous as per IATA regulations (for air freight).')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="NON_DG" data-doc-title="Non-DG Declaration" data-doc-desc="Certifies cargo is non-hazardous as per IATA regulations (for air freight)." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Non-DG Declaration</span>
                         </button>
-                        <button onclick="selectDoc(this, 'QUOTA', 'Quota Charge Statement', 'Required for textile exports subject to quota charges.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="QUOTA" data-doc-title="Quota Charge Statement" data-doc-desc="Required for textile exports subject to quota charges." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Quota Charge Statement</span>
                         </button>
-                        <button onclick="selectDoc(this, 'SCD', 'Single Country Declaration', 'For goods wholly produced in one country (often for US imports).')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="SCD" data-doc-title="Single Country Declaration" data-doc-desc="For goods wholly produced in one country (often for US imports)." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Single Country Declaration</span>
                         </button>
-                        <button onclick="selectDoc(this, 'COO', 'Certificate of Origin', 'Certifies the country where the goods were manufactured.')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
+                        <button data-doc-code="COO" data-doc-title="Certificate of Origin" data-doc-desc="Certifies the country where the goods were manufactured." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Certificate of Origin</span>
                         </button>
-                        <button onclick="selectDoc(this, 'MCD', 'Multiple Country Declaration', 'For goods assembled across multiple countries (often for US textile imports).')" class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
+                        <button data-doc-code="MCD" data-doc-title="Multiple Country Declaration" data-doc-desc="For goods assembled across multiple countries (often for US textile imports)." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
                             <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Multiple Country Declaration</span>
                         </button>
                     </div>
@@ -178,5 +178,21 @@
 
     <!-- Document Generation Logic -->
     <script src="docs-gen.js"></script>
+    <script>
+        // This script block demonstrates how to handle the click events unobtrusively.
+        // It is recommended to move this logic into the 'docs-gen.js' file for better separation of concerns.
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.doc-link').forEach(button => {
+                button.addEventListener('click', () => {
+                    // The 'selectDoc' function is expected to be globally available from 'docs-gen.js'
+                    if (typeof selectDoc === 'function') {
+                        selectDoc(button, button.dataset.docCode, button.dataset.docTitle, button.dataset.docDesc);
+                    } else {
+                        console.error('selectDoc function not found. Make sure docs-gen.js is loaded and selectDoc is a global function.');
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

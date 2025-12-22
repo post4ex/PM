@@ -1,0 +1,11 @@
+{
+  "name": "Python Server 5500",
+  "postStartCommand": "nohup python3 -m http.server 5500 > server.log 2>&1 &",
+  "forwardPorts": [5500],
+  "portsAttributes": {
+    "5500": {
+      "label": "Web Preview",
+      "onAutoForward": "openPreview" 
+    }
+  }
+}
