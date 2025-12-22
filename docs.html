@@ -160,7 +160,7 @@
 
         <!-- Content Area -->
         <section id="app-content" class="flex-1 p-6 lg:p-10 overflow-y-auto">
-            <!-- Content is dynamically rendered by docsx-gen.js -->
+            <!-- Content is dynamically rendered by docs-gen.js -->
         </section>
     </main>
 
@@ -170,11 +170,13 @@
     <!-- Layout Script -->
     <script src="layout.js"></script>
     
+    <!-- PDF & DOCX Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
+
     <!-- Document Generation Logic -->
-    <script src="docsx-gen.js"></script>
-    <script>
-        // Initialize the page with the decision guide
-        document.addEventListener('DOMContentLoaded', initDocCenter);
-    </script>
+    <script src="docs-gen.js"></script>
 </body>
 </html>
