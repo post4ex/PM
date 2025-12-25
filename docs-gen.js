@@ -5,6 +5,263 @@
  */
 
 // ============================================================================
+// DOCUMENT SEARCH MAPPING
+// ============================================================================
+const DOCUMENT_SEARCH_MAP = {
+    'COM_INV': {
+        keywords: ['commercial', 'invoice', 'export', 'customs', 'value', 'goods', 'payment', 'buyer', 'seller', 'price', 'amount', 'currency', 'incoterms'],
+        why: 'Required for customs clearance and payment collection',
+        when: 'For all export shipments to declare commercial value',
+        usage: 'Export customs clearance, payment terms, goods valuation'
+    },
+    'PKL': {
+        keywords: ['packing', 'list', 'contents', 'weight', 'dimensions', 'cartons', 'packages', 'shipping', 'freight', 'cargo'],
+        why: 'Details package contents and weights for shipping',
+        when: 'For all shipments to specify packaging details',
+        usage: 'Freight booking, customs inspection, cargo handling'
+    },
+    'KYC': {
+        keywords: ['kyc', 'customer', 'verification', 'identity', 'compliance', 'aml', 'due diligence', 'background'],
+        why: 'Customer identity verification and compliance',
+        when: 'For new customers or high-value transactions',
+        usage: 'Customer onboarding, compliance verification, risk assessment'
+    },
+    'SLI': {
+        keywords: ['shipper', 'instructions', 'freight', 'forwarder', 'booking', 'transport', 'logistics', 'carrier'],
+        why: 'Instructions to freight forwarder for shipment handling',
+        when: 'When booking freight services',
+        usage: 'Freight booking, transport arrangements, logistics coordination'
+    },
+    'BL_AWB': {
+        keywords: ['bill', 'lading', 'awb', 'airway', 'transport', 'receipt', 'cargo', 'carrier', 'consignment'],
+        why: 'Transport document and receipt of goods',
+        when: 'For sea freight (BL) or air freight (AWB)',
+        usage: 'Proof of shipment, cargo receipt, transport contract'
+    },
+    'INS_CERT': {
+        keywords: ['insurance', 'certificate', 'coverage', 'marine', 'cargo', 'protection', 'risk', 'claim'],
+        why: 'Cargo insurance coverage certificate',
+        when: 'When cargo insurance is required or requested',
+        usage: 'Insurance claims, risk coverage, buyer assurance'
+    },
+    'LOA': {
+        keywords: ['letter', 'authority', 'authorization', 'cha', 'customs', 'agent', 'clearance', 'power'],
+        why: 'Authorizes customs house agent for clearance',
+        when: 'When appointing CHA for customs clearance',
+        usage: 'Customs clearance authorization, agent appointment'
+    },
+    'COO': {
+        keywords: ['certificate', 'origin', 'country', 'manufacture', 'preferential', 'duty', 'trade', 'agreement'],
+        why: 'Certifies country of origin for preferential duty',
+        when: 'For preferential trade agreements or buyer requirement',
+        usage: 'Duty reduction, trade preferences, origin verification'
+    },
+    'NON_DG': {
+        keywords: ['non', 'dangerous', 'goods', 'declaration', 'air', 'freight', 'safety', 'hazardous', 'iata'],
+        why: 'Declares goods are not dangerous for air transport',
+        when: 'For all air freight shipments',
+        usage: 'Air freight safety, IATA compliance, cargo acceptance'
+    },
+    'TAX_CHALLAN': {
+        keywords: ['tax', 'invoice', 'challan', 'gst', 'domestic', 'supply', 'billing', 'vat'],
+        why: 'GST compliant domestic tax invoice',
+        when: 'For domestic supplies within India',
+        usage: 'GST compliance, domestic billing, tax documentation'
+    },
+    'DELIVERY_CHALLAN': {
+        keywords: ['delivery', 'challan', 'dispatch', 'goods', 'transport', 'domestic', 'receipt'],
+        why: 'Goods dispatch document for domestic delivery',
+        when: 'For domestic goods movement without sale',
+        usage: 'Goods dispatch, domestic transport, delivery proof'
+    },
+    'ANN_D': {
+        keywords: ['annexure', 'depb', 'duty', 'entitlement', 'pass', 'book', 'export', 'incentive'],
+        why: 'DEPB duty entitlement pass book declaration',
+        when: 'When claiming DEPB export incentives',
+        usage: 'Export incentives, duty benefits, DEPB claims'
+    },
+    'ARE1': {
+        keywords: ['are1', 'excise', 'rebate', 'duty', 'refund', 'export', 'incentive'],
+        why: 'Excise duty rebate claim form',
+        when: 'When claiming excise duty rebate on exports',
+        usage: 'Duty rebate, export incentives, excise refund'
+    },
+    'SDF': {
+        keywords: ['sdf', 'rbi', 'foreign', 'exchange', 'declaration', 'forex', 'export', 'proceeds'],
+        why: 'RBI foreign exchange declaration form',
+        when: 'For export proceeds realization',
+        usage: 'Forex compliance, RBI reporting, export proceeds'
+    },
+    'ANN_1': {
+        keywords: ['annexure', 'drawback', 'garments', 'textile', 'duty', 'refund', 'export'],
+        why: 'Drawback claim for garment exports',
+        when: 'When claiming drawback on garment exports',
+        usage: 'Duty drawback, garment exports, duty refund'
+    },
+    'ANN_2': {
+        keywords: ['annexure', 'drawback', 'manufacturer', 'duty', 'refund', 'export', 'production'],
+        why: 'Drawback claim for manufacturer exports',
+        when: 'When claiming drawback as manufacturer',
+        usage: 'Duty drawback, manufacturing exports, duty refund'
+    },
+    'APP_3': {
+        keywords: ['appendix', 'drawback', 'declaration', 'duty', 'refund', 'export'],
+        why: 'Drawback declaration form',
+        when: 'When claiming duty drawback on exports',
+        usage: 'Duty drawback, export incentives, duty refund'
+    },
+    'APP_4': {
+        keywords: ['appendix', 'drawback', 'cenvat', 'duty', 'refund', 'export'],
+        why: 'CENVAT drawback declaration',
+        when: 'When claiming CENVAT drawback',
+        usage: 'CENVAT drawback, duty refund, export incentives'
+    },
+    'APP_2': {
+        keywords: ['appendix', 'deec', 'duty', 'exemption', 'entitlement', 'certificate'],
+        why: 'DEEC duty exemption declaration',
+        when: 'When using DEEC for duty exemption',
+        usage: 'Duty exemption, DEEC benefits, import duty savings'
+    },
+    'ANN_C1': {
+        keywords: ['annexure', 'eou', 'export', 'oriented', 'unit', 'certificate'],
+        why: 'EOU export certificate',
+        when: 'For EOU unit exports',
+        usage: 'EOU compliance, export obligations, unit certification'
+    },
+    'SCD': {
+        keywords: ['single', 'country', 'declaration', 'origin', 'textile', 'quota'],
+        why: 'Single country origin declaration for textiles',
+        when: 'For textile exports to quota countries',
+        usage: 'Textile quota, origin declaration, trade compliance'
+    },
+    'MCD': {
+        keywords: ['multiple', 'country', 'declaration', 'origin', 'textile', 'manufacturing'],
+        why: 'Multiple country declaration for textile manufacturing',
+        when: 'For textiles with multi-country processing',
+        usage: 'Complex textile supply chain, multi-origin goods'
+    },
+    'NEG_DEC': {
+        keywords: ['negative', 'declaration', 'silk', 'usa', 'america', 'textile'],
+        why: 'Negative declaration for silk products to USA',
+        when: 'For silk exports to United States',
+        usage: 'US silk imports, negative declaration, trade compliance'
+    },
+    'QUOTA': {
+        keywords: ['quota', 'charge', 'statement', 'textile', 'allocation', 'fee'],
+        why: 'Textile quota charge statement',
+        when: 'When paying textile quota charges',
+        usage: 'Quota management, textile exports, charge documentation'
+    },
+    'TSCA': {
+        keywords: ['tsca', 'chemical', 'usa', 'america', 'toxic', 'substances', 'control'],
+        why: 'TSCA certificate for chemical exports to USA',
+        when: 'For chemical exports to United States',
+        usage: 'US chemical imports, TSCA compliance, chemical safety'
+    },
+    'GR_SAMPLE': {
+        keywords: ['gr', 'waiver', 'sample', 'free', 'no', 'value', 'promotional'],
+        why: 'GR waiver for free samples',
+        when: 'For free sample exports with no commercial value',
+        usage: 'Sample exports, promotional goods, no-value shipments'
+    },
+    'GR_REPAIR': {
+        keywords: ['gr', 'waiver', 'repair', 'return', 'warranty', 'service'],
+        why: 'GR waiver for repair and return goods',
+        when: 'For goods sent for repair and return',
+        usage: 'Repair services, warranty claims, temporary exports'
+    },
+    'MSDS': {
+        keywords: ['msds', 'material', 'safety', 'data', 'sheet', 'chemical', 'hazard', 'safety'],
+        why: 'Material safety data sheet for chemicals',
+        when: 'For chemical or hazardous material exports',
+        usage: 'Chemical safety, hazard communication, regulatory compliance'
+    }
+};
+
+// ============================================================================
+// DOCUMENT SEARCH FUNCTIONALITY
+// ============================================================================
+function filterDocuments(searchTerm) {
+    const term = searchTerm.toLowerCase().trim();
+    const docLinks = document.querySelectorAll('.doc-link');
+    const categories = document.querySelectorAll('nav > div');
+    
+    if (!term) {
+        // Show all documents and categories
+        docLinks.forEach(link => {
+            link.style.display = 'block';
+            link.classList.remove('bg-yellow-50', 'border-yellow-300');
+        });
+        categories.forEach(cat => cat.style.display = 'block');
+        return;
+    }
+    
+    let hasVisibleDocs = false;
+    
+    categories.forEach(category => {
+        const categoryLinks = category.querySelectorAll('.doc-link');
+        let categoryHasVisible = false;
+        
+        categoryLinks.forEach(link => {
+            const docCode = link.dataset.docCode;
+            const docTitle = link.dataset.docTitle?.toLowerCase() || '';
+            const docDesc = link.dataset.docDesc?.toLowerCase() || '';
+            const searchData = DOCUMENT_SEARCH_MAP[docCode];
+            
+            let isMatch = false;
+            
+            // Search in title and description
+            if (docTitle.includes(term) || docDesc.includes(term)) {
+                isMatch = true;
+            }
+            
+            // Search in keywords, why, when, usage
+            if (searchData && !isMatch) {
+                const searchableText = [
+                    ...searchData.keywords,
+                    searchData.why,
+                    searchData.when,
+                    searchData.usage
+                ].join(' ').toLowerCase();
+                
+                if (searchableText.includes(term)) {
+                    isMatch = true;
+                }
+            }
+            
+            if (isMatch) {
+                link.style.display = 'block';
+                link.classList.add('bg-yellow-50', 'border-yellow-300');
+                categoryHasVisible = true;
+                hasVisibleDocs = true;
+            } else {
+                link.style.display = 'none';
+                link.classList.remove('bg-yellow-50', 'border-yellow-300');
+            }
+        });
+        
+        category.style.display = categoryHasVisible ? 'block' : 'none';
+    });
+    
+    // Show "no results" message if needed
+    const existingNoResults = document.getElementById('no-search-results');
+    if (existingNoResults) existingNoResults.remove();
+    
+    if (!hasVisibleDocs && term) {
+        const noResultsDiv = document.createElement('div');
+        noResultsDiv.id = 'no-search-results';
+        noResultsDiv.className = 'p-4 text-center text-gray-500 text-sm';
+        noResultsDiv.innerHTML = `
+            <i class="fa-solid fa-search text-2xl mb-2 block"></i>
+            No documents found for "${term}"
+        `;
+        document.querySelector('nav').appendChild(noResultsDiv);
+    }
+}
+
+window.filterDocuments = filterDocuments;
+
+// ============================================================================
 // SECURITY: HTML SANITIZATION
 // ============================================================================
 /**
@@ -22,6 +279,27 @@ function sanitizeHTML(str) {
         .replace(/'/g, '&#x27;')
         .replace(/\//g, '&#x2F;');
 }
+
+// ============================================================================
+// MOBILE VIEW FUNCTIONS
+// ============================================================================
+const isMobileView = () => window.innerWidth < 768;
+
+const showDocumentView = () => {
+    if (isMobileView()) {
+        document.getElementById('documentListContainer').classList.add('hidden');
+        document.getElementById('mainContentContainer').classList.remove('hidden', 'md:block');
+        document.getElementById('mainContentContainer').classList.add('block');
+    }
+};
+
+const showListView = () => {
+    if (isMobileView()) {
+        document.getElementById('documentListContainer').classList.remove('hidden');
+        document.getElementById('mainContentContainer').classList.add('hidden');
+        document.getElementById('mainContentContainer').classList.remove('block');
+    }
+};
 
 // ============================================================================
 // TABLE ROW MANAGEMENT FUNCTIONS
@@ -194,45 +472,103 @@ let savedDocsVisible = false;
 // SAVED DOCUMENTS FUNCTIONS
 // ============================================================================
 function toggleSavedDocs() {
-    const pane = document.getElementById('savedDocsPane');
-    savedDocsVisible = !savedDocsVisible;
-    
-    if (savedDocsVisible) {
-        pane.classList.remove('hidden');
-        loadSavedDocuments();
-    } else {
-        pane.classList.add('hidden');
-    }
+    // Show saved documents in main content area instead of right pane
+    renderSavedDocumentsView();
 }
 
-async function loadSavedDocuments() {
-    const container = document.getElementById('savedDocsList');
+async function renderSavedDocumentsView() {
+    const contentArea = document.getElementById('app-content');
     const userId = getCurrentUserId();
+    
+    // Clear active selection in sidebar
+    document.querySelectorAll('.doc-link').forEach(link => {
+        link.classList.remove('bg-blue-50', 'border-blue-500', 'text-blue-700');
+        link.querySelector('span').classList.remove('text-blue-700');
+        link.classList.add('border-transparent');
+    });
     
     try {
         const docs = await DocumentDB.getByUser(userId);
         
+        let docsHtml = '';
         if (docs.length === 0) {
-            container.innerHTML = '<p class="text-gray-500 text-sm">No saved documents found.</p>';
-            return;
+            docsHtml = `
+                <div class="text-center py-12">
+                    <i class="fa-solid fa-folder-open text-6xl text-gray-300 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-gray-600 mb-2">No Saved Documents</h3>
+                    <p class="text-gray-500">Start creating documents and save them to see them here.</p>
+                </div>
+            `;
+        } else {
+            docsHtml = `
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    ${docs.map(doc => `
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="flex-1">
+                                    <h3 class="font-semibold text-gray-900 mb-1">${sanitizeHTML(doc.title)}</h3>
+                                    <p class="text-sm text-gray-500 font-mono">${doc.docId}</p>
+                                    <p class="text-xs text-gray-400 mt-1">${new Date(doc.timestamp).toLocaleString()}</p>
+                                </div>
+                                <div class="flex gap-1">
+                                    <button onclick="copySavedDocument('${doc.id}')" class="text-blue-500 hover:text-blue-700 p-1 rounded" title="Copy to clipboard">
+                                        <i class="fa-solid fa-copy text-sm"></i>
+                                    </button>
+                                    <button onclick="deleteSavedDocument('${doc.id}')" class="text-red-500 hover:text-red-700 p-1 rounded" title="Delete">
+                                        <i class="fa-solid fa-trash text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="border-t pt-3">
+                                <div class="grid grid-cols-2 gap-2 text-xs text-gray-600 mb-3">
+                                    <div><strong>Fields:</strong> ${Object.keys(doc.data).length}</div>
+                                    <div><strong>Size:</strong> ${(JSON.stringify(doc.data).length / 1024).toFixed(1)}KB</div>
+                                </div>
+                                
+                                <button onclick="loadSavedDocument('${doc.id}')" class="w-full bg-blue-600 text-white py-2 px-3 rounded text-sm font-medium hover:bg-blue-700 transition-colors">
+                                    <i class="fa-solid fa-folder-open mr-1"></i> Load Document
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
         }
         
-        container.innerHTML = docs.map(doc => `
-            <div class="p-3 bg-gray-50 rounded-lg border cursor-pointer hover:bg-gray-100" onclick="loadSavedDocument('${doc.id}')">
-                <div class="font-semibold text-sm text-gray-800">${doc.title}</div>
-                <div class="text-xs text-gray-500">${doc.docId} • ${new Date(doc.timestamp).toLocaleDateString()}</div>
-                <div class="flex gap-1 mt-2">
-                    <button onclick="event.stopPropagation(); copySavedDocument('${doc.id}')" class="text-blue-500 hover:text-blue-700 text-xs px-2 py-1 bg-blue-50 rounded" title="Copy to clipboard">
-                        <i class="fa-solid fa-copy"></i>
-                    </button>
-                    <button onclick="event.stopPropagation(); deleteSavedDocument('${doc.id}')" class="text-red-500 hover:text-red-700 text-xs px-2 py-1 bg-red-50 rounded" title="Delete">
-                        <i class="fa-solid fa-trash"></i>
+        contentArea.innerHTML = `
+            <div class="max-w-6xl mx-auto animate-fade-in">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900 mb-2 flex items-center gap-3">
+                            <i class="fa-solid fa-save text-blue-600"></i>
+                            Saved Documents
+                        </h1>
+                        <p class="text-gray-600">Your saved document drafts (${docs.length} total)</p>
+                    </div>
+                    <button onclick="renderDecisionGuide()" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors">
+                        <i class="fa-solid fa-arrow-left mr-2"></i> Back to Guide
                     </button>
                 </div>
+                
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    ${docsHtml}
+                </div>
             </div>
-        `).join('');
+        `;
+        
+        showDocumentView();
+        
     } catch (error) {
-        container.innerHTML = '<p class="text-red-500 text-sm">Error loading saved documents.</p>';
+        contentArea.innerHTML = `
+            <div class="max-w-4xl mx-auto animate-fade-in">
+                <div class="text-center py-12">
+                    <i class="fa-solid fa-exclamation-triangle text-6xl text-red-300 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-red-600 mb-2">Error Loading Documents</h3>
+                    <p class="text-gray-500">Unable to load saved documents. Please try again.</p>
+                </div>
+            </div>
+        `;
     }
 }
 
@@ -405,7 +741,8 @@ async function deleteSavedDocument(docId) {
         if (window.showNotification) {
             window.showNotification('Document deleted!', 'success');
         }
-        loadSavedDocuments();
+        // Refresh the saved documents view
+        renderSavedDocumentsView();
     } catch (error) {
         if (window.showNotification) {
             window.showNotification('Error deleting document.', 'error');
@@ -594,6 +931,9 @@ function selectDoc(element, docId, docTitle, docDesc) {
 
     // 3. Render Content
     renderDocumentWorkspace(schema);
+    
+    // 4. Show document view on mobile
+    showDocumentView();
 }
 
 /**
@@ -1798,7 +2138,7 @@ window.handleImportData = handleImportData;
 window.togglePreview = togglePreview;
 window.renderDecisionGuide = renderDecisionGuide;
 window.initDocCenter = initDocCenter;
-window.loadSavedDocument = loadSavedDocument;
+window.renderSavedDocumentsView = renderSavedDocumentsView;
 window.deleteSavedDocument = deleteSavedDocument;
 window.copySavedDocument = copySavedDocument;
 window.generatePrintView = generatePrintView;
@@ -1829,4 +2169,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+    
+    // Setup back button for mobile
+    const backBtn = document.getElementById('backToListBtn');
+    if (backBtn) {
+        backBtn.addEventListener('click', showListView);
+    }
 });

@@ -24,65 +24,188 @@
     <div id="header-placeholder"></div>
 
     <!-- Main Layout -->
-    <main class="flex-grow w-full p-6 md:p-8">
+    <main class="flex flex-col md:flex-row flex-grow w-full">
         
-        <!-- Document Header Buttons -->
-        <div class="mb-6 flex flex-wrap gap-2 justify-center">
-            <button class="doc-link px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors text-sm font-medium" data-doc-code="COM_INV" data-doc-title="Commercial Invoice" data-doc-desc="Primary export document">
-                <i class="fa-solid fa-file-contract mr-2"></i>
-                <span>COM INV</span>
-            </button>
-            <button class="doc-link px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors text-sm font-medium" data-doc-code="PKL" data-doc-title="Packing List" data-doc-desc="Package contents and weights">
-                <i class="fa-solid fa-boxes-stacked mr-2"></i>
-                <span>PL</span>
-            </button>
-            <button class="doc-link px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors text-sm font-medium" data-doc-code="KYC" data-doc-title="KYC Form" data-doc-desc="Customer verification document">
-                <i class="fa-solid fa-id-card mr-2"></i>
-                <span>KYC</span>
-            </button>
-            <button class="doc-link px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors text-sm font-medium" data-doc-code="SLI" data-doc-title="Shipper Instructions" data-doc-desc="Instructions to freight forwarder">
-                <i class="fa-solid fa-clipboard-list mr-2"></i>
-                <span>SLI</span>
-            </button>
-            <button class="doc-link px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors text-sm font-medium" data-doc-code="TAX_CHALLAN" data-doc-title="Tax Challan" data-doc-desc="GST compliant domestic invoice">
-                <i class="fa-solid fa-receipt mr-2"></i>
-                <span>TAX CLN</span>
-            </button>
-            <button class="doc-link px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors text-sm font-medium" data-doc-code="DELIVERY_CHALLAN" data-doc-title="Delivery Challan" data-doc-desc="Goods dispatch document">
-                <i class="fa-solid fa-truck mr-2"></i>
-                <span>DEL CLN</span>
-            </button>
-            <button onclick="toggleSavedDocs()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                <i class="fa-solid fa-folder mr-2"></i>
-                <span>FOLDER</span>
-            </button>
-        </div>
-        
-        <!-- Main Content Area (Now full width) -->
-        <div id="app-content" class="w-full">
-            <!-- Content will be dynamically rendered here -->
-        </div>
-
-        <!-- Right Pane for Saved Documents -->
-        <aside id="savedDocsPane" class="hidden fixed top-0 right-0 h-full w-full md:w-96 bg-white border-l flex flex-col flex-shrink-0 overflow-hidden shadow-lg z-50">
+        <!-- Document Sidebar -->
+        <aside id="documentListContainer" class="w-full md:w-64 bg-white border-r border-gray-200 flex-shrink-0 overflow-y-auto custom-scrollbar flex flex-col" style="height: 100vh;">
             <div class="p-4 border-b bg-gray-50 flex-shrink-0">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-lg font-bold text-blue-900 flex items-center gap-2">
-                        <i class="fa-solid fa-save"></i> Saved Documents
-                    </h2>
-                    <button onclick="toggleSavedDocs()" class="text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100 transition-colors">
-                        <i class="fa-solid fa-times"></i>
+                <h2 class="text-lg font-bold text-blue-900">Documents</h2>
+                <p class="text-xs text-gray-500 mb-3">Select a document to create</p>
+                
+                <!-- Search Bar -->
+                <div class="relative">
+                    <input type="text" id="docSearch" placeholder="Search documents..." class="w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" oninput="filterDocuments(this.value)">
+                    <i class="fa-solid fa-search absolute left-2.5 top-2.5 text-gray-400 text-sm"></i>
+                </div>
+            </div>
+            <nav class="p-2">
+                <!-- Core Documents -->
+                <div class="mb-4">
+                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide px-3 py-1">Core Documents</h3>
+                    <div class="space-y-1">
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="COM_INV" data-doc-title="Commercial Invoice" data-doc-desc="Primary export document">
+                            <i class="fa-solid fa-file-contract w-5"></i>
+                            <span>Commercial Invoice</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="PKL" data-doc-title="Packing List" data-doc-desc="Package contents and weights">
+                            <i class="fa-solid fa-boxes-stacked w-5"></i>
+                            <span>Packing List</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="KYC" data-doc-title="KYC Form" data-doc-desc="Customer verification">
+                            <i class="fa-solid fa-id-card w-5"></i>
+                            <span>KYC Form</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="SLI" data-doc-title="Shipper Instructions" data-doc-desc="Freight forwarder instructions">
+                            <i class="fa-solid fa-clipboard-list w-5"></i>
+                            <span>Shipper Instructions</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="BL_AWB" data-doc-title="Bill of Lading" data-doc-desc="Transport document">
+                            <i class="fa-solid fa-ship w-5"></i>
+                            <span>Bill of Lading / AWB</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="INS_CERT" data-doc-title="Insurance Certificate" data-doc-desc="Cargo insurance">
+                            <i class="fa-solid fa-shield-halved w-5"></i>
+                            <span>Insurance Certificate</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="LOA" data-doc-title="Letter of Authority" data-doc-desc="CHA authorization">
+                            <i class="fa-solid fa-file-signature w-5"></i>
+                            <span>Letter of Authority</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="COO" data-doc-title="Certificate of Origin" data-doc-desc="Origin certification">
+                            <i class="fa-solid fa-certificate w-5"></i>
+                            <span>Certificate of Origin</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="NON_DG" data-doc-title="Non-DG Declaration" data-doc-desc="Air freight safety">
+                            <i class="fa-solid fa-plane w-5"></i>
+                            <span>Non-DG Declaration</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Domestic Documents -->
+                <div class="mb-4">
+                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide px-3 py-1">Domestic</h3>
+                    <div class="space-y-1">
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="TAX_CHALLAN" data-doc-title="Tax Challan" data-doc-desc="GST domestic invoice">
+                            <i class="fa-solid fa-receipt w-5"></i>
+                            <span>Tax Invoice Challan</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="DELIVERY_CHALLAN" data-doc-title="Delivery Challan" data-doc-desc="Goods dispatch document">
+                            <i class="fa-solid fa-truck w-5"></i>
+                            <span>Delivery Challan</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Incentives & Regimes -->
+                <div class="mb-4">
+                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide px-3 py-1">Incentives</h3>
+                    <div class="space-y-1">
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="ANN_D" data-doc-title="Annexure D" data-doc-desc="DEPB declaration">
+                            <i class="fa-solid fa-file-text w-5"></i>
+                            <span>Annexure D (DEPB)</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="ARE1" data-doc-title="ARE-1 Form" data-doc-desc="Excise rebate">
+                            <i class="fa-solid fa-file-invoice w-5"></i>
+                            <span>ARE-1 Form</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Shipment Type -->
+                <div class="mb-4">
+                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide px-3 py-1">Shipment Type</h3>
+                    <div class="space-y-1">
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="SDF" data-doc-title="SDF Form" data-doc-desc="RBI declaration">
+                            <i class="fa-solid fa-landmark w-5"></i>
+                            <span>SDF Form</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="ANN_1" data-doc-title="Annexure-I" data-doc-desc="Drawback (Garments)">
+                            <i class="fa-solid fa-file-alt w-5"></i>
+                            <span>Annexure-I (Drawback)</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="ANN_2" data-doc-title="Annexure-II" data-doc-desc="Drawback (Manufacturer)">
+                            <i class="fa-solid fa-file-alt w-5"></i>
+                            <span>Annexure-II (Drawback)</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="APP_3" data-doc-title="Appendix III" data-doc-desc="Drawback declaration">
+                            <i class="fa-solid fa-file-alt w-5"></i>
+                            <span>Appendix III (Drawback)</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="APP_4" data-doc-title="Appendix IV" data-doc-desc="Drawback CENVAT">
+                            <i class="fa-solid fa-file-alt w-5"></i>
+                            <span>Appendix IV (Drawback)</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="APP_2" data-doc-title="Appendix II" data-doc-desc="DEEC declaration">
+                            <i class="fa-solid fa-file-alt w-5"></i>
+                            <span>Appendix II (DEEC)</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="ANN_C1" data-doc-title="Annexure C1" data-doc-desc="EOU certificate">
+                            <i class="fa-solid fa-file-alt w-5"></i>
+                            <span>Annexure C1 (EOU)</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="SCD" data-doc-title="Single Country Declaration" data-doc-desc="Origin declaration">
+                            <i class="fa-solid fa-flag w-5"></i>
+                            <span>Single Country Declaration</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="MCD" data-doc-title="Multiple Country Declaration" data-doc-desc="Multi-origin textiles">
+                            <i class="fa-solid fa-globe w-5"></i>
+                            <span>Multiple Country Declaration</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="NEG_DEC" data-doc-title="Negative Declaration" data-doc-desc="Silk products to USA">
+                            <i class="fa-solid fa-ban w-5"></i>
+                            <span>Negative Declaration</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="QUOTA" data-doc-title="Quota Charge Statement" data-doc-desc="Textile quota charges">
+                            <i class="fa-solid fa-calculator w-5"></i>
+                            <span>Quota Charge Statement</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="TSCA" data-doc-title="TSCA Certificate" data-doc-desc="Chemicals to USA">
+                            <i class="fa-solid fa-flask w-5"></i>
+                            <span>TSCA Certificate</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="GR_SAMPLE" data-doc-title="GR Waiver (Sample)" data-doc-desc="Free samples">
+                            <i class="fa-solid fa-gift w-5"></i>
+                            <span>GR Waiver (Sample)</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="GR_REPAIR" data-doc-title="GR Waiver (Repair)" data-doc-desc="Repair & return">
+                            <i class="fa-solid fa-wrench w-5"></i>
+                            <span>GR Waiver (Repair)</span>
+                        </button>
+                        <button class="doc-link w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 rounded transition-colors border border-transparent" data-doc-code="MSDS" data-doc-title="MSDS" data-doc-desc="Material safety data">
+                            <i class="fa-solid fa-exclamation-triangle w-5"></i>
+                            <span>MSDS</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="pt-4 border-t">
+                    <button onclick="toggleSavedDocs()" class="w-full text-left px-3 py-2 text-sm bg-blue-600 text-white hover:bg-blue-700 rounded transition-colors">
+                        <i class="fa-solid fa-folder w-5"></i>
+                        <span>Saved Documents</span>
                     </button>
                 </div>
-                <p class="text-xs text-gray-500 mt-1">Your saved document drafts.</p>
-            </div>
-            <div class="flex-grow overflow-y-auto py-4 custom-scrollbar">
-                <div id="savedDocsList" class="px-4 space-y-2">
-                    <!-- Saved documents will be listed here -->
-                </div>
-            </div>
+            </nav>
         </aside>
+        
+        <!-- Main Content -->
+        <div id="mainContentContainer" class="flex-grow p-6 md:p-8 bg-gray-50 hidden md:block overflow-y-auto" style="height: 100vh;">
+            <!-- Mobile Back Button -->
+            <div class="p-4 border-b md:hidden bg-white -mt-6 -mx-6 mb-6">
+                <button type="button" id="backToListBtn" class="text-sm bg-gray-200 text-gray-800 font-semibold py-1 px-3 rounded-lg hover:bg-gray-300 flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    Back to List
+                </button>
+            </div>
+            
+            <!-- Main Content Area -->
+            <div id="app-content" class="w-full">
+                <!-- Content will be dynamically rendered here -->
+            </div>
+        </div>
     </main>
+
+    <!-- Footer Placeholder (Injected by layout.js) -->
+    <div id="footer-placeholder"></div>
 
     <!-- Templates for Dynamic Tables -->
     <template id="doc-item-row-template">
