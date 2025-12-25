@@ -399,161 +399,10 @@ const FIELD_MAPPINGS = {
 };
 
 // ============================================================================
-// SECTION 1.1: DYNAMIC TABLE HELPERS
-// ============================================================================
-window.addDocItemRow = function() {
-    const tbody = document.getElementById('doc-items-body');
-    if(!tbody) return;
-    
-    const template = document.getElementById('doc-item-row-template');
-    const row = template.content.cloneNode(true);
-    
-    // Set row number
-    const rowNumber = tbody.rows.length + 1;
-    row.querySelector('.row-number').textContent = rowNumber;
-    
-    // Add event listeners
-    const qtyInput = row.querySelector('input[name="item_qty[]"]');
-    const rateInput = row.querySelector('input[name="item_rate[]"]');
-    qtyInput.addEventListener('input', (e) => updateRowCalculations(e.target));
-    rateInput.addEventListener('input', (e) => updateRowCalculations(e.target));
-    
-    row.querySelector('.remove-row-btn').addEventListener('click', (e) => removeDocItemRow(e.target));
-    
-    tbody.appendChild(row);
-};
-
-window.removeDocItemRow = function(btn) {
-    btn.closest('tr').remove();
-    Array.from(document.getElementById('doc-items-body').rows).forEach((r, i) => r.cells[0].innerText = i + 1);
-};
-
-window.updateRowCalculations = function(input) {
-    const row = input.closest('tr');
-    const qty = parseFloat(row.querySelector('input[name="item_qty[]"]').value) || 0;
-    const rate = parseFloat(row.querySelector('input[name="item_rate[]"]').value) || 0;
-    const amount = qty * rate;
-    row.querySelector('input[name="item_amount[]"]').value = Math.round(amount * 100) / 100;
-};
-
-// --- Packing List Table Helpers ---
-window.addNonDGRow = function() {
-    const tbody = document.getElementById('nondg-items-body');
-    if(!tbody) return;
-    
-    const template = document.getElementById('nondg-row-template');
-    const row = template.content.cloneNode(true);
-    
-    row.querySelector('.remove-row-btn').addEventListener('click', (e) => removeDocItemRow(e.target));
-    
-    tbody.appendChild(row);
-};
-
-window.addPackingRow = function() {
-    const tbody = document.getElementById('pkl-items-body');
-    if(!tbody) return;
-    
-    const template = document.getElementById('packing-row-template');
-    const row = template.content.cloneNode(true);
-    
-    // Add event listeners for dimension inputs
-    const dimInputs = row.querySelectorAll('input[name^="pkl_"][name$="[]"]');
-    dimInputs.forEach(input => {
-        if (input.name.includes('_l') || input.name.includes('_b') || input.name.includes('_h')) {
-            input.addEventListener('input', (e) => updateVolWeight(e.target));
-        }
-    });
-    
-    row.querySelector('.remove-row-btn').addEventListener('click', (e) => removeDocItemRow(e.target));
-    
-    tbody.appendChild(row);
-};
-
-window.addNegRow = function() {
-    const tbody = document.getElementById('neg-items-body');
-    if(!tbody) return;
-    
-    const template = document.getElementById('neg-row-template');
-    const row = template.content.cloneNode(true);
-    
-    row.querySelector('.remove-row-btn').addEventListener('click', (e) => removeDocItemRow(e.target));
-    
-    tbody.appendChild(row);
-};
-
-window.addMCDRow = function() {
-    const tbody = document.getElementById('mcd-items-body');
-    if(!tbody) return;
-    
-    const template = document.getElementById('mcd-row-template');
-    const row = template.content.cloneNode(true);
-    
-    row.querySelector('.remove-row-btn').addEventListener('click', (e) => removeDocItemRow(e.target));
-    
-    tbody.appendChild(row);
-};
-
-window.updateVolWeight = function(input) {
-    const row = input.closest('tr');
-    const l = parseFloat(row.querySelector('input[name="pkl_l[]"]').value) || 0;
-    const b = parseFloat(row.querySelector('input[name="pkl_b[]"]').value) || 0;
-    const h = parseFloat(row.querySelector('input[name="pkl_h[]"]').value) || 0;
-    // Standard IATA Volumetric Divisor: 5000
-    const vol = (l * b * h) / 5000;
-    row.querySelector('input[name="pkl_vol[]"]').value = vol.toFixed(2);
-};
-
-window.fetchExchangeRate = async function(currency) {
-    if (!currency) return;
-    
-    // Only proceed if there is an exchange rate field to populate
-    const rateField = document.querySelector('input[name="exchange_rate"]');
-    if (!rateField) return;
-
-    // Visual feedback
-    const originalPlaceholder = rateField.placeholder;
-    rateField.value = '';
-    rateField.placeholder = "Fetching rate...";
-    
-    try {
-        // Using open.er-api.com (Free, No Key Required)
-        const response = await fetch(`https://open.er-api.com/v6/latest/${currency}`);
-        if (!response.ok) throw new Error("API Error");
-        
-        const data = await response.json();
-        // We need the rate of 1 Unit of Target Currency in INR (e.g., 1 USD = 84 INR)
-        const rate = data.rates.INR;
-        
-        if (rate) {
-            rateField.value = rate.toFixed(2);
-            if (window.showNotification) window.showNotification(`Rate updated: 1 ${currency} = ${rate.toFixed(2)} INR`, 'success');
-        }
-    } catch (e) {
-        console.error("Exchange rate fetch failed", e);
-        if (window.showNotification) window.showNotification("Failed to fetch exchange rate automatically.", "error");
-        rateField.placeholder = originalPlaceholder;
-    }
-};
-
-// ============================================================================
 // SECTION 1: DOCUMENT SCHEMAS (CONFIGURATION)
 // ============================================================================
 const DOC_SCHEMAS = {
     // --- Category 1: Core Documents ---
-    'DOM_INV': {
-        id: 'DOM_INV',
-        title: 'Domestic Invoice / Challan',
-        desc: 'Issued for domestic sales to comply with GST regulations, transfer ownership, and serve as a formal request for payment within the country. It acts as the primary proof of sale for local tax authorities.',
-        fields: [
-            { key: 'reference_id', label: 'Reference ID', type: 'text', width: 'w-full', placeholder: 'Enter ID or leave blank for auto-generation' },
-            { key: 'invoice_no', label: 'Invoice Number', type: 'text', required: true, width: 'w-1/2' },
-            { key: 'invoice_date', label: 'Invoice Date', type: 'date', required: true, width: 'w-1/2' },
-            { key: 'exporter_details', label: 'Consignor (Sender)', type: 'text', required: true, width: 'w-full' },
-            { key: 'consignee_details', label: 'Consignee (Receiver)', type: 'text', required: true, width: 'w-full' },
-            { key: 'gstin', label: 'GSTIN', type: 'text', width: 'w-1/2' },
-            { key: 'place_supply', label: 'Place of Supply', type: 'text', width: 'w-1/2' }
-        ]
-    },
     'COM_INV': {
         id: 'COM_INV',
         title: 'Commercial Invoice',
@@ -1040,6 +889,7 @@ const DOC_SCHEMAS = {
         desc: 'GST compliant domestic invoice for inter-state supply of goods with delivery challan format.',
         fields: [
             { key: 'reference_id', label: 'Reference ID', type: 'text', width: 'w-full', placeholder: 'Enter ID or leave blank for auto-generation' },
+            { key: 'document_title', label: 'Document Title', type: 'text', value: 'Tax Invoice cum Delivery Challan', width: 'w-full', placeholder: 'Edit document name as needed' },
             { type: 'heading', label: 'Supplier Details' },
             { key: 'supplier_name', label: 'Supplier Name', type: 'text', required: true, width: 'w-full' },
             { key: 'supplier_address', label: 'Supplier Address', type: 'textarea', required: true, width: 'w-full' },
@@ -1078,6 +928,7 @@ const DOC_SCHEMAS = {
         desc: 'Document for goods dispatch and receipt with detailed packaging information.',
         fields: [
             { key: 'reference_id', label: 'Reference ID', type: 'text', width: 'w-full', placeholder: 'Enter ID or leave blank for auto-generation' },
+            { key: 'document_title', label: 'Document Title', type: 'text', value: 'Delivery Challan & Packaging List', width: 'w-full', placeholder: 'Edit document name as needed' },
             { key: 'challan_no', label: 'Challan No.', type: 'text', required: true, width: 'w-1/2' },
             { key: 'challan_date', label: 'Date', type: 'date', required: true, width: 'w-1/2' },
             { key: 'from_company', label: 'From (Company)', type: 'text', required: true, width: 'w-1/2' },
@@ -1193,10 +1044,17 @@ const DECISION_GUIDE = [
             { id: 'SLI', name: 'Shippers-Letter-of-Instructions' },
             { id: 'BL_AWB', name: 'Bill of Lading/Air Waybill' },
             { id: 'SDF', name: 'SDF-Form' },
-            { id: 'INS_CERT', name: 'Insurance Certificate (if applicable)' },
-            { id: 'LOA', name: 'Letter of Authority (for CHA)' },
-            { id: 'COO', name: 'Certificate of Origin (if required)' },
-            { id: 'NON_DG', name: 'Non-DG-Declaration (if air freight)' }
+            { id: 'INS_CERT', name: 'Insurance Certificate' },
+            { id: 'LOA', name: 'Letter of Authority' },
+            { id: 'COO', name: 'Certificate of Origin' },
+            { id: 'NON_DG', name: 'Non-DG-Declaration' }
+        ]
+    },
+    {
+        condition: "Domestic shipments within India",
+        documents: [
+            { id: 'TAX_CHALLAN', name: 'Tax Invoice cum Delivery Challan' },
+            { id: 'DELIVERY_CHALLAN', name: 'Delivery Challan & Packaging List' }
         ]
     },
     {
@@ -1204,7 +1062,8 @@ const DECISION_GUIDE = [
         documents: [
             { id: 'APP_3', name: 'Appendix-III-for-Drawback' },
             { id: 'APP_4', name: 'Appendix-IV-for-Drawback' },
-            { id: 'ANN_1_2', name: 'Annexure-I & II (Garments)' }
+            { id: 'ANN_1', name: 'Annexure-I (Garments)' },
+            { id: 'ANN_2', name: 'Annexure-II (Garments)' }
         ]
     },
     {
@@ -1225,17 +1084,23 @@ const DECISION_GUIDE = [
     },
     {
         condition: "Chemicals to the USA",
-        documents: [ { id: 'MSDS', name: 'MSDS' }, { id: 'TSCA', name: 'TSCA-Certificate' } ]
+        documents: [
+            { id: 'MSDS', name: 'MSDS' },
+            { id: 'TSCA', name: 'TSCA-Certificate' }
+        ]
     },
     {
         condition: "Textiles/Silk to the USA",
-        documents: [ { id: 'NEG_DEC', name: 'Negative-Declaration' }, { id: 'QUOTA', name: 'Quota-Charge-Statement' }, { id: 'SCD', name: 'Single-Country-Declaration' }, { id: 'MCD', name: 'Multiple-Country-Declaration' } ]
+        documents: [
+            { id: 'NEG_DEC', name: 'Negative-Declaration' },
+            { id: 'QUOTA', name: 'Quota-Charge-Statement' },
+            { id: 'SCD', name: 'Single-Country-Declaration' },
+            { id: 'MCD', name: 'Multiple-Country-Declaration' }
+        ]
     }
 ];
 
 // ============================================================================
 // SECTION 2: CORE LOGIC
 // ============================================================================
-
-let isPreviewOpen = false;
 

@@ -1208,11 +1208,93 @@ function generateTSCAPrintView(data) { generateGenericPrintView('TSCA', data); }
 function generateGRSamplePrintView(data) { generateGenericPrintView('GR_SAMPLE', data); }
 function generateGRRepairPrintView(data) { generateGenericPrintView('GR_REPAIR', data); }
 function generateMSDSPrintView(data) { generateGenericPrintView('MSDS', data); }
-function generateTaxChallanPrintView(data) { generateGenericPrintView('TAX_CHALLAN', data); }
+/**
+ * Generates the Tax Invoice cum Delivery Challan print view with design selection.
+ * @param {object} data
+ * @param {number} designId - Design variant (1-10)
+ */
+function generateTaxChallanPrintView(data, designId = 1) {
+    // Check if designId is passed in data object
+    if (data.designId) {
+        designId = parseInt(data.designId) || 1;
+    }
+    
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        alert('Pop-up blocked! Please allow pop-ups for this site.');
+        return;
+    }
+
+    const val = (key, fallback = '') => sanitizeHTML(data[key] || fallback);
+    const products = data.products || [];
+    const subtotal = products.reduce((sum, p) => sum + (p.amount || 0), 0);
+    const cgstRate = 9; // 9% CGST
+    const sgstRate = 9; // 9% SGST
+    const cgstAmount = subtotal * (cgstRate / 100);
+    const sgstAmount = subtotal * (sgstRate / 100);
+    const grandTotal = subtotal + cgstAmount + sgstAmount;
+
+    const designs = {
+        1: generateTaxChallanDesign1(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal),
+        2: generateTaxChallanDesign2(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal),
+        3: generateTaxChallanDesign3(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal),
+        4: generateTaxChallanDesign4(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal),
+        5: generateTaxChallanDesign5(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal),
+        6: generateTaxChallanDesign6(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal),
+        7: generateTaxChallanDesign7(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal),
+        8: generateTaxChallanDesign8(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal),
+        9: generateTaxChallanDesign9(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal),
+        10: generateTaxChallanDesign10(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal)
+    };
+
+    const html = designs[designId] || designs[1];
+    printWindow.document.write(html);
+    printWindow.document.close();
+}
 function generateLOAPrintView(data) { generateGenericPrintView('LOA', data); }
 function generateCOOPrintView(data) { generateGenericPrintView('COO', data); }
 function generateAnnexureDPrintView(data) { generateGenericPrintView('ANN_D', data); }
-function generateDeliveryChallanPrintView(data) { generateGenericPrintView('DELIVERY_CHALLAN', data); }
+/**
+ * Generates the Delivery Challan & Packaging List print view with design selection.
+ * @param {object} data
+ * @param {number} designId - Design variant (1-10)
+ */
+function generateDeliveryChallanPrintView(data, designId = 1) {
+    // Check if designId is passed in data object
+    if (data.designId) {
+        designId = parseInt(data.designId) || 1;
+    }
+    
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        alert('Pop-up blocked! Please allow pop-ups for this site.');
+        return;
+    }
+
+    const val = (key, fallback = '') => sanitizeHTML(data[key] || fallback);
+    const products = data.products || [];
+    const packages = data.packages || [];
+    const totalNet = packages.reduce((sum, p) => sum + (p.net || 0), 0);
+    const totalGross = packages.reduce((sum, p) => sum + (p.gross || 0), 0);
+    const totalVol = packages.reduce((sum, p) => sum + (p.vol || 0), 0);
+
+    const designs = {
+        1: generateDeliveryChallanDesign1(data, val, products, packages, totalNet, totalGross, totalVol),
+        2: generateDeliveryChallanDesign2(data, val, products, packages, totalNet, totalGross, totalVol),
+        3: generateDeliveryChallanDesign3(data, val, products, packages, totalNet, totalGross, totalVol),
+        4: generateDeliveryChallanDesign4(data, val, products, packages, totalNet, totalGross, totalVol),
+        5: generateDeliveryChallanDesign5(data, val, products, packages, totalNet, totalGross, totalVol),
+        6: generateDeliveryChallanDesign6(data, val, products, packages, totalNet, totalGross, totalVol),
+        7: generateDeliveryChallanDesign7(data, val, products, packages, totalNet, totalGross, totalVol),
+        8: generateDeliveryChallanDesign8(data, val, products, packages, totalNet, totalGross, totalVol),
+        9: generateDeliveryChallanDesign9(data, val, products, packages, totalNet, totalGross, totalVol),
+        10: generateDeliveryChallanDesign10(data, val, products, packages, totalNet, totalGross, totalVol)
+    };
+
+    const html = designs[designId] || designs[1];
+    printWindow.document.write(html);
+    printWindow.document.close();
+}
 
 /**
  * Generic print view fallback for documents without specialized templates
@@ -1261,4 +1343,1802 @@ function generateGenericPrintView(docId, data) {
 
     printWindow.document.write(html);
     printWindow.document.close();
+}
+
+// ============================================================================
+// TAX CHALLAN DESIGN VARIANTS (10 Different Styles)
+// ============================================================================
+
+function generateTaxChallanDesign1(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Tax Invoice - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { padding: 20px; font-size: 11px; }
+        .header { text-align: center; font-size: 18px; font-weight: bold; color: #2563eb; margin-bottom: 20px; }
+        .info-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        .info-table td { padding: 8px; border: 1px solid #000; }
+        .label { font-weight: bold; background: #f0f8ff; width: 30%; }
+        .product-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .product-table th { background: #2563eb; color: white; padding: 8px; text-align: left; }
+        .product-table td { padding: 6px; border: 1px solid #ddd; }
+        .text-right { text-align: right; }
+        .total-row { font-weight: bold; background: #f0f8ff; }
+        .btn { background: #2563eb; color: white; padding: 10px 20px; border: none; border-radius: 6px; margin: 5px; cursor: pointer; }
+        @media print { .no-print { display: none; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">Print</button>
+            <button onclick="window.close()" class="btn" style="background: #6b7280;">Close</button>
+        </div>
+        <div class="header">TAX INVOICE CUM DELIVERY CHALLAN</div>
+        <table class="info-table">
+            <tr><td class="label">Challan No:</td><td>${val('challan_no')}</td><td class="label">Date:</td><td>${val('challan_date')}</td></tr>
+            <tr><td class="label">From:</td><td colspan="3">${val('supplier_name')}<br>${val('supplier_address')}<br>GSTIN: ${val('supplier_gstin')}</td></tr>
+            <tr><td class="label">To:</td><td colspan="3">${val('receiver_name')}<br>${val('receiver_address')}<br>GSTIN: ${val('receiver_gstin')}</td></tr>
+            <tr><td class="label">Vehicle:</td><td>${val('vehicle_no')}</td><td class="label">E-Way Bill:</td><td>${val('eway_bill')}</td></tr>
+        </table>
+        <table class="product-table">
+            <thead><tr><th>S.No</th><th>Description</th><th>HSN</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+            <tbody>
+                ${products.map((p, i) => `<tr><td>${i + 1}</td><td>${p.desc || ''}</td><td>${p.hsn || ''}</td><td>${p.qty || 0}</td><td class="text-right">₹${(p.rate || 0).toFixed(2)}</td><td class="text-right">₹${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                <tr class="total-row"><td colspan="5" class="text-right">Subtotal</td><td class="text-right">₹${subtotal.toFixed(2)}</td></tr>
+                <tr><td colspan="5" class="text-right">CGST @ 9%</td><td class="text-right">₹${cgstAmount.toFixed(2)}</td></tr>
+                <tr><td colspan="5" class="text-right">SGST @ 9%</td><td class="text-right">₹${sgstAmount.toFixed(2)}</td></tr>
+                <tr class="total-row"><td colspan="5" class="text-right">Grand Total</td><td class="text-right">₹${grandTotal.toFixed(2)}</td></tr>
+            </tbody>
+        </table>
+        <div style="margin-top: 40px; display: flex; justify-content: space-between;">
+            <div>Terms: ${val('terms_conditions')}</div>
+            <div style="text-align: right;"><div style="margin-top: 60px; border-top: 1px solid #000; padding-top: 5px;">Authorized Signatory</div></div>
+        </div>
+    </body></html>`;
+}
+
+function generateTaxChallanDesign2(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Tax Invoice - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Times New Roman', serif; }
+        body { padding: 20px; font-size: 12px; background: #fafafa; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .header h1 { font-size: 24px; margin-bottom: 5px; }
+        .header p { font-size: 14px; opacity: 0.9; }
+        .section { margin: 20px 0; padding: 15px; border-left: 4px solid #667eea; background: #f8f9ff; }
+        .section-title { font-weight: bold; color: #667eea; margin-bottom: 10px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .product-table { width: 100%; border-collapse: collapse; margin: 20px 0; border-radius: 8px; overflow: hidden; }
+        .product-table th { background: #667eea; color: white; padding: 12px; text-align: left; }
+        .product-table td { padding: 10px; border-bottom: 1px solid #eee; }
+        .product-table tr:nth-child(even) { background: #f8f9ff; }
+        .total-section { background: #667eea; color: white; padding: 15px; border-radius: 8px; margin-top: 20px; }
+        .btn { background: #667eea; color: white; padding: 12px 24px; border: none; border-radius: 6px; margin: 5px; cursor: pointer; }
+        @media print { .no-print { display: none; } body { background: white; } .container { box-shadow: none; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">Print Invoice</button>
+            <button onclick="window.close()" class="btn" style="background: #6b7280;">Close</button>
+        </div>
+        <div class="container">
+            <div class="header">
+                <h1>TAX INVOICE CUM DELIVERY CHALLAN</h1>
+                <p>Invoice No: ${val('challan_no')} | Date: ${val('challan_date')}</p>
+            </div>
+            <div class="grid">
+                <div class="section">
+                    <div class="section-title">SUPPLIER DETAILS</div>
+                    <div><strong>${val('supplier_name')}</strong></div>
+                    <div>${val('supplier_address')}</div>
+                    <div><strong>GSTIN:</strong> ${val('supplier_gstin')}</div>
+                </div>
+                <div class="section">
+                    <div class="section-title">RECEIVER DETAILS</div>
+                    <div><strong>${val('receiver_name')}</strong></div>
+                    <div>${val('receiver_address')}</div>
+                    <div><strong>GSTIN:</strong> ${val('receiver_gstin')}</div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">TRANSPORT DETAILS</div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div><strong>Vehicle:</strong> ${val('vehicle_no')}</div>
+                    <div><strong>E-Way Bill:</strong> ${val('eway_bill')}</div>
+                    <div><strong>LR No:</strong> ${val('lr_no')}</div>
+                </div>
+            </div>
+            <table class="product-table">
+                <thead><tr><th>S.No</th><th>Description of Goods</th><th>HSN Code</th><th>Quantity</th><th>Rate (₹)</th><th>Amount (₹)</th></tr></thead>
+                <tbody>
+                    ${products.map((p, i) => `<tr><td>${i + 1}</td><td>${p.desc || ''}</td><td>${p.hsn || ''}</td><td>${p.qty || 0}</td><td style="text-align:right;">${(p.rate || 0).toFixed(2)}</td><td style="text-align:right;">${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                </tbody>
+            </table>
+            <div class="total-section">
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center;">
+                    <div>
+                        <div><strong>Subtotal:</strong> ₹${subtotal.toFixed(2)}</div>
+                        <div><strong>CGST @ 9%:</strong> ₹${cgstAmount.toFixed(2)}</div>
+                        <div><strong>SGST @ 9%:</strong> ₹${sgstAmount.toFixed(2)}</div>
+                    </div>
+                    <div style="font-size: 18px; font-weight: bold;">
+                        <div>Grand Total: ₹${grandTotal.toFixed(2)}</div>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 40px; text-align: right;">
+                <div style="display: inline-block; text-align: center;">
+                    <div style="width: 200px; height: 60px; border-bottom: 1px solid #000; margin-bottom: 5px;"></div>
+                    <div><strong>Authorized Signatory</strong></div>
+                </div>
+            </div>
+        </div>
+    </body></html>`;
+}
+
+function generateTaxChallanDesign3(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Tax Invoice - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', monospace; }
+        body { padding: 15px; font-size: 10px; background: #f5f5f5; }
+        .invoice { background: white; border: 2px solid #000; }
+        .header { background: #000; color: white; text-align: center; padding: 15px; }
+        .header h1 { font-size: 16px; letter-spacing: 2px; }
+        .content { padding: 20px; }
+        .row { display: flex; margin: 10px 0; }
+        .col { flex: 1; padding: 5px; border: 1px solid #000; }
+        .col-label { background: #000; color: white; font-weight: bold; }
+        .table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .table th, .table td { border: 1px solid #000; padding: 8px; text-align: left; }
+        .table th { background: #000; color: white; }
+        .table .total { background: #000; color: white; font-weight: bold; }
+        .signature { margin-top: 30px; text-align: right; }
+        .btn { background: #000; color: white; padding: 10px 20px; border: none; margin: 5px; cursor: pointer; }
+        @media print { .no-print { display: none; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">PRINT</button>
+            <button onclick="window.close()" class="btn">CLOSE</button>
+        </div>
+        <div class="invoice">
+            <div class="header">
+                <h1>TAX INVOICE CUM DELIVERY CHALLAN</h1>
+                <div>CHALLAN NO: ${val('challan_no')} | DATE: ${val('challan_date')}</div>
+            </div>
+            <div class="content">
+                <div class="row">
+                    <div class="col col-label">FROM</div>
+                    <div class="col">${val('supplier_name')}<br>${val('supplier_address')}<br>GSTIN: ${val('supplier_gstin')}</div>
+                    <div class="col col-label">TO</div>
+                    <div class="col">${val('receiver_name')}<br>${val('receiver_address')}<br>GSTIN: ${val('receiver_gstin')}</div>
+                </div>
+                <div class="row">
+                    <div class="col col-label">VEHICLE</div>
+                    <div class="col">${val('vehicle_no')}</div>
+                    <div class="col col-label">E-WAY BILL</div>
+                    <div class="col">${val('eway_bill')}</div>
+                </div>
+                <table class="table">
+                    <thead><tr><th>SR</th><th>DESCRIPTION</th><th>HSN</th><th>QTY</th><th>RATE</th><th>AMOUNT</th></tr></thead>
+                    <tbody>
+                        ${products.map((p, i) => `<tr><td>${i + 1}</td><td>${p.desc || ''}</td><td>${p.hsn || ''}</td><td>${p.qty || 0}</td><td>₹${(p.rate || 0).toFixed(2)}</td><td>₹${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                        <tr><td colspan="5">SUBTOTAL</td><td>₹${subtotal.toFixed(2)}</td></tr>
+                        <tr><td colspan="5">CGST @ 9%</td><td>₹${cgstAmount.toFixed(2)}</td></tr>
+                        <tr><td colspan="5">SGST @ 9%</td><td>₹${sgstAmount.toFixed(2)}</td></tr>
+                        <tr class="total"><td colspan="5">GRAND TOTAL</td><td>₹${grandTotal.toFixed(2)}</td></tr>
+                    </tbody>
+                </table>
+                <div class="signature">
+                    <div style="width: 200px; margin-left: auto;">
+                        <div style="height: 50px; border-bottom: 1px solid #000; margin-bottom: 5px;"></div>
+                        <div style="text-align: center; font-weight: bold;">AUTHORIZED SIGNATORY</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body></html>`;
+}
+
+function generateTaxChallanDesign4(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Tax Invoice - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Georgia', serif; }
+        body { padding: 20px; font-size: 11px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
+        .invoice { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .header { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; padding: 25px; text-align: center; }
+        .header h1 { font-size: 22px; margin-bottom: 8px; }
+        .header p { opacity: 0.9; }
+        .content { padding: 25px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+        .info-card { background: #fff5f5; border-left: 4px solid #ff6b6b; padding: 15px; border-radius: 8px; }
+        .info-card h3 { color: #ff6b6b; margin-bottom: 10px; font-size: 14px; }
+        .transport-info { background: #f0f8ff; padding: 15px; border-radius: 8px; margin: 20px 0; }
+        .product-table { width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; }
+        .product-table th { background: #ff6b6b; color: white; padding: 12px; }
+        .product-table td { padding: 10px; border-bottom: 1px solid #fee; }
+        .product-table tr:hover { background: #fff5f5; }
+        .totals { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); color: white; padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .btn { background: #ff6b6b; color: white; padding: 12px 24px; border: none; border-radius: 25px; margin: 5px; cursor: pointer; }
+        @media print { .no-print { display: none; } body { background: white; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">🖨️ Print Invoice</button>
+            <button onclick="window.close()" class="btn" style="background: #6b7280;">❌ Close</button>
+        </div>
+        <div class="invoice">
+            <div class="header">
+                <h1>TAX INVOICE CUM DELIVERY CHALLAN</h1>
+                <p>Invoice No: ${val('challan_no')} • Date: ${val('challan_date')}</p>
+            </div>
+            <div class="content">
+                <div class="info-grid">
+                    <div class="info-card">
+                        <h3>📤 SUPPLIER DETAILS</h3>
+                        <div><strong>${val('supplier_name')}</strong></div>
+                        <div>${val('supplier_address')}</div>
+                        <div><strong>GSTIN:</strong> ${val('supplier_gstin')}</div>
+                    </div>
+                    <div class="info-card">
+                        <h3>📥 RECEIVER DETAILS</h3>
+                        <div><strong>${val('receiver_name')}</strong></div>
+                        <div>${val('receiver_address')}</div>
+                        <div><strong>GSTIN:</strong> ${val('receiver_gstin')}</div>
+                    </div>
+                </div>
+                <div class="transport-info">
+                    <h3 style="color: #2563eb; margin-bottom: 10px;">🚛 TRANSPORT INFORMATION</h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                        <div><strong>Vehicle No:</strong> ${val('vehicle_no')}</div>
+                        <div><strong>E-Way Bill:</strong> ${val('eway_bill')}</div>
+                        <div><strong>LR Number:</strong> ${val('lr_no')}</div>
+                    </div>
+                </div>
+                <table class="product-table">
+                    <thead><tr><th>S.No</th><th>📦 Description</th><th>🏷️ HSN</th><th>📊 Qty</th><th>💰 Rate</th><th>💵 Amount</th></tr></thead>
+                    <tbody>
+                        ${products.map((p, i) => `<tr><td>${i + 1}</td><td>${p.desc || ''}</td><td>${p.hsn || ''}</td><td>${p.qty || 0}</td><td style="text-align:right;">₹${(p.rate || 0).toFixed(2)}</td><td style="text-align:right;">₹${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                    </tbody>
+                </table>
+                <div class="totals">
+                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 20px;">
+                        <div>
+                            <div>Subtotal: ₹${subtotal.toFixed(2)}</div>
+                            <div>CGST @ 9%: ₹${cgstAmount.toFixed(2)}</div>
+                            <div>SGST @ 9%: ₹${sgstAmount.toFixed(2)}</div>
+                        </div>
+                        <div style="font-size: 20px; font-weight: bold;">
+                            Grand Total: ₹${grandTotal.toFixed(2)}
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 30px; text-align: right;">
+                    <div style="display: inline-block; text-align: center;">
+                        <div style="width: 200px; height: 60px; border-bottom: 2px solid #ff6b6b; margin-bottom: 5px;"></div>
+                        <div style="color: #ff6b6b; font-weight: bold;">✍️ Authorized Signatory</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body></html>`;
+}
+
+function generateTaxChallanDesign5(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Tax Invoice - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Helvetica', sans-serif; }
+        body { padding: 15px; font-size: 10px; background: #f8f9fa; }
+        .invoice { background: white; border: 1px solid #dee2e6; }
+        .header { background: #28a745; color: white; padding: 20px; }
+        .header h1 { font-size: 18px; text-align: center; }
+        .header .details { display: flex; justify-content: space-between; margin-top: 10px; }
+        .section { padding: 15px; border-bottom: 1px solid #dee2e6; }
+        .section:last-child { border-bottom: none; }
+        .section-title { background: #28a745; color: white; padding: 8px; margin: -15px -15px 15px -15px; font-weight: bold; }
+        .flex { display: flex; gap: 20px; }
+        .flex > div { flex: 1; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { border: 1px solid #dee2e6; padding: 8px; text-align: left; }
+        .table th { background: #28a745; color: white; }
+        .table .total-row { background: #d4edda; font-weight: bold; }
+        .btn { background: #28a745; color: white; padding: 10px 20px; border: none; border-radius: 4px; margin: 5px; cursor: pointer; }
+        @media print { .no-print { display: none; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">Print</button>
+            <button onclick="window.close()" class="btn" style="background: #6c757d;">Close</button>
+        </div>
+        <div class="invoice">
+            <div class="header">
+                <h1>TAX INVOICE CUM DELIVERY CHALLAN</h1>
+                <div class="details">
+                    <div>Challan No: ${val('challan_no')}</div>
+                    <div>Date: ${val('challan_date')}</div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">PARTY DETAILS</div>
+                <div class="flex">
+                    <div>
+                        <h4>Supplier:</h4>
+                        <div>${val('supplier_name')}</div>
+                        <div>${val('supplier_address')}</div>
+                        <div><strong>GSTIN:</strong> ${val('supplier_gstin')}</div>
+                    </div>
+                    <div>
+                        <h4>Receiver:</h4>
+                        <div>${val('receiver_name')}</div>
+                        <div>${val('receiver_address')}</div>
+                        <div><strong>GSTIN:</strong> ${val('receiver_gstin')}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">TRANSPORT DETAILS</div>
+                <div class="flex">
+                    <div><strong>Vehicle No:</strong> ${val('vehicle_no')}</div>
+                    <div><strong>E-Way Bill:</strong> ${val('eway_bill')}</div>
+                    <div><strong>Transporter:</strong> ${val('transporter')}</div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">GOODS DETAILS</div>
+                <table class="table">
+                    <thead><tr><th>S.No</th><th>Description</th><th>HSN Code</th><th>Quantity</th><th>Rate (₹)</th><th>Amount (₹)</th></tr></thead>
+                    <tbody>
+                        ${products.map((p, i) => `<tr><td>${i + 1}</td><td>${p.desc || ''}</td><td>${p.hsn || ''}</td><td>${p.qty || 0}</td><td style="text-align:right;">${(p.rate || 0).toFixed(2)}</td><td style="text-align:right;">${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                        <tr><td colspan="5" style="text-align:right;"><strong>Subtotal</strong></td><td style="text-align:right;"><strong>₹${subtotal.toFixed(2)}</strong></td></tr>
+                        <tr><td colspan="5" style="text-align:right;">CGST @ 9%</td><td style="text-align:right;">₹${cgstAmount.toFixed(2)}</td></tr>
+                        <tr><td colspan="5" style="text-align:right;">SGST @ 9%</td><td style="text-align:right;">₹${sgstAmount.toFixed(2)}</td></tr>
+                        <tr class="total-row"><td colspan="5" style="text-align:right;"><strong>Grand Total</strong></td><td style="text-align:right;"><strong>₹${grandTotal.toFixed(2)}</strong></td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="section">
+                <div style="display: flex; justify-content: space-between; align-items: end;">
+                    <div>
+                        <strong>Terms & Conditions:</strong><br>
+                        ${val('terms_conditions')}
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="width: 200px; height: 60px; border-bottom: 1px solid #000; margin-bottom: 5px;"></div>
+                        <div><strong>Authorized Signatory</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body></html>`;
+}
+function generateTaxChallanDesign6(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Tax Invoice - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Trebuchet MS', sans-serif; }
+        body { padding: 20px; font-size: 11px; background: #e8f4f8; }
+        .invoice { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+        .header { background: linear-gradient(45deg, #00b4db, #0083b0); color: white; padding: 30px; text-align: center; position: relative; }
+        .header::after { content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 20px solid #0083b0; }
+        .header h1 { font-size: 24px; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .content { padding: 30px; }
+        .card { background: #f8fdff; border: 1px solid #b3e5fc; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .card-header { background: #00b4db; color: white; padding: 10px 15px; margin: -20px -20px 15px -20px; border-radius: 10px 10px 0 0; font-weight: bold; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .product-table { width: 100%; border-collapse: collapse; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .product-table th { background: linear-gradient(45deg, #00b4db, #0083b0); color: white; padding: 15px; text-align: left; }
+        .product-table td { padding: 12px; border-bottom: 1px solid #e1f5fe; }
+        .product-table tr:nth-child(even) { background: #f1f8e9; }
+        .total-card { background: linear-gradient(45deg, #00b4db, #0083b0); color: white; border-radius: 15px; padding: 25px; margin-top: 20px; }
+        .btn { background: linear-gradient(45deg, #00b4db, #0083b0); color: white; padding: 12px 25px; border: none; border-radius: 25px; margin: 5px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        @media print { .no-print { display: none; } body { background: white; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">🖨️ Print Invoice</button>
+            <button onclick="window.close()" class="btn" style="background: linear-gradient(45deg, #6b7280, #4b5563);">❌ Close</button>
+        </div>
+        <div class="invoice">
+            <div class="header">
+                <h1>TAX INVOICE CUM DELIVERY CHALLAN</h1>
+                <p style="font-size: 16px; margin-top: 10px;">Invoice No: ${val('challan_no')} | Date: ${val('challan_date')}</p>
+            </div>
+            <div class="content">
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">📤 SUPPLIER INFORMATION</div>
+                        <div style="line-height: 1.6;">
+                            <div style="font-size: 14px; font-weight: bold; color: #00b4db;">${val('supplier_name')}</div>
+                            <div>${val('supplier_address')}</div>
+                            <div style="margin-top: 8px;"><strong>GSTIN:</strong> <span style="color: #00b4db;">${val('supplier_gstin')}</span></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">📥 RECEIVER INFORMATION</div>
+                        <div style="line-height: 1.6;">
+                            <div style="font-size: 14px; font-weight: bold; color: #00b4db;">${val('receiver_name')}</div>
+                            <div>${val('receiver_address')}</div>
+                            <div style="margin-top: 8px;"><strong>GSTIN:</strong> <span style="color: #00b4db;">${val('receiver_gstin')}</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">🚛 TRANSPORT & LOGISTICS</div>
+                    <div class="grid-3">
+                        <div><strong>Vehicle Number:</strong><br><span style="color: #00b4db; font-size: 14px;">${val('vehicle_no')}</span></div>
+                        <div><strong>E-Way Bill:</strong><br><span style="color: #00b4db; font-size: 14px;">${val('eway_bill')}</span></div>
+                        <div><strong>LR Number:</strong><br><span style="color: #00b4db; font-size: 14px;">${val('lr_no')}</span></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">📦 GOODS DETAILS</div>
+                    <table class="product-table">
+                        <thead><tr><th>S.No</th><th>Description of Goods</th><th>HSN Code</th><th>Quantity</th><th>Rate (₹)</th><th>Amount (₹)</th></tr></thead>
+                        <tbody>
+                            ${products.map((p, i) => `<tr><td style="font-weight: bold;">${i + 1}</td><td>${p.desc || ''}</td><td style="color: #00b4db; font-weight: bold;">${p.hsn || ''}</td><td style="text-align: center;">${p.qty || 0}</td><td style="text-align:right;">₹${(p.rate || 0).toFixed(2)}</td><td style="text-align:right; font-weight: bold;">₹${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="total-card">
+                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 30px; align-items: center;">
+                        <div style="line-height: 1.8;">
+                            <div>Subtotal: ₹${subtotal.toFixed(2)}</div>
+                            <div>CGST @ 9%: ₹${cgstAmount.toFixed(2)}</div>
+                            <div>SGST @ 9%: ₹${sgstAmount.toFixed(2)}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 14px;">Grand Total</div>
+                            <div style="font-size: 28px; font-weight: bold;">₹${grandTotal.toFixed(2)}</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 40px; text-align: right;">
+                    <div style="display: inline-block; text-align: center;">
+                        <div style="width: 250px; height: 80px; border: 2px dashed #00b4db; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; color: #00b4db; font-style: italic;">Signature & Company Stamp</div>
+                        <div style="color: #00b4db; font-weight: bold; font-size: 14px;">Authorized Signatory</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body></html>`;
+}
+
+function generateTaxChallanDesign7(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Tax Invoice - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial Black', sans-serif; }
+        body { padding: 10px; font-size: 10px; background: #1a1a1a; color: white; }
+        .invoice { background: #2d2d2d; border: 2px solid #ff6b35; border-radius: 10px; overflow: hidden; }
+        .header { background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; padding: 25px; text-align: center; }
+        .header h1 { font-size: 20px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+        .content { padding: 25px; }
+        .section { background: #3d3d3d; border: 1px solid #ff6b35; border-radius: 8px; padding: 20px; margin: 15px 0; }
+        .section-title { color: #ff6b35; font-size: 14px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .info-item { margin: 8px 0; }
+        .info-label { color: #ff6b35; font-weight: bold; }
+        .product-table { width: 100%; border-collapse: collapse; background: #3d3d3d; border-radius: 8px; overflow: hidden; }
+        .product-table th { background: #ff6b35; color: white; padding: 15px; text-align: left; font-weight: bold; }
+        .product-table td { padding: 12px; border-bottom: 1px solid #555; }
+        .product-table tr:hover { background: #4d4d4d; }
+        .total-section { background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; padding: 25px; border-radius: 8px; margin-top: 20px; }
+        .btn { background: #ff6b35; color: white; padding: 12px 25px; border: none; border-radius: 5px; margin: 5px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
+        @media print { .no-print { display: none; } body { background: white; color: black; } .invoice { background: white; } .section { background: #f5f5f5; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">🖨️ PRINT</button>
+            <button onclick="window.close()" class="btn" style="background: #666;">❌ CLOSE</button>
+        </div>
+        <div class="invoice">
+            <div class="header">
+                <h1>TAX INVOICE CUM DELIVERY CHALLAN</h1>
+                <div style="font-size: 14px; margin-top: 10px;">INVOICE: ${val('challan_no')} | DATE: ${val('challan_date')}</div>
+            </div>
+            <div class="content">
+                <div class="section">
+                    <div class="section-title">📋 INVOICE DETAILS</div>
+                    <div class="grid">
+                        <div>
+                            <div class="info-item"><span class="info-label">SUPPLIER:</span> ${val('supplier_name')}</div>
+                            <div class="info-item">${val('supplier_address')}</div>
+                            <div class="info-item"><span class="info-label">GSTIN:</span> ${val('supplier_gstin')}</div>
+                        </div>
+                        <div>
+                            <div class="info-item"><span class="info-label">RECEIVER:</span> ${val('receiver_name')}</div>
+                            <div class="info-item">${val('receiver_address')}</div>
+                            <div class="info-item"><span class="info-label">GSTIN:</span> ${val('receiver_gstin')}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-title">🚛 TRANSPORT INFO</div>
+                    <div class="grid">
+                        <div class="info-item"><span class="info-label">VEHICLE:</span> ${val('vehicle_no')}</div>
+                        <div class="info-item"><span class="info-label">E-WAY BILL:</span> ${val('eway_bill')}</div>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-title">📦 GOODS BREAKDOWN</div>
+                    <table class="product-table">
+                        <thead><tr><th>#</th><th>DESCRIPTION</th><th>HSN</th><th>QTY</th><th>RATE</th><th>AMOUNT</th></tr></thead>
+                        <tbody>
+                            ${products.map((p, i) => `<tr><td style="color: #ff6b35; font-weight: bold;">${i + 1}</td><td>${p.desc || ''}</td><td style="color: #ff6b35;">${p.hsn || ''}</td><td style="text-align: center;">${p.qty || 0}</td><td style="text-align:right;">₹${(p.rate || 0).toFixed(2)}</td><td style="text-align:right; color: #ff6b35; font-weight: bold;">₹${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="total-section">
+                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 30px; align-items: center;">
+                        <div>
+                            <div style="margin: 5px 0;">SUBTOTAL: ₹${subtotal.toFixed(2)}</div>
+                            <div style="margin: 5px 0;">CGST @ 9%: ₹${cgstAmount.toFixed(2)}</div>
+                            <div style="margin: 5px 0;">SGST @ 9%: ₹${sgstAmount.toFixed(2)}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 16px;">GRAND TOTAL</div>
+                            <div style="font-size: 32px; font-weight: bold;">₹${grandTotal.toFixed(2)}</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 30px; text-align: right;">
+                    <div style="display: inline-block; text-align: center;">
+                        <div style="width: 200px; height: 60px; border: 2px solid #ff6b35; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; color: #ff6b35;">AUTHORIZED SIGNATURE</div>
+                        <div style="color: #ff6b35; font-weight: bold;">COMPANY SEAL</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body></html>`;
+}
+
+function generateTaxChallanDesign8(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Tax Invoice - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Verdana', sans-serif; }
+        body { padding: 20px; font-size: 11px; background: #f0f2f5; }
+        .invoice { background: white; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%); color: white; padding: 25px; text-align: center; position: relative; }
+        .header::before { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="80" r="2" fill="rgba(255,255,255,0.1)"/></svg>'); }
+        .header h1 { font-size: 22px; margin-bottom: 8px; position: relative; z-index: 1; }
+        .header p { position: relative; z-index: 1; opacity: 0.9; }
+        .content { padding: 30px; }
+        .badge { background: #8e44ad; color: white; padding: 5px 12px; border-radius: 15px; font-size: 10px; font-weight: bold; display: inline-block; margin-bottom: 10px; }
+        .info-row { display: flex; margin: 15px 0; gap: 20px; }
+        .info-box { flex: 1; background: #f8f9fa; border-left: 4px solid #8e44ad; padding: 15px; border-radius: 0 8px 8px 0; }
+        .info-title { color: #8e44ad; font-weight: bold; margin-bottom: 8px; font-size: 12px; }
+        .transport-bar { background: linear-gradient(90deg, #3498db, #8e44ad); color: white; padding: 15px; border-radius: 8px; margin: 20px 0; }
+        .transport-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .product-table { width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .product-table th { background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%); color: white; padding: 15px; text-align: left; }
+        .product-table td { padding: 12px; border-bottom: 1px solid #ecf0f1; }
+        .product-table tr:nth-child(even) { background: #f8f9fa; }
+        .summary-card { background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%); color: white; padding: 25px; border-radius: 12px; margin-top: 25px; }
+        .btn { background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%); color: white; padding: 12px 24px; border: none; border-radius: 25px; margin: 5px; cursor: pointer; }
+        @media print { .no-print { display: none; } body { background: white; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">🖨️ Print Invoice</button>
+            <button onclick="window.close()" class="btn" style="background: linear-gradient(135deg, #6b7280, #4b5563);">❌ Close</button>
+        </div>
+        <div class="invoice">
+            <div class="header">
+                <h1>TAX INVOICE CUM DELIVERY CHALLAN</h1>
+                <p>Invoice No: ${val('challan_no')} • Date: ${val('challan_date')}</p>
+            </div>
+            <div class="content">
+                <div class="badge">📄 INVOICE DETAILS</div>
+                <div class="info-row">
+                    <div class="info-box">
+                        <div class="info-title">📤 SUPPLIER DETAILS</div>
+                        <div style="font-weight: bold; color: #2c3e50;">${val('supplier_name')}</div>
+                        <div style="margin: 5px 0; line-height: 1.4;">${val('supplier_address')}</div>
+                        <div><strong>GSTIN:</strong> <span style="color: #8e44ad;">${val('supplier_gstin')}</span></div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-title">📥 RECEIVER DETAILS</div>
+                        <div style="font-weight: bold; color: #2c3e50;">${val('receiver_name')}</div>
+                        <div style="margin: 5px 0; line-height: 1.4;">${val('receiver_address')}</div>
+                        <div><strong>GSTIN:</strong> <span style="color: #8e44ad;">${val('receiver_gstin')}</span></div>
+                    </div>
+                </div>
+                <div class="transport-bar">
+                    <div style="margin-bottom: 10px; font-weight: bold;">🚛 TRANSPORT INFORMATION</div>
+                    <div class="transport-grid">
+                        <div><strong>Vehicle:</strong> ${val('vehicle_no')}</div>
+                        <div><strong>E-Way Bill:</strong> ${val('eway_bill')}</div>
+                        <div><strong>LR Number:</strong> ${val('lr_no')}</div>
+                    </div>
+                </div>
+                <div class="badge">📦 GOODS DETAILS</div>
+                <table class="product-table">
+                    <thead><tr><th>S.No</th><th>Description of Goods</th><th>HSN Code</th><th>Quantity</th><th>Rate (₹)</th><th>Amount (₹)</th></tr></thead>
+                    <tbody>
+                        ${products.map((p, i) => `<tr><td style="font-weight: bold; color: #8e44ad;">${i + 1}</td><td>${p.desc || ''}</td><td style="color: #3498db; font-weight: bold;">${p.hsn || ''}</td><td style="text-align: center;">${p.qty || 0}</td><td style="text-align:right;">₹${(p.rate || 0).toFixed(2)}</td><td style="text-align:right; font-weight: bold;">₹${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                    </tbody>
+                </table>
+                <div class="summary-card">
+                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 30px; align-items: center;">
+                        <div style="line-height: 1.8;">
+                            <div>💰 Subtotal: ₹${subtotal.toFixed(2)}</div>
+                            <div>🏛️ CGST @ 9%: ₹${cgstAmount.toFixed(2)}</div>
+                            <div>🏛️ SGST @ 9%: ₹${sgstAmount.toFixed(2)}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 16px; opacity: 0.9;">Grand Total</div>
+                            <div style="font-size: 32px; font-weight: bold;">₹${grandTotal.toFixed(2)}</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 40px; text-align: right;">
+                    <div style="display: inline-block; text-align: center;">
+                        <div style="width: 220px; height: 70px; border: 2px dashed #8e44ad; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; color: #8e44ad; font-style: italic;">Digital Signature & Stamp</div>
+                        <div style="color: #8e44ad; font-weight: bold;">✍️ Authorized Signatory</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body></html>`;
+}
+
+function generateTaxChallanDesign9(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Tax Invoice - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { padding: 15px; font-size: 11px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .invoice { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); max-width: 900px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); padding: 30px; text-align: center; position: relative; }
+        .header::before { content: '✨'; position: absolute; top: 20px; left: 30px; font-size: 24px; }
+        .header::after { content: '✨'; position: absolute; top: 20px; right: 30px; font-size: 24px; }
+        .header h1 { font-size: 26px; color: #2d3748; margin-bottom: 10px; font-weight: 300; letter-spacing: 1px; }
+        .header p { color: #4a5568; font-size: 14px; }
+        .content { padding: 35px; }
+        .section { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 15px; margin: 20px 0; }
+        .section-content { background: white; color: #2d3748; padding: 20px; border-radius: 10px; margin-top: 15px; }
+        .section-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .info-card { background: #f7fafc; border-radius: 12px; padding: 20px; border-left: 5px solid #ff9a9e; }
+        .info-label { color: #ff9a9e; font-weight: bold; font-size: 12px; margin-bottom: 5px; }
+        .info-value { color: #2d3748; font-weight: 600; }
+        .product-table { width: 100%; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .product-table th { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #2d3748; padding: 18px; text-align: left; font-weight: 600; }
+        .product-table td { padding: 15px; border-bottom: 1px solid #e2e8f0; }
+        .product-table tr:nth-child(even) { background: #f8fafc; }
+        .product-table tr:hover { background: #edf2f7; }
+        .total-section { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin-top: 25px; }
+        .btn { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #2d3748; padding: 15px 30px; border: none; border-radius: 25px; margin: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        @media print { .no-print { display: none; } body { background: white; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">🖨️ Print Beautiful Invoice</button>
+            <button onclick="window.close()" class="btn" style="background: linear-gradient(135deg, #a0aec0, #718096);">❌ Close Window</button>
+        </div>
+        <div class="invoice">
+            <div class="header">
+                <h1>TAX INVOICE CUM DELIVERY CHALLAN</h1>
+                <p>Invoice No: ${val('challan_no')} • Date: ${val('challan_date')}</p>
+            </div>
+            <div class="content">
+                <div class="section">
+                    <div class="section-title">👥 PARTY INFORMATION</div>
+                    <div class="section-content">
+                        <div class="info-grid">
+                            <div class="info-card">
+                                <div class="info-label">📤 SUPPLIER DETAILS</div>
+                                <div class="info-value" style="font-size: 14px; margin-bottom: 8px;">${val('supplier_name')}</div>
+                                <div style="line-height: 1.5; margin-bottom: 8px;">${val('supplier_address')}</div>
+                                <div><span class="info-label">GSTIN:</span> <span style="color: #667eea; font-weight: bold;">${val('supplier_gstin')}</span></div>
+                            </div>
+                            <div class="info-card">
+                                <div class="info-label">📥 RECEIVER DETAILS</div>
+                                <div class="info-value" style="font-size: 14px; margin-bottom: 8px;">${val('receiver_name')}</div>
+                                <div style="line-height: 1.5; margin-bottom: 8px;">${val('receiver_address')}</div>
+                                <div><span class="info-label">GSTIN:</span> <span style="color: #667eea; font-weight: bold;">${val('receiver_gstin')}</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-title">🚛 LOGISTICS & TRANSPORT</div>
+                    <div class="section-content">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                            <div class="info-card">
+                                <div class="info-label">Vehicle Number</div>
+                                <div class="info-value" style="font-size: 16px;">${val('vehicle_no')}</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="info-label">E-Way Bill</div>
+                                <div class="info-value" style="font-size: 16px;">${val('eway_bill')}</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="info-label">LR Number</div>
+                                <div class="info-value" style="font-size: 16px;">${val('lr_no')}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-title">📦 GOODS & SERVICES</div>
+                    <div class="section-content">
+                        <table class="product-table">
+                            <thead><tr><th>S.No</th><th>Description of Goods</th><th>HSN Code</th><th>Quantity</th><th>Rate (₹)</th><th>Amount (₹)</th></tr></thead>
+                            <tbody>
+                                ${products.map((p, i) => `<tr><td style="font-weight: bold; color: #667eea;">${i + 1}</td><td style="font-weight: 500;">${p.desc || ''}</td><td style="color: #ff9a9e; font-weight: bold;">${p.hsn || ''}</td><td style="text-align: center; font-weight: 600;">${p.qty || 0}</td><td style="text-align:right; font-weight: 600;">₹${(p.rate || 0).toFixed(2)}</td><td style="text-align:right; font-weight: bold; color: #667eea;">₹${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="total-section">
+                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 40px; align-items: center;">
+                        <div style="line-height: 2;">
+                            <div style="font-size: 16px;">💰 Subtotal: ₹${subtotal.toFixed(2)}</div>
+                            <div style="font-size: 16px;">🏛️ CGST @ 9%: ₹${cgstAmount.toFixed(2)}</div>
+                            <div style="font-size: 16px;">🏛️ SGST @ 9%: ₹${sgstAmount.toFixed(2)}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 18px; opacity: 0.9;">Grand Total</div>
+                            <div style="font-size: 36px; font-weight: bold;">₹${grandTotal.toFixed(2)}</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 40px; text-align: right;">
+                    <div style="display: inline-block; text-align: center;">
+                        <div style="width: 250px; height: 80px; border: 3px dashed #ff9a9e; border-radius: 15px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; color: #ff9a9e; font-style: italic; font-size: 14px;">Authorized Signature & Company Seal</div>
+                        <div style="color: #667eea; font-weight: bold; font-size: 16px;">✍️ Authorized Signatory</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body></html>`;
+}
+
+function generateTaxChallanDesign10(data, val, products, subtotal, cgstAmount, sgstAmount, grandTotal) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Tax Invoice - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Comic Sans MS', cursive; }
+        body { padding: 20px; font-size: 12px; background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57); background-size: 400% 400%; animation: gradientShift 15s ease infinite; }
+        @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .invoice { background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.2); border: 5px solid #ff6b6b; }
+        .header { background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%); color: white; padding: 30px; text-align: center; position: relative; }
+        .header::before { content: '🎉'; position: absolute; top: 15px; left: 20px; font-size: 30px; animation: bounce 2s infinite; }
+        .header::after { content: '🎉'; position: absolute; top: 15px; right: 20px; font-size: 30px; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
+        .header h1 { font-size: 28px; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); animation: pulse 3s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .content { padding: 30px; }
+        .fun-section { background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%); border-radius: 20px; padding: 25px; margin: 20px 0; border: 3px dashed #ff6b6b; }
+        .fun-title { font-size: 18px; font-weight: bold; color: #2d3436; margin-bottom: 15px; text-align: center; }
+        .party-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .party-card { background: white; border-radius: 15px; padding: 20px; border: 3px solid #4ecdc4; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .party-title { color: #4ecdc4; font-weight: bold; font-size: 14px; margin-bottom: 10px; }
+        .transport-fun { background: linear-gradient(135deg, #a29bfe 0%, #fd79a8 100%); color: white; border-radius: 20px; padding: 20px; margin: 20px 0; }
+        .product-table { width: 100%; border-collapse: collapse; border-radius: 15px; overflow: hidden; border: 3px solid #00b894; }
+        .product-table th { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: white; padding: 15px; text-align: left; font-weight: bold; }
+        .product-table td { padding: 12px; border-bottom: 2px solid #ddd; }
+        .product-table tr:nth-child(even) { background: #f1f2f6; }
+        .product-table tr:hover { background: #ddd; transform: scale(1.02); transition: all 0.3s; }
+        .total-fun { background: linear-gradient(135deg, #e17055 0%, #fdcb6e 100%); color: white; padding: 30px; border-radius: 20px; margin-top: 25px; border: 3px solid #e17055; }
+        .btn { background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%); color: white; padding: 15px 30px; border: none; border-radius: 25px; margin: 8px; cursor: pointer; font-weight: bold; font-size: 14px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: all 0.3s; }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        @media print { .no-print { display: none; } body { background: white; animation: none; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">🖨️ Print Fun Invoice!</button>
+            <button onclick="window.close()" class="btn" style="background: linear-gradient(135deg, #636e72, #2d3436);">❌ Close Fun Window</button>
+        </div>
+        <div class="invoice">
+            <div class="header">
+                <h1>🎊 TAX INVOICE CUM DELIVERY CHALLAN 🎊</h1>
+                <p style="font-size: 16px;">Invoice: ${val('challan_no')} • Date: ${val('challan_date')}</p>
+            </div>
+            <div class="content">
+                <div class="fun-section">
+                    <div class="fun-title">👥 PARTY TIME! WHO'S WHO? 👥</div>
+                    <div class="party-grid">
+                        <div class="party-card">
+                            <div class="party-title">📤 SUPPLIER (THE SENDER!)</div>
+                            <div style="font-weight: bold; color: #2d3436; font-size: 14px; margin-bottom: 8px;">${val('supplier_name')}</div>
+                            <div style="line-height: 1.5; margin-bottom: 8px;">${val('supplier_address')}</div>
+                            <div><strong>GSTIN:</strong> <span style="color: #00b894; font-weight: bold;">${val('supplier_gstin')}</span></div>
+                        </div>
+                        <div class="party-card">
+                            <div class="party-title">📥 RECEIVER (THE LUCKY ONE!)</div>
+                            <div style="font-weight: bold; color: #2d3436; font-size: 14px; margin-bottom: 8px;">${val('receiver_name')}</div>
+                            <div style="line-height: 1.5; margin-bottom: 8px;">${val('receiver_address')}</div>
+                            <div><strong>GSTIN:</strong> <span style="color: #00b894; font-weight: bold;">${val('receiver_gstin')}</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="transport-fun">
+                    <div style="text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 15px;">🚛 TRANSPORT ADVENTURE! 🚛</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: center;">
+                        <div><strong>🚗 Vehicle:</strong><br><span style="font-size: 16px;">${val('vehicle_no')}</span></div>
+                        <div><strong>📋 E-Way Bill:</strong><br><span style="font-size: 16px;">${val('eway_bill')}</span></div>
+                        <div><strong>📄 LR Number:</strong><br><span style="font-size: 16px;">${val('lr_no')}</span></div>
+                    </div>
+                </div>
+                <div class="fun-section">
+                    <div class="fun-title">📦 AWESOME GOODS BREAKDOWN! 📦</div>
+                    <table class="product-table">
+                        <thead><tr><th>🔢 S.No</th><th>📝 What's This?</th><th>🏷️ HSN Code</th><th>📊 How Many?</th><th>💰 Price Each</th><th>💵 Total Cost</th></tr></thead>
+                        <tbody>
+                            ${products.map((p, i) => `<tr><td style="font-weight: bold; color: #00b894; font-size: 14px;">${i + 1}</td><td style="font-weight: 600;">${p.desc || ''}</td><td style="color: #e17055; font-weight: bold;">${p.hsn || ''}</td><td style="text-align: center; font-weight: 600;">${p.qty || 0}</td><td style="text-align:right; font-weight: 600;">₹${(p.rate || 0).toFixed(2)}</td><td style="text-align:right; font-weight: bold; color: #00b894; font-size: 14px;">₹${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="total-fun">
+                    <div style="text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 20px;">💸 MONEY MATTERS! 💸</div>
+                    <div style="display: grid; grid-template-columns: 1fr auto; gap: 30px; align-items: center;">
+                        <div style="line-height: 2; font-size: 16px;">
+                            <div>💰 Subtotal: ₹${subtotal.toFixed(2)}</div>
+                            <div>🏛️ CGST @ 9%: ₹${cgstAmount.toFixed(2)}</div>
+                            <div>🏛️ SGST @ 9%: ₹${sgstAmount.toFixed(2)}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-size: 20px;">🎯 GRAND TOTAL</div>
+                            <div style="font-size: 40px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">₹${grandTotal.toFixed(2)}</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="margin-top: 40px; text-align: right;">
+                    <div style="display: inline-block; text-align: center;">
+                        <div style="width: 280px; height: 90px; border: 4px dashed #ff6b6b; border-radius: 20px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; color: #ff6b6b; font-style: italic; font-size: 16px; font-weight: bold;">🖋️ Sign Here & Stamp It! 🖋️</div>
+                        <div style="color: #4ecdc4; font-weight: bold; font-size: 18px;">✍️ The Boss's Signature!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body></html>`;
+}
+// ============================================================================
+// DELIVERY CHALLAN DESIGN VARIANTS (10 Different Styles)
+// ============================================================================
+
+function generateDeliveryChallanDesign1(data, val, products, packages, totalNet, totalGross, totalVol) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Delivery Challan - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { padding: 20px; font-size: 11px; }
+        .header { text-align: center; font-size: 18px; font-weight: bold; color: #16a085; margin-bottom: 20px; }
+        .info-table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        .info-table td { padding: 8px; border: 1px solid #000; }
+        .label { font-weight: bold; background: #e8f8f5; width: 25%; }
+        .product-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .product-table th { background: #16a085; color: white; padding: 8px; text-align: left; }
+        .product-table td { padding: 6px; border: 1px solid #ddd; }
+        .text-right { text-align: right; }
+        .summary-box { background: #e8f8f5; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .btn { background: #16a085; color: white; padding: 10px 20px; border: none; border-radius: 6px; margin: 5px; cursor: pointer; }
+        @media print { .no-print { display: none; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">Print</button>
+            <button onclick="window.close()" class="btn" style="background: #6b7280;">Close</button>
+        </div>
+        <div class="header">DELIVERY CHALLAN & PACKAGING LIST</div>
+        <table class="info-table">
+            <tr><td class="label">Challan No:</td><td>${val('challan_no')}</td><td class="label">Date:</td><td>${val('challan_date')}</td></tr>
+            <tr><td class="label">From:</td><td>${val('from_company')}<br>${val('from_address')}</td><td class="label">To:</td><td>${val('to_company')}<br>${val('to_address')}</td></tr>
+            <tr><td class="label">Vehicle:</td><td>${val('vehicle_no')}</td><td class="label">Driver:</td><td>${val('driver_name')}</td></tr>
+        </table>
+        <h3 style="color: #16a085; margin: 20px 0 10px;">GOODS DETAILS</h3>
+        <table class="product-table">
+            <thead><tr><th>S.No</th><th>Description</th><th>HSN</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+            <tbody>
+                ${products.map((p, i) => `<tr><td>${i + 1}</td><td>${p.desc || ''}</td><td>${p.hsn || ''}</td><td>${p.qty || 0}</td><td class="text-right">₹${(p.rate || 0).toFixed(2)}</td><td class="text-right">₹${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+            </tbody>
+        </table>
+        <h3 style="color: #16a085; margin: 20px 0 10px;">PACKAGING DETAILS</h3>
+        <table class="product-table">
+            <thead><tr><th>Carton#</th><th>Description</th><th>Qty</th><th>Net Wt</th><th>Gross Wt</th><th>Dimensions</th><th>Vol Wt</th></tr></thead>
+            <tbody>
+                ${packages.map(p => `<tr><td>${p.carton}</td><td>${p.desc}</td><td>${p.qty}</td><td class="text-right">${p.net.toFixed(2)}</td><td class="text-right">${p.gross.toFixed(2)}</td><td>${p.dims}</td><td class="text-right">${p.vol.toFixed(2)}</td></tr>`).join('')}
+            </tbody>
+        </table>
+        <div class="summary-box">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                <div><strong>Total Packages:</strong> ${packages.length}</div>
+                <div><strong>Total Net Weight:</strong> ${totalNet.toFixed(2)} KGS</div>
+                <div><strong>Total Gross Weight:</strong> ${totalGross.toFixed(2)} KGS</div>
+            </div>
+        </div>
+        <div style="margin-top: 40px; display: flex; justify-content: space-between;">
+            <div style="text-align: center;"><div style="width: 200px; border-bottom: 1px solid #000; margin: 40px 0 5px;"></div><strong>Sender's Signature</strong></div>
+            <div style="text-align: center;"><div style="width: 200px; border-bottom: 1px solid #000; margin: 40px 0 5px;"></div><strong>Receiver's Signature</strong></div>
+        </div>
+    </body></html>`;
+}
+
+function generateDeliveryChallanDesign2(data, val, products, packages, totalNet, totalGross, totalVol) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Delivery Challan - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Times New Roman', serif; }
+        body { padding: 20px; font-size: 12px; background: #f8f9fa; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; text-align: center; padding: 25px; border-radius: 8px; margin-bottom: 25px; }
+        .header h1 { font-size: 24px; margin-bottom: 8px; }
+        .section { margin: 25px 0; padding: 20px; border-left: 4px solid #e74c3c; background: #fdf2f2; border-radius: 0 8px 8px 0; }
+        .section-title { font-weight: bold; color: #e74c3c; margin-bottom: 15px; font-size: 14px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .info-card { background: white; padding: 15px; border-radius: 8px; border: 1px solid #fadbd8; }
+        .product-table { width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .product-table th { background: #e74c3c; color: white; padding: 12px; text-align: left; }
+        .product-table td { padding: 10px; border-bottom: 1px solid #fadbd8; }
+        .product-table tr:nth-child(even) { background: #fdf2f2; }
+        .summary-card { background: #e74c3c; color: white; padding: 20px; border-radius: 8px; margin-top: 20px; }
+        .btn { background: #e74c3c; color: white; padding: 12px 24px; border: none; border-radius: 6px; margin: 5px; cursor: pointer; }
+        @media print { .no-print { display: none; } body { background: white; } .container { box-shadow: none; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">Print Challan</button>
+            <button onclick="window.close()" class="btn" style="background: #6b7280;">Close</button>
+        </div>
+        <div class="container">
+            <div class="header">
+                <h1>DELIVERY CHALLAN & PACKAGING LIST</h1>
+                <p>Challan No: ${val('challan_no')} | Date: ${val('challan_date')}</p>
+            </div>
+            <div class="section">
+                <div class="section-title">📋 CHALLAN INFORMATION</div>
+                <div class="grid">
+                    <div class="info-card">
+                        <div><strong>From Company:</strong></div>
+                        <div style="margin: 8px 0; font-weight: 600;">${val('from_company')}</div>
+                        <div>${val('from_address')}</div>
+                    </div>
+                    <div class="info-card">
+                        <div><strong>To Company:</strong></div>
+                        <div style="margin: 8px 0; font-weight: 600;">${val('to_company')}</div>
+                        <div>${val('to_address')}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">🚛 TRANSPORT DETAILS</div>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div class="info-card"><strong>Vehicle:</strong> ${val('vehicle_no')}</div>
+                    <div class="info-card"><strong>Driver:</strong> ${val('driver_name')}</div>
+                    <div class="info-card"><strong>Delivery Date:</strong> ${val('delivery_date')}</div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">📦 GOODS BREAKDOWN</div>
+                <table class="product-table">
+                    <thead><tr><th>S.No</th><th>Description</th><th>HSN</th><th>Quantity</th><th>Rate (₹)</th><th>Amount (₹)</th></tr></thead>
+                    <tbody>
+                        ${products.map((p, i) => `<tr><td>${i + 1}</td><td>${p.desc || ''}</td><td>${p.hsn || ''}</td><td>${p.qty || 0}</td><td style="text-align:right;">${(p.rate || 0).toFixed(2)}</td><td style="text-align:right;">${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div class="section">
+                <div class="section-title">📋 PACKAGING BREAKDOWN</div>
+                <table class="product-table">
+                    <thead><tr><th>Carton</th><th>Contents</th><th>Qty</th><th>Net Wt (KG)</th><th>Gross Wt (KG)</th><th>Dimensions</th><th>Vol Wt</th></tr></thead>
+                    <tbody>
+                        ${packages.map(p => `<tr><td>${p.carton}</td><td>${p.desc}</td><td>${p.qty}</td><td style="text-align:right;">${p.net.toFixed(2)}</td><td style="text-align:right;">${p.gross.toFixed(2)}</td><td>${p.dims}</td><td style="text-align:right;">${p.vol.toFixed(2)}</td></tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div class="summary-card">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: center;">
+                    <div><div style="font-size: 18px; font-weight: bold;">${packages.length}</div><div>Total Packages</div></div>
+                    <div><div style="font-size: 18px; font-weight: bold;">${totalNet.toFixed(2)} KG</div><div>Net Weight</div></div>
+                    <div><div style="font-size: 18px; font-weight: bold;">${totalGross.toFixed(2)} KG</div><div>Gross Weight</div></div>
+                </div>
+            </div>
+            <div style="margin-top: 40px; display: flex; justify-content: space-between;">
+                <div style="text-align: center;"><div style="width: 200px; height: 60px; border-bottom: 2px solid #e74c3c; margin-bottom: 8px;"></div><div style="color: #e74c3c; font-weight: bold;">Sender's Signature</div></div>
+                <div style="text-align: center;"><div style="width: 200px; height: 60px; border-bottom: 2px solid #e74c3c; margin-bottom: 8px;"></div><div style="color: #e74c3c; font-weight: bold;">Receiver's Signature</div></div>
+            </div>
+        </div>
+    </body></html>`;
+}
+
+function generateDeliveryChallanDesign3(data, val, products, packages, totalNet, totalGross, totalVol) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Delivery Challan - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Courier New', monospace; }
+        body { padding: 15px; font-size: 10px; background: #2c3e50; color: white; }
+        .challan { background: #34495e; border: 2px solid #f39c12; border-radius: 10px; }
+        .header { background: #f39c12; color: #2c3e50; text-align: center; padding: 20px; font-weight: bold; }
+        .header h1 { font-size: 18px; letter-spacing: 2px; }
+        .content { padding: 25px; }
+        .section { background: #2c3e50; border: 1px solid #f39c12; border-radius: 5px; padding: 20px; margin: 15px 0; }
+        .section-title { color: #f39c12; font-size: 12px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .info-item { margin: 8px 0; }
+        .info-label { color: #f39c12; font-weight: bold; }
+        .table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        .table th, .table td { border: 1px solid #f39c12; padding: 8px; text-align: left; }
+        .table th { background: #f39c12; color: #2c3e50; font-weight: bold; }
+        .summary { background: #f39c12; color: #2c3e50; padding: 20px; border-radius: 5px; margin-top: 20px; }
+        .btn { background: #f39c12; color: #2c3e50; padding: 10px 20px; border: none; margin: 5px; cursor: pointer; font-weight: bold; }
+        @media print { .no-print { display: none; } body { background: white; color: black; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">PRINT CHALLAN</button>
+            <button onclick="window.close()" class="btn">CLOSE</button>
+        </div>
+        <div class="challan">
+            <div class="header">
+                <h1>DELIVERY CHALLAN & PACKAGING LIST</h1>
+                <div>CHALLAN: ${val('challan_no')} | DATE: ${val('challan_date')}</div>
+            </div>
+            <div class="content">
+                <div class="section">
+                    <div class="section-title">DELIVERY INFORMATION</div>
+                    <div class="info-grid">
+                        <div>
+                            <div class="info-item"><span class="info-label">FROM:</span> ${val('from_company')}</div>
+                            <div class="info-item">${val('from_address')}</div>
+                        </div>
+                        <div>
+                            <div class="info-item"><span class="info-label">TO:</span> ${val('to_company')}</div>
+                            <div class="info-item">${val('to_address')}</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px;">
+                        <div class="info-item"><span class="info-label">VEHICLE:</span> ${val('vehicle_no')} | <span class="info-label">DRIVER:</span> ${val('driver_name')}</div>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-title">GOODS LIST</div>
+                    <table class="table">
+                        <thead><tr><th>SR</th><th>DESCRIPTION</th><th>HSN</th><th>QTY</th><th>RATE</th><th>AMOUNT</th></tr></thead>
+                        <tbody>
+                            ${products.map((p, i) => `<tr><td>${i + 1}</td><td>${p.desc || ''}</td><td>${p.hsn || ''}</td><td>${p.qty || 0}</td><td>₹${(p.rate || 0).toFixed(2)}</td><td>₹${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="section">
+                    <div class="section-title">PACKAGE DETAILS</div>
+                    <table class="table">
+                        <thead><tr><th>CARTON</th><th>CONTENTS</th><th>QTY</th><th>NET</th><th>GROSS</th><th>DIMS</th><th>VOL</th></tr></thead>
+                        <tbody>
+                            ${packages.map(p => `<tr><td>${p.carton}</td><td>${p.desc}</td><td>${p.qty}</td><td>${p.net.toFixed(2)}</td><td>${p.gross.toFixed(2)}</td><td>${p.dims}</td><td>${p.vol.toFixed(2)}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="summary">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: center;">
+                        <div><strong>PACKAGES: ${packages.length}</strong></div>
+                        <div><strong>NET: ${totalNet.toFixed(2)} KG</strong></div>
+                        <div><strong>GROSS: ${totalGross.toFixed(2)} KG</strong></div>
+                    </div>
+                </div>
+                <div style="margin-top: 30px; display: flex; justify-content: space-between;">
+                    <div style="text-align: center;"><div style="width: 150px; height: 50px; border-bottom: 1px solid #f39c12; margin-bottom: 5px;"></div><strong>SENDER</strong></div>
+                    <div style="text-align: center;"><div style="width: 150px; height: 50px; border-bottom: 1px solid #f39c12; margin-bottom: 5px;"></div><strong>RECEIVER</strong></div>
+                </div>
+            </div>
+        </div>
+    </body></html>`;
+}
+
+function generateDeliveryChallanDesign4(data, val, products, packages, totalNet, totalGross, totalVol) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Delivery Challan - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Georgia', serif; }
+        body { padding: 20px; font-size: 11px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .challan { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
+        .header h1 { font-size: 26px; margin-bottom: 10px; }
+        .content { padding: 30px; }
+        .elegant-section { background: #f8f9ff; border-left: 5px solid #667eea; padding: 25px; margin: 20px 0; border-radius: 0 15px 15px 0; }
+        .section-title { color: #667eea; font-size: 16px; font-weight: bold; margin-bottom: 15px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .info-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .product-table { width: 100%; border-collapse: collapse; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .product-table th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; text-align: left; }
+        .product-table td { padding: 12px; border-bottom: 1px solid #e1e8ff; }
+        .product-table tr:nth-child(even) { background: #f8f9ff; }
+        .summary-elegant { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 25px; border-radius: 15px; margin-top: 25px; }
+        .btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 25px; border: none; border-radius: 25px; margin: 5px; cursor: pointer; }
+        @media print { .no-print { display: none; } body { background: white; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">🖨️ Print Elegant Challan</button>
+            <button onclick="window.close()" class="btn" style="background: linear-gradient(135deg, #6b7280, #4b5563);">❌ Close</button>
+        </div>
+        <div class="challan">
+            <div class="header">
+                <h1>DELIVERY CHALLAN & PACKAGING LIST</h1>
+                <p style="font-size: 16px; opacity: 0.9;">Challan No: ${val('challan_no')} • Date: ${val('challan_date')}</p>
+            </div>
+            <div class="content">
+                <div class="elegant-section">
+                    <div class="section-title">📋 DELIVERY INFORMATION</div>
+                    <div class="info-grid">
+                        <div class="info-card">
+                            <div style="color: #667eea; font-weight: bold; margin-bottom: 10px;">📤 FROM</div>
+                            <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">${val('from_company')}</div>
+                            <div style="line-height: 1.5;">${val('from_address')}</div>
+                        </div>
+                        <div class="info-card">
+                            <div style="color: #667eea; font-weight: bold; margin-bottom: 10px;">📥 TO</div>
+                            <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">${val('to_company')}</div>
+                            <div style="line-height: 1.5;">${val('to_address')}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="elegant-section">
+                    <div class="section-title">🚛 TRANSPORT DETAILS</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                        <div class="info-card" style="text-align: center;">
+                            <div style="color: #667eea; font-weight: bold;">Vehicle Number</div>
+                            <div style="font-size: 16px; font-weight: bold; margin-top: 5px;">${val('vehicle_no')}</div>
+                        </div>
+                        <div class="info-card" style="text-align: center;">
+                            <div style="color: #667eea; font-weight: bold;">Driver Name</div>
+                            <div style="font-size: 16px; font-weight: bold; margin-top: 5px;">${val('driver_name')}</div>
+                        </div>
+                        <div class="info-card" style="text-align: center;">
+                            <div style="color: #667eea; font-weight: bold;">Delivery Date</div>
+                            <div style="font-size: 16px; font-weight: bold; margin-top: 5px;">${val('delivery_date')}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="elegant-section">
+                    <div class="section-title">📦 GOODS DETAILS</div>
+                    <table class="product-table">
+                        <thead><tr><th>S.No</th><th>Description</th><th>HSN Code</th><th>Quantity</th><th>Rate (₹)</th><th>Amount (₹)</th></tr></thead>
+                        <tbody>
+                            ${products.map((p, i) => `<tr><td style="font-weight: bold; color: #667eea;">${i + 1}</td><td>${p.desc || ''}</td><td style="color: #764ba2; font-weight: bold;">${p.hsn || ''}</td><td style="text-align: center;">${p.qty || 0}</td><td style="text-align:right;">₹${(p.rate || 0).toFixed(2)}</td><td style="text-align:right; font-weight: bold;">₹${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="elegant-section">
+                    <div class="section-title">📋 PACKAGING DETAILS</div>
+                    <table class="product-table">
+                        <thead><tr><th>Carton#</th><th>Contents</th><th>Qty</th><th>Net Wt (KG)</th><th>Gross Wt (KG)</th><th>Dimensions</th><th>Vol Wt</th></tr></thead>
+                        <tbody>
+                            ${packages.map(p => `<tr><td style="font-weight: bold; color: #667eea;">${p.carton}</td><td>${p.desc}</td><td style="text-align: center;">${p.qty}</td><td style="text-align:right;">${p.net.toFixed(2)}</td><td style="text-align:right;">${p.gross.toFixed(2)}</td><td style="text-align: center;">${p.dims}</td><td style="text-align:right;">${p.vol.toFixed(2)}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="summary-elegant">
+                    <div style="text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 20px;">📊 SUMMARY</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; text-align: center;">
+                        <div><div style="font-size: 24px; font-weight: bold;">${packages.length}</div><div>Total Packages</div></div>
+                        <div><div style="font-size: 24px; font-weight: bold;">${totalNet.toFixed(2)}</div><div>Net Weight (KG)</div></div>
+                        <div><div style="font-size: 24px; font-weight: bold;">${totalGross.toFixed(2)}</div><div>Gross Weight (KG)</div></div>
+                    </div>
+                </div>
+                <div style="margin-top: 40px; display: flex; justify-content: space-between;">
+                    <div style="text-align: center;">
+                        <div style="width: 220px; height: 70px; border: 2px dashed #667eea; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; color: #667eea; font-style: italic;">Sender's Signature & Stamp</div>
+                        <div style="color: #667eea; font-weight: bold;">Authorized Sender</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="width: 220px; height: 70px; border: 2px dashed #667eea; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; color: #667eea; font-style: italic;">Receiver's Signature & Stamp</div>
+                        <div style="color: #667eea; font-weight: bold;">Authorized Receiver</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body></html>`;
+}
+
+function generateDeliveryChallanDesign5(data, val, products, packages, totalNet, totalGross, totalVol) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Delivery Challan - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Helvetica', sans-serif; }
+        body { padding: 15px; font-size: 10px; background: #ecf0f1; }
+        .challan { background: white; border: 1px solid #bdc3c7; }
+        .header { background: #27ae60; color: white; padding: 20px; text-align: center; }
+        .header h1 { font-size: 18px; }
+        .section { padding: 15px; border-bottom: 1px solid #ecf0f1; }
+        .section:last-child { border-bottom: none; }
+        .section-title { background: #27ae60; color: white; padding: 8px; margin: -15px -15px 15px -15px; font-weight: bold; }
+        .info-flex { display: flex; gap: 20px; }
+        .info-flex > div { flex: 1; }
+        .table { width: 100%; border-collapse: collapse; }
+        .table th, .table td { border: 1px solid #bdc3c7; padding: 8px; text-align: left; }
+        .table th { background: #27ae60; color: white; }
+        .summary-bar { background: #2ecc71; color: white; padding: 15px; display: flex; justify-content: space-around; text-align: center; }
+        .btn { background: #27ae60; color: white; padding: 10px 20px; border: none; border-radius: 4px; margin: 5px; cursor: pointer; }
+        @media print { .no-print { display: none; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">Print</button>
+            <button onclick="window.close()" class="btn" style="background: #7f8c8d;">Close</button>
+        </div>
+        <div class="challan">
+            <div class="header">
+                <h1>DELIVERY CHALLAN & PACKAGING LIST</h1>
+                <div>Challan: ${val('challan_no')} | Date: ${val('challan_date')}</div>
+            </div>
+            <div class="section">
+                <div class="section-title">DELIVERY DETAILS</div>
+                <div class="info-flex">
+                    <div><h4>From:</h4><div>${val('from_company')}</div><div>${val('from_address')}</div></div>
+                    <div><h4>To:</h4><div>${val('to_company')}</div><div>${val('to_address')}</div></div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">TRANSPORT INFO</div>
+                <div class="info-flex">
+                    <div><strong>Vehicle:</strong> ${val('vehicle_no')}</div>
+                    <div><strong>Driver:</strong> ${val('driver_name')}</div>
+                    <div><strong>Delivery Date:</strong> ${val('delivery_date')}</div>
+                </div>
+            </div>
+            <div class="section">
+                <div class="section-title">GOODS LIST</div>
+                <table class="table">
+                    <thead><tr><th>S.No</th><th>Description</th><th>HSN</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+                    <tbody>
+                        ${products.map((p, i) => `<tr><td>${i + 1}</td><td>${p.desc || ''}</td><td>${p.hsn || ''}</td><td>${p.qty || 0}</td><td style="text-align:right;">₹${(p.rate || 0).toFixed(2)}</td><td style="text-align:right;">₹${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div class="section">
+                <div class="section-title">PACKAGING INFO</div>
+                <table class="table">
+                    <thead><tr><th>Carton</th><th>Contents</th><th>Qty</th><th>Net Wt</th><th>Gross Wt</th><th>Dims</th><th>Vol Wt</th></tr></thead>
+                    <tbody>
+                        ${packages.map(p => `<tr><td>${p.carton}</td><td>${p.desc}</td><td>${p.qty}</td><td style="text-align:right;">${p.net.toFixed(2)}</td><td style="text-align:right;">${p.gross.toFixed(2)}</td><td>${p.dims}</td><td style="text-align:right;">${p.vol.toFixed(2)}</td></tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>
+            <div class="summary-bar">
+                <div><strong>Packages: ${packages.length}</strong></div>
+                <div><strong>Net: ${totalNet.toFixed(2)} KG</strong></div>
+                <div><strong>Gross: ${totalGross.toFixed(2)} KG</strong></div>
+            </div>
+            <div class="section">
+                <div style="display: flex; justify-content: space-between;">
+                    <div style="text-align: center;"><div style="width: 200px; height: 60px; border-bottom: 1px solid #000; margin-bottom: 5px;"></div><strong>Sender</strong></div>
+                    <div style="text-align: center;"><div style="width: 200px; height: 60px; border-bottom: 1px solid #000; margin-bottom: 5px;"></div><strong>Receiver</strong></div>
+                </div>
+            </div>
+        </div>
+    </body></html>`;
+}
+function generateDeliveryChallanDesign6(data, val, products, packages, totalNet, totalGross, totalVol) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Delivery Challan - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Trebuchet MS', sans-serif; }
+        body { padding: 20px; font-size: 11px; background: #e8f4f8; }
+        .challan { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.15); }
+        .header { background: linear-gradient(45deg, #00b4db, #0083b0); color: white; padding: 30px; text-align: center; position: relative; }
+        .header::after { content: ''; position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 20px solid #0083b0; }
+        .header h1 { font-size: 24px; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .content { padding: 30px; }
+        .card { background: #f8fdff; border: 1px solid #b3e5fc; border-radius: 10px; padding: 20px; margin: 15px 0; }
+        .card-header { background: #00b4db; color: white; padding: 10px 15px; margin: -20px -20px 15px -20px; border-radius: 10px 10px 0 0; font-weight: bold; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .product-table { width: 100%; border-collapse: collapse; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .product-table th { background: linear-gradient(45deg, #00b4db, #0083b0); color: white; padding: 15px; text-align: left; }
+        .product-table td { padding: 12px; border-bottom: 1px solid #e1f5fe; }
+        .product-table tr:nth-child(even) { background: #f1f8e9; }
+        .summary-card { background: linear-gradient(45deg, #00b4db, #0083b0); color: white; border-radius: 15px; padding: 25px; margin-top: 20px; }
+        .btn { background: linear-gradient(45deg, #00b4db, #0083b0); color: white; padding: 12px 25px; border: none; border-radius: 25px; margin: 5px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        @media print { .no-print { display: none; } body { background: white; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">🖨️ Print Challan</button>
+            <button onclick="window.close()" class="btn" style="background: linear-gradient(45deg, #6b7280, #4b5563);">❌ Close</button>
+        </div>
+        <div class="challan">
+            <div class="header">
+                <h1>DELIVERY CHALLAN & PACKAGING LIST</h1>
+                <p style="font-size: 16px; margin-top: 10px;">Challan No: ${val('challan_no')} | Date: ${val('challan_date')}</p>
+            </div>
+            <div class="content">
+                <div class="grid-2">
+                    <div class="card">
+                        <div class="card-header">📤 FROM COMPANY</div>
+                        <div style="line-height: 1.6;">
+                            <div style="font-size: 14px; font-weight: bold; color: #00b4db;">${val('from_company')}</div>
+                            <div>${val('from_address')}</div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">📥 TO COMPANY</div>
+                        <div style="line-height: 1.6;">
+                            <div style="font-size: 14px; font-weight: bold; color: #00b4db;">${val('to_company')}</div>
+                            <div>${val('to_address')}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">🚛 TRANSPORT & DELIVERY</div>
+                    <div class="grid-3">
+                        <div><strong>Vehicle Number:</strong><br><span style="color: #00b4db; font-size: 14px;">${val('vehicle_no')}</span></div>
+                        <div><strong>Driver Name:</strong><br><span style="color: #00b4db; font-size: 14px;">${val('driver_name')}</span></div>
+                        <div><strong>Delivery Date:</strong><br><span style="color: #00b4db; font-size: 14px;">${val('delivery_date')}</span></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">📦 GOODS DETAILS</div>
+                    <table class="product-table">
+                        <thead><tr><th>S.No</th><th>Description</th><th>HSN</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+                        <tbody>
+                            ${products.map((p, i) => `<tr><td style="font-weight: bold;">${i + 1}</td><td>${p.desc || ''}</td><td style="color: #00b4db; font-weight: bold;">${p.hsn || ''}</td><td style="text-align: center;">${p.qty || 0}</td><td style="text-align:right;">₹${(p.rate || 0).toFixed(2)}</td><td style="text-align:right; font-weight: bold;">₹${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card">
+                    <div class="card-header">📋 PACKAGING DETAILS</div>
+                    <table class="product-table">
+                        <thead><tr><th>Carton#</th><th>Contents</th><th>Qty</th><th>Net Wt</th><th>Gross Wt</th><th>Dims</th><th>Vol Wt</th></tr></thead>
+                        <tbody>
+                            ${packages.map(p => `<tr><td style="font-weight: bold;">${p.carton}</td><td>${p.desc}</td><td style="text-align: center;">${p.qty}</td><td style="text-align:right;">${p.net.toFixed(2)}</td><td style="text-align:right;">${p.gross.toFixed(2)}</td><td style="text-align: center;">${p.dims}</td><td style="text-align:right;">${p.vol.toFixed(2)}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="summary-card">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; text-align: center;">
+                        <div><div style="font-size: 28px; font-weight: bold;">${packages.length}</div><div>Total Packages</div></div>
+                        <div><div style="font-size: 28px; font-weight: bold;">${totalNet.toFixed(2)}</div><div>Net Weight (KG)</div></div>
+                        <div><div style="font-size: 28px; font-weight: bold;">${totalGross.toFixed(2)}</div><div>Gross Weight (KG)</div></div>
+                    </div>
+                </div>
+                <div style="margin-top: 40px; display: flex; justify-content: space-between;">
+                    <div style="text-align: center;">
+                        <div style="width: 250px; height: 80px; border: 2px dashed #00b4db; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; color: #00b4db; font-style: italic;">Sender Signature & Stamp</div>
+                        <div style="color: #00b4db; font-weight: bold; font-size: 14px;">Authorized Sender</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="width: 250px; height: 80px; border: 2px dashed #00b4db; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; color: #00b4db; font-style: italic;">Receiver Signature & Stamp</div>
+                        <div style="color: #00b4db; font-weight: bold; font-size: 14px;">Authorized Receiver</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body></html>`;
+}
+
+function generateDeliveryChallanDesign7(data, val, products, packages, totalNet, totalGross, totalVol) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Delivery Challan - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial Black', sans-serif; }
+        body { padding: 10px; font-size: 10px; background: #1a1a1a; color: white; }
+        .challan { background: #2d2d2d; border: 2px solid #ff6b35; border-radius: 10px; overflow: hidden; }
+        .header { background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; padding: 25px; text-align: center; }
+        .header h1 { font-size: 20px; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; }
+        .content { padding: 25px; }
+        .section { background: #3d3d3d; border: 1px solid #ff6b35; border-radius: 8px; padding: 20px; margin: 15px 0; }
+        .section-title { color: #ff6b35; font-size: 14px; font-weight: bold; margin-bottom: 15px; text-transform: uppercase; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .info-item { margin: 8px 0; }
+        .info-label { color: #ff6b35; font-weight: bold; }
+        .product-table { width: 100%; border-collapse: collapse; background: #3d3d3d; border-radius: 8px; overflow: hidden; }
+        .product-table th { background: #ff6b35; color: white; padding: 15px; text-align: left; font-weight: bold; }
+        .product-table td { padding: 12px; border-bottom: 1px solid #555; }
+        .product-table tr:hover { background: #4d4d4d; }
+        .summary-section { background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%); color: white; padding: 25px; border-radius: 8px; margin-top: 20px; }
+        .btn { background: #ff6b35; color: white; padding: 12px 25px; border: none; border-radius: 5px; margin: 5px; cursor: pointer; font-weight: bold; text-transform: uppercase; }
+        @media print { .no-print { display: none; } body { background: white; color: black; } .challan { background: white; } .section { background: #f5f5f5; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">🖨️ PRINT</button>
+            <button onclick="window.close()" class="btn" style="background: #666;">❌ CLOSE</button>
+        </div>
+        <div class="challan">
+            <div class="header">
+                <h1>DELIVERY CHALLAN & PACKAGING LIST</h1>
+                <div style="font-size: 14px; margin-top: 10px;">CHALLAN: ${val('challan_no')} | DATE: ${val('challan_date')}</div>
+            </div>
+            <div class="content">
+                <div class="section">
+                    <div class="section-title">📋 DELIVERY INFO</div>
+                    <div class="grid">
+                        <div>
+                            <div class="info-item"><span class="info-label">FROM:</span> ${val('from_company')}</div>
+                            <div class="info-item">${val('from_address')}</div>
+                        </div>
+                        <div>
+                            <div class="info-item"><span class="info-label">TO:</span> ${val('to_company')}</div>
+                            <div class="info-item">${val('to_address')}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-title">🚛 TRANSPORT</div>
+                    <div class="grid">
+                        <div class="info-item"><span class="info-label">VEHICLE:</span> ${val('vehicle_no')}</div>
+                        <div class="info-item"><span class="info-label">DRIVER:</span> ${val('driver_name')}</div>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-title">📦 GOODS</div>
+                    <table class="product-table">
+                        <thead><tr><th>#</th><th>DESCRIPTION</th><th>HSN</th><th>QTY</th><th>RATE</th><th>AMOUNT</th></tr></thead>
+                        <tbody>
+                            ${products.map((p, i) => `<tr><td style="color: #ff6b35; font-weight: bold;">${i + 1}</td><td>${p.desc || ''}</td><td style="color: #ff6b35;">${p.hsn || ''}</td><td style="text-align: center;">${p.qty || 0}</td><td style="text-align:right;">₹${(p.rate || 0).toFixed(2)}</td><td style="text-align:right; color: #ff6b35; font-weight: bold;">₹${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="section">
+                    <div class="section-title">📋 PACKAGES</div>
+                    <table class="product-table">
+                        <thead><tr><th>CARTON</th><th>CONTENTS</th><th>QTY</th><th>NET</th><th>GROSS</th><th>DIMS</th><th>VOL</th></tr></thead>
+                        <tbody>
+                            ${packages.map(p => `<tr><td style="color: #ff6b35; font-weight: bold;">${p.carton}</td><td>${p.desc}</td><td style="text-align: center;">${p.qty}</td><td style="text-align:right;">${p.net.toFixed(2)}</td><td style="text-align:right;">${p.gross.toFixed(2)}</td><td style="text-align: center;">${p.dims}</td><td style="text-align:right;">${p.vol.toFixed(2)}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="summary-section">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; text-align: center;">
+                        <div><div style="font-size: 32px; font-weight: bold;">${packages.length}</div><div>PACKAGES</div></div>
+                        <div><div style="font-size: 32px; font-weight: bold;">${totalNet.toFixed(2)}</div><div>NET KG</div></div>
+                        <div><div style="font-size: 32px; font-weight: bold;">${totalGross.toFixed(2)}</div><div>GROSS KG</div></div>
+                    </div>
+                </div>
+                <div style="margin-top: 30px; display: flex; justify-content: space-between;">
+                    <div style="text-align: center;">
+                        <div style="width: 200px; height: 60px; border: 2px solid #ff6b35; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; color: #ff6b35;">SENDER SIGNATURE</div>
+                        <div style="color: #ff6b35; font-weight: bold;">AUTHORIZED SENDER</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="width: 200px; height: 60px; border: 2px solid #ff6b35; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; color: #ff6b35;">RECEIVER SIGNATURE</div>
+                        <div style="color: #ff6b35; font-weight: bold;">AUTHORIZED RECEIVER</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body></html>`;
+}
+function generateDeliveryChallanDesign8(data, val, products, packages, totalNet, totalGross, totalVol) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Delivery Challan - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Verdana', sans-serif; }
+        body { padding: 20px; font-size: 11px; background: #f0f2f5; }
+        .challan { background: white; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%); color: white; padding: 25px; text-align: center; }
+        .header h1 { font-size: 22px; margin-bottom: 8px; }
+        .content { padding: 30px; }
+        .badge { background: #8e44ad; color: white; padding: 5px 12px; border-radius: 15px; font-size: 10px; font-weight: bold; display: inline-block; margin-bottom: 10px; }
+        .info-row { display: flex; margin: 15px 0; gap: 20px; }
+        .info-box { flex: 1; background: #f8f9fa; border-left: 4px solid #8e44ad; padding: 15px; border-radius: 0 8px 8px 0; }
+        .info-title { color: #8e44ad; font-weight: bold; margin-bottom: 8px; font-size: 12px; }
+        .transport-bar { background: linear-gradient(90deg, #3498db, #8e44ad); color: white; padding: 15px; border-radius: 8px; margin: 20px 0; }
+        .transport-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .product-table { width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .product-table th { background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%); color: white; padding: 15px; text-align: left; }
+        .product-table td { padding: 12px; border-bottom: 1px solid #ecf0f1; }
+        .product-table tr:nth-child(even) { background: #f8f9fa; }
+        .summary-card { background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%); color: white; padding: 25px; border-radius: 12px; margin-top: 25px; }
+        .btn { background: linear-gradient(135deg, #8e44ad 0%, #3498db 100%); color: white; padding: 12px 24px; border: none; border-radius: 25px; margin: 5px; cursor: pointer; }
+        @media print { .no-print { display: none; } body { background: white; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">🖨️ Print Challan</button>
+            <button onclick="window.close()" class="btn" style="background: linear-gradient(135deg, #6b7280, #4b5563);">❌ Close</button>
+        </div>
+        <div class="challan">
+            <div class="header">
+                <h1>DELIVERY CHALLAN & PACKAGING LIST</h1>
+                <p>Challan No: ${val('challan_no')} • Date: ${val('challan_date')}</p>
+            </div>
+            <div class="content">
+                <div class="badge">📄 DELIVERY DETAILS</div>
+                <div class="info-row">
+                    <div class="info-box">
+                        <div class="info-title">📤 FROM COMPANY</div>
+                        <div style="font-weight: bold; color: #2c3e50;">${val('from_company')}</div>
+                        <div style="margin: 5px 0; line-height: 1.4;">${val('from_address')}</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-title">📥 TO COMPANY</div>
+                        <div style="font-weight: bold; color: #2c3e50;">${val('to_company')}</div>
+                        <div style="margin: 5px 0; line-height: 1.4;">${val('to_address')}</div>
+                    </div>
+                </div>
+                <div class="transport-bar">
+                    <div style="margin-bottom: 10px; font-weight: bold;">🚛 TRANSPORT INFORMATION</div>
+                    <div class="transport-grid">
+                        <div><strong>Vehicle:</strong> ${val('vehicle_no')}</div>
+                        <div><strong>Driver:</strong> ${val('driver_name')}</div>
+                        <div><strong>Delivery Date:</strong> ${val('delivery_date')}</div>
+                    </div>
+                </div>
+                <div class="badge">📦 GOODS DETAILS</div>
+                <table class="product-table">
+                    <thead><tr><th>S.No</th><th>Description</th><th>HSN</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+                    <tbody>
+                        ${products.map((p, i) => `<tr><td style="font-weight: bold; color: #8e44ad;">${i + 1}</td><td>${p.desc || ''}</td><td style="color: #3498db; font-weight: bold;">${p.hsn || ''}</td><td style="text-align: center;">${p.qty || 0}</td><td style="text-align:right;">₹${(p.rate || 0).toFixed(2)}</td><td style="text-align:right; font-weight: bold;">₹${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                    </tbody>
+                </table>
+                <div class="badge">📋 PACKAGING DETAILS</div>
+                <table class="product-table">
+                    <thead><tr><th>Carton#</th><th>Contents</th><th>Qty</th><th>Net Wt</th><th>Gross Wt</th><th>Dims</th><th>Vol Wt</th></tr></thead>
+                    <tbody>
+                        ${packages.map(p => `<tr><td style="font-weight: bold; color: #8e44ad;">${p.carton}</td><td>${p.desc}</td><td style="text-align: center;">${p.qty}</td><td style="text-align:right;">${p.net.toFixed(2)}</td><td style="text-align:right;">${p.gross.toFixed(2)}</td><td style="text-align: center;">${p.dims}</td><td style="text-align:right;">${p.vol.toFixed(2)}</td></tr>`).join('')}
+                    </tbody>
+                </table>
+                <div class="summary-card">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; text-align: center;">
+                        <div><div style="font-size: 32px; font-weight: bold;">${packages.length}</div><div>Total Packages</div></div>
+                        <div><div style="font-size: 32px; font-weight: bold;">${totalNet.toFixed(2)}</div><div>Net Weight (KG)</div></div>
+                        <div><div style="font-size: 32px; font-weight: bold;">${totalGross.toFixed(2)}</div><div>Gross Weight (KG)</div></div>
+                    </div>
+                </div>
+                <div style="margin-top: 40px; display: flex; justify-content: space-between;">
+                    <div style="text-align: center;">
+                        <div style="width: 220px; height: 70px; border: 2px dashed #8e44ad; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; color: #8e44ad; font-style: italic;">Sender Signature & Stamp</div>
+                        <div style="color: #8e44ad; font-weight: bold;">✍️ Authorized Sender</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="width: 220px; height: 70px; border: 2px dashed #8e44ad; border-radius: 8px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; color: #8e44ad; font-style: italic;">Receiver Signature & Stamp</div>
+                        <div style="color: #8e44ad; font-weight: bold;">✍️ Authorized Receiver</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body></html>`;
+}
+function generateDeliveryChallanDesign9(data, val, products, packages, totalNet, totalGross, totalVol) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Delivery Challan - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { padding: 15px; font-size: 11px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .challan { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2); max-width: 900px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%); padding: 30px; text-align: center; position: relative; }
+        .header::before { content: '✨'; position: absolute; top: 20px; left: 30px; font-size: 24px; }
+        .header::after { content: '✨'; position: absolute; top: 20px; right: 30px; font-size: 24px; }
+        .header h1 { font-size: 26px; color: #2d3748; margin-bottom: 10px; font-weight: 300; letter-spacing: 1px; }
+        .header p { color: #4a5568; font-size: 14px; }
+        .content { padding: 35px; }
+        .section { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 20px; border-radius: 15px; margin: 20px 0; }
+        .section-content { background: white; color: #2d3748; padding: 20px; border-radius: 10px; margin-top: 15px; }
+        .section-title { font-size: 16px; font-weight: bold; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .info-card { background: #f7fafc; border-radius: 12px; padding: 20px; border-left: 5px solid #ff9a9e; }
+        .info-label { color: #ff9a9e; font-weight: bold; font-size: 12px; margin-bottom: 5px; }
+        .info-value { color: #2d3748; font-weight: 600; }
+        .product-table { width: 100%; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .product-table th { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #2d3748; padding: 18px; text-align: left; font-weight: 600; }
+        .product-table td { padding: 15px; border-bottom: 1px solid #e2e8f0; }
+        .product-table tr:nth-child(even) { background: #f8fafc; }
+        .product-table tr:hover { background: #edf2f7; }
+        .summary-section { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 15px; margin-top: 25px; }
+        .btn { background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%); color: #2d3748; padding: 15px 30px; border: none; border-radius: 25px; margin: 8px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        @media print { .no-print { display: none; } body { background: white; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">🖨️ Print Beautiful Challan</button>
+            <button onclick="window.close()" class="btn" style="background: linear-gradient(135deg, #a0aec0, #718096);">❌ Close Window</button>
+        </div>
+        <div class="challan">
+            <div class="header">
+                <h1>DELIVERY CHALLAN & PACKAGING LIST</h1>
+                <p>Challan No: ${val('challan_no')} • Date: ${val('challan_date')}</p>
+            </div>
+            <div class="content">
+                <div class="section">
+                    <div class="section-title">🏢 COMPANY INFORMATION</div>
+                    <div class="section-content">
+                        <div class="info-grid">
+                            <div class="info-card">
+                                <div class="info-label">📤 FROM COMPANY</div>
+                                <div class="info-value" style="font-size: 14px; margin-bottom: 8px;">${val('from_company')}</div>
+                                <div style="line-height: 1.5; margin-bottom: 8px;">${val('from_address')}</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="info-label">📥 TO COMPANY</div>
+                                <div class="info-value" style="font-size: 14px; margin-bottom: 8px;">${val('to_company')}</div>
+                                <div style="line-height: 1.5; margin-bottom: 8px;">${val('to_address')}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-title">🚛 LOGISTICS & TRANSPORT</div>
+                    <div class="section-content">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                            <div class="info-card">
+                                <div class="info-label">Vehicle Number</div>
+                                <div class="info-value" style="font-size: 16px;">${val('vehicle_no')}</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="info-label">Driver Name</div>
+                                <div class="info-value" style="font-size: 16px;">${val('driver_name')}</div>
+                            </div>
+                            <div class="info-card">
+                                <div class="info-label">Delivery Date</div>
+                                <div class="info-value" style="font-size: 16px;">${val('delivery_date')}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-title">📦 GOODS & SERVICES</div>
+                    <div class="section-content">
+                        <table class="product-table">
+                            <thead><tr><th>S.No</th><th>Description</th><th>HSN</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+                            <tbody>
+                                ${products.map((p, i) => `<tr><td style="font-weight: bold; color: #667eea;">${i + 1}</td><td style="font-weight: 500;">${p.desc || ''}</td><td style="color: #ff9a9e; font-weight: bold;">${p.hsn || ''}</td><td style="text-align: center; font-weight: 600;">${p.qty || 0}</td><td style="text-align:right; font-weight: 600;">₹${(p.rate || 0).toFixed(2)}</td><td style="text-align:right; font-weight: bold; color: #667eea;">₹${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="section-title">📋 PACKAGING BREAKDOWN</div>
+                    <div class="section-content">
+                        <table class="product-table">
+                            <thead><tr><th>Carton#</th><th>Contents</th><th>Qty</th><th>Net Wt</th><th>Gross Wt</th><th>Dims</th><th>Vol Wt</th></tr></thead>
+                            <tbody>
+                                ${packages.map(p => `<tr><td style="font-weight: bold; color: #667eea;">${p.carton}</td><td style="font-weight: 500;">${p.desc}</td><td style="text-align: center; font-weight: 600;">${p.qty}</td><td style="text-align:right; font-weight: 600;">${p.net.toFixed(2)}</td><td style="text-align:right; font-weight: 600;">${p.gross.toFixed(2)}</td><td style="text-align: center;">${p.dims}</td><td style="text-align:right; font-weight: 600;">${p.vol.toFixed(2)}</td></tr>`).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="summary-section">
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; text-align: center;">
+                        <div><div style="font-size: 36px; font-weight: bold;">${packages.length}</div><div style="font-size: 16px;">Total Packages</div></div>
+                        <div><div style="font-size: 36px; font-weight: bold;">${totalNet.toFixed(2)}</div><div style="font-size: 16px;">Net Weight (KG)</div></div>
+                        <div><div style="font-size: 36px; font-weight: bold;">${totalGross.toFixed(2)}</div><div style="font-size: 16px;">Gross Weight (KG)</div></div>
+                    </div>
+                </div>
+                <div style="margin-top: 40px; display: flex; justify-content: space-between;">
+                    <div style="text-align: center;">
+                        <div style="width: 250px; height: 80px; border: 3px dashed #ff9a9e; border-radius: 15px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; color: #ff9a9e; font-style: italic; font-size: 14px;">Sender Signature & Company Seal</div>
+                        <div style="color: #667eea; font-weight: bold; font-size: 16px;">✍️ Authorized Sender</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="width: 250px; height: 80px; border: 3px dashed #ff9a9e; border-radius: 15px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; color: #ff9a9e; font-style: italic; font-size: 14px;">Receiver Signature & Company Seal</div>
+                        <div style="color: #667eea; font-weight: bold; font-size: 16px;">✍️ Authorized Receiver</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body></html>`;
+}
+function generateDeliveryChallanDesign10(data, val, products, packages, totalNet, totalGross, totalVol) {
+    return `
+    <!DOCTYPE html>
+    <html><head><meta charset="UTF-8"><title>Delivery Challan - ${val('challan_no')}</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Comic Sans MS', cursive; }
+        body { padding: 20px; font-size: 12px; background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57); background-size: 400% 400%; animation: gradientShift 15s ease infinite; }
+        @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .challan { background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.2); border: 5px solid #ff6b6b; }
+        .header { background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%); color: white; padding: 30px; text-align: center; position: relative; }
+        .header::before { content: '🎉'; position: absolute; top: 15px; left: 20px; font-size: 30px; animation: bounce 2s infinite; }
+        .header::after { content: '🎉'; position: absolute; top: 15px; right: 20px; font-size: 30px; animation: bounce 2s infinite; }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
+        .header h1 { font-size: 28px; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); animation: pulse 3s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .content { padding: 30px; }
+        .fun-section { background: linear-gradient(135deg, #feca57 0%, #ff9ff3 100%); border-radius: 20px; padding: 25px; margin: 20px 0; border: 3px dashed #ff6b6b; }
+        .fun-title { font-size: 18px; font-weight: bold; color: #2d3436; margin-bottom: 15px; text-align: center; }
+        .party-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .party-card { background: white; border-radius: 15px; padding: 20px; border: 3px solid #4ecdc4; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .party-title { color: #4ecdc4; font-weight: bold; font-size: 14px; margin-bottom: 10px; }
+        .transport-fun { background: linear-gradient(135deg, #a29bfe 0%, #fd79a8 100%); color: white; border-radius: 20px; padding: 20px; margin: 20px 0; }
+        .product-table { width: 100%; border-collapse: collapse; border-radius: 15px; overflow: hidden; border: 3px solid #00b894; }
+        .product-table th { background: linear-gradient(135deg, #00b894 0%, #00cec9 100%); color: white; padding: 15px; text-align: left; font-weight: bold; }
+        .product-table td { padding: 12px; border-bottom: 2px solid #ddd; }
+        .product-table tr:nth-child(even) { background: #f1f2f6; }
+        .product-table tr:hover { background: #ddd; transform: scale(1.02); transition: all 0.3s; }
+        .summary-fun { background: linear-gradient(135deg, #e17055 0%, #fdcb6e 100%); color: white; padding: 30px; border-radius: 20px; margin-top: 25px; border: 3px solid #e17055; }
+        .btn { background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 100%); color: white; padding: 15px 30px; border: none; border-radius: 25px; margin: 8px; cursor: pointer; font-weight: bold; font-size: 14px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); transition: all 0.3s; }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        @media print { .no-print { display: none; } body { background: white; animation: none; } }
+    </style></head>
+    <body>
+        <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+            <button onclick="window.print()" class="btn">🖨️ Print Fun Challan!</button>
+            <button onclick="window.close()" class="btn" style="background: linear-gradient(135deg, #636e72, #2d3436);">❌ Close Fun Window</button>
+        </div>
+        <div class="challan">
+            <div class="header">
+                <h1>🎊 DELIVERY CHALLAN & PACKAGING LIST 🎊</h1>
+                <p style="font-size: 16px;">Challan: ${val('challan_no')} • Date: ${val('challan_date')}</p>
+            </div>
+            <div class="content">
+                <div class="fun-section">
+                    <div class="fun-title">🏢 COMPANY PARTY! WHO'S SENDING & RECEIVING? 🏢</div>
+                    <div class="party-grid">
+                        <div class="party-card">
+                            <div class="party-title">📤 FROM COMPANY (THE SENDER!)</div>
+                            <div style="font-weight: bold; color: #2d3436; font-size: 14px; margin-bottom: 8px;">${val('from_company')}</div>
+                            <div style="line-height: 1.5; margin-bottom: 8px;">${val('from_address')}</div>
+                        </div>
+                        <div class="party-card">
+                            <div class="party-title">📥 TO COMPANY (THE LUCKY RECEIVER!)</div>
+                            <div style="font-weight: bold; color: #2d3436; font-size: 14px; margin-bottom: 8px;">${val('to_company')}</div>
+                            <div style="line-height: 1.5; margin-bottom: 8px;">${val('to_address')}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="transport-fun">
+                    <div style="text-align: center; font-size: 18px; font-weight: bold; margin-bottom: 15px;">🚛 TRANSPORT ADVENTURE! 🚛</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: center;">
+                        <div><strong>🚗 Vehicle:</strong><br><span style="font-size: 16px;">${val('vehicle_no')}</span></div>
+                        <div><strong>👨‍✈️ Driver:</strong><br><span style="font-size: 16px;">${val('driver_name')}</span></div>
+                        <div><strong>📅 Delivery:</strong><br><span style="font-size: 16px;">${val('delivery_date')}</span></div>
+                    </div>
+                </div>
+                <div class="fun-section">
+                    <div class="fun-title">📦 AWESOME GOODS LIST! 📦</div>
+                    <table class="product-table">
+                        <thead><tr><th>🔢 S.No</th><th>📝 What's This?</th><th>🏷️ HSN Code</th><th>📊 How Many?</th><th>💰 Price Each</th><th>💵 Total Cost</th></tr></thead>
+                        <tbody>
+                            ${products.map((p, i) => `<tr><td style="font-weight: bold; color: #00b894; font-size: 14px;">${i + 1}</td><td style="font-weight: 600;">${p.desc || ''}</td><td style="color: #e17055; font-weight: bold;">${p.hsn || ''}</td><td style="text-align: center; font-weight: 600;">${p.qty || 0}</td><td style="text-align:right; font-weight: 600;">₹${(p.rate || 0).toFixed(2)}</td><td style="text-align:right; font-weight: bold; color: #00b894; font-size: 14px;">₹${(p.amount || 0).toFixed(2)}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="fun-section">
+                    <div class="fun-title">📋 SUPER COOL PACKAGING BREAKDOWN! 📋</div>
+                    <table class="product-table">
+                        <thead><tr><th>📦 Carton#</th><th>📝 What's Inside?</th><th>📊 Qty</th><th>⚖️ Net Wt</th><th>📏 Gross Wt</th><th>📐 Dimensions</th><th>🎈 Vol Wt</th></tr></thead>
+                        <tbody>
+                            ${packages.map(p => `<tr><td style="font-weight: bold; color: #00b894; font-size: 14px;">${p.carton}</td><td style="font-weight: 600;">${p.desc}</td><td style="text-align: center; font-weight: 600;">${p.qty}</td><td style="text-align:right; font-weight: 600;">${p.net.toFixed(2)}</td><td style="text-align:right; font-weight: 600;">${p.gross.toFixed(2)}</td><td style="text-align: center;">${p.dims}</td><td style="text-align:right; font-weight: 600;">${p.vol.toFixed(2)}</td></tr>`).join('')}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="summary-fun">
+                    <div style="text-align: center; font-size: 20px; font-weight: bold; margin-bottom: 20px;">📊 AMAZING SUMMARY! 📊</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; text-align: center;">
+                        <div><div style="font-size: 40px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">${packages.length}</div><div style="font-size: 16px;">🎁 Total Packages</div></div>
+                        <div><div style="font-size: 40px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">${totalNet.toFixed(2)}</div><div style="font-size: 16px;">⚖️ Net Weight (KG)</div></div>
+                        <div><div style="font-size: 40px; font-weight: bold; text-shadow: 2px 2px 4px rgba(0,0,0,0.3);">${totalGross.toFixed(2)}</div><div style="font-size: 16px;">📏 Gross Weight (KG)</div></div>
+                    </div>
+                </div>
+                <div style="margin-top: 40px; display: flex; justify-content: space-between;">
+                    <div style="text-align: center;">
+                        <div style="width: 280px; height: 90px; border: 4px dashed #ff6b6b; border-radius: 20px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; color: #ff6b6b; font-style: italic; font-size: 16px; font-weight: bold;">🖋️ Sender Sign Here! 🖋️</div>
+                        <div style="color: #4ecdc4; font-weight: bold; font-size: 18px;">✍️ The Sender Boss!</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="width: 280px; height: 90px; border: 4px dashed #ff6b6b; border-radius: 20px; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; color: #ff6b6b; font-style: italic; font-size: 16px; font-weight: bold;">🖋️ Receiver Sign Here! 🖋️</div>
+                        <div style="color: #4ecdc4; font-weight: bold; font-size: 18px;">✍️ The Receiver Boss!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body></html>`;
 }

@@ -10,19 +10,12 @@
     <link rel="stylesheet" href="style.css">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #ccc;
-            border-radius: 3px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #aaa;
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #aaa; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
@@ -31,258 +24,138 @@
     <div id="header-placeholder"></div>
 
     <!-- Main Layout -->
-    <main class="flex-grow flex flex-col md:flex-row w-full md:h-[calc(100vh-88px)] overflow-hidden">
+    <main class="flex-grow w-full p-6 md:p-8">
         
-        <!-- Sidebar for Document Categories -->
-        <aside class="w-full md:w-80 bg-white border-r flex flex-col flex-shrink-0 overflow-hidden">
+        <!-- Document Header Buttons -->
+        <div class="mb-6 flex flex-wrap gap-2 justify-center">
+            <button class="doc-link px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors text-sm font-medium" data-doc-code="COM_INV" data-doc-title="Commercial Invoice" data-doc-desc="Primary export document">
+                <i class="fa-solid fa-file-contract mr-2"></i>
+                <span>COM INV</span>
+            </button>
+            <button class="doc-link px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors text-sm font-medium" data-doc-code="PKL" data-doc-title="Packing List" data-doc-desc="Package contents and weights">
+                <i class="fa-solid fa-boxes-stacked mr-2"></i>
+                <span>PL</span>
+            </button>
+            <button class="doc-link px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors text-sm font-medium" data-doc-code="KYC" data-doc-title="KYC Form" data-doc-desc="Customer verification document">
+                <i class="fa-solid fa-id-card mr-2"></i>
+                <span>KYC</span>
+            </button>
+            <button class="doc-link px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors text-sm font-medium" data-doc-code="SLI" data-doc-title="Shipper Instructions" data-doc-desc="Instructions to freight forwarder">
+                <i class="fa-solid fa-clipboard-list mr-2"></i>
+                <span>SLI</span>
+            </button>
+            <button class="doc-link px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors text-sm font-medium" data-doc-code="TAX_CHALLAN" data-doc-title="Tax Challan" data-doc-desc="GST compliant domestic invoice">
+                <i class="fa-solid fa-receipt mr-2"></i>
+                <span>TAX CLN</span>
+            </button>
+            <button class="doc-link px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-blue-50 hover:border-blue-500 transition-colors text-sm font-medium" data-doc-code="DELIVERY_CHALLAN" data-doc-title="Delivery Challan" data-doc-desc="Goods dispatch document">
+                <i class="fa-solid fa-truck mr-2"></i>
+                <span>DEL CLN</span>
+            </button>
+            <button onclick="toggleSavedDocs()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+                <i class="fa-solid fa-folder mr-2"></i>
+                <span>FOLDER</span>
+            </button>
+        </div>
+        
+        <!-- Main Content Area (Now full width) -->
+        <div id="app-content" class="w-full">
+            <!-- Content will be dynamically rendered here -->
+        </div>
+
+        <!-- Right Pane for Saved Documents -->
+        <aside id="savedDocsPane" class="hidden fixed top-0 right-0 h-full w-full md:w-96 bg-white border-l flex flex-col flex-shrink-0 overflow-hidden shadow-lg z-50">
             <div class="p-4 border-b bg-gray-50 flex-shrink-0">
                 <div class="flex justify-between items-center">
                     <h2 class="text-lg font-bold text-blue-900 flex items-center gap-2">
-                        <i class="fa-solid fa-folder-open"></i> Document Library
+                        <i class="fa-solid fa-save"></i> Saved Documents
                     </h2>
-                    <button onclick="initDocCenter()" title="Show Guide" class="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-100 transition-colors">
-                        <i class="fa-solid fa-book-open"></i>
+                    <button onclick="toggleSavedDocs()" class="text-gray-600 hover:text-gray-800 p-2 rounded-full hover:bg-gray-100 transition-colors">
+                        <i class="fa-solid fa-times"></i>
                     </button>
                 </div>
-                <p class="text-xs text-gray-500 mt-1">Select a document to generate or edit.</p>
+                <p class="text-xs text-gray-500 mt-1">Your saved document drafts.</p>
             </div>
-            
-            <nav class="flex-grow overflow-y-auto py-4 space-y-6 custom-scrollbar">
-                
-                <!-- Category 1: Core Documents -->
-                <div>
-                    <h3 class="px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Category 1: Core Documents</h3>
-                    <div class="space-y-1 pr-2">
-                        <button data-doc-code="COM_INV" data-doc-title="Commercial Invoice" data-doc-desc="Standard document for all commercial export shipments." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Commercial Invoice</span>
-                        </button>
-                        <button data-doc-code="PKL" data-doc-title="Packing List" data-doc-desc="Detailed breakdown of shipment contents, weights, and dimensions." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Packing List</span>
-                        </button>
-                        <button data-doc-code="KYC" data-doc-title="KYC Form" data-doc-desc="Mandatory Indian Customs declaration for new or first-time exporters." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">KYC Form</span>
-                        </button>
-                        <button data-doc-code="SLI" data-doc-title="Shippers Letter of Instructions" data-doc-desc="Formal instructions provided to the freight forwarder." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Shippers Letter of Instructions</span>
-                        </button>
-                        <button data-doc-code="BL_AWB" data-doc-title="Bill of Lading / Air Waybill" data-doc-desc="Contract of carriage issued by the carrier, detailing shipment terms." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Bill of Lading / Air Waybill</span>
-                        </button>
-                        <button data-doc-code="INS_CERT" data-doc-title="Insurance Certificate" data-doc-desc="Proof of insurance coverage for the shipment." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Insurance Certificate</span>
-                        </button>
-                        <button data-doc-code="LOA" data-doc-title="Letter of Authority" data-doc-desc="Authorizes a Customs House Agent (CHA) to act on your behalf." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Letter of Authority (CHA)</span>
-                        </button>
-                    </div>
+            <div class="flex-grow overflow-y-auto py-4 custom-scrollbar">
+                <div id="savedDocsList" class="px-4 space-y-2">
+                    <!-- Saved documents will be listed here -->
                 </div>
-
-                <!-- Category 1.5: Domestic Shipping -->
-                <div>
-                    <h3 class="px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Category 1.5: Domestic Shipping</h3>
-                    <div class="space-y-1 pr-2">
-                        <button data-doc-code="TAX_CHALLAN" data-doc-title="Tax Invoice cum Delivery Challan" data-doc-desc="GST compliant domestic invoice for inter-state supply of goods." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Tax Invoice cum Delivery Challan</span>
-                        </button>
-                        <button data-doc-code="DELIVERY_CHALLAN" data-doc-title="Delivery Challan & Packaging List" data-doc-desc="Document for goods dispatch and receipt with detailed packaging information." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Delivery Challan & Packaging List</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Category 2: Incentives & Regimes -->
-                <div>
-                    <h3 class="px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Category 2: Export Incentives</h3>
-                    <div class="space-y-1 pr-2">
-                        <button data-doc-code="ANN_D" data-doc-title="Annexure D (DEPB)" data-doc-desc="Required for claims under the Duty Entitlement Pass Book scheme." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Annexure D for DEPB</span>
-                        </button>
-                        <button data-doc-code="APP_3" data-doc-title="Appendix III (Drawback)" data-doc-desc="For Duty Drawback claims under the standard all-industry rate." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Appendix III for Drawback</span>
-                        </button>
-                        <button data-doc-code="APP_4" data-doc-title="Appendix IV (Drawback)" data-doc-desc="For specific items where CENVAT has not been availed." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Appendix IV for Drawback</span>
-                        </button>
-                        <button data-doc-code="APP_2" data-doc-title="Appendix II (DEEC)" data-doc-desc="Required for exports under the Advance License (DEEC) scheme." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Appendix II for DEEC</span>
-                        </button>
-                        <button data-doc-code="ANN_C1" data-doc-title="Annexure C1 (EOU)" data-doc-desc="Mandatory for 100% Export Oriented Units (EOU)." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Annexure C1 for EOU</span>
-                        </button>
-                        <button data-doc-code="ARE1" data-doc-title="ARE-1 Form" data-doc-desc="For removal of goods for export without payment of Central Excise duty." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">ARE-1 Form</span>
-                        </button>
-                        <button data-doc-code="ANN_1" data-doc-title="Annexure I (Drawback)" data-doc-desc="Exporter's declaration for higher All Industry Rate." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Annexure I (Drawback)</span>
-                        </button>
-                        <button data-doc-code="ANN_2" data-doc-title="Annexure II (DBK)" data-doc-desc="Supporting manufacturer's declaration for drawback claims." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Annexure II (DBK)</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Category 3: Shipment Type -->
-                <div>
-                    <h3 class="px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Category 3: Shipment Type</h3>
-                    <div class="space-y-1 pr-2">
-                        <button data-doc-code="GR_SAMPLE" data-doc-title="GR Waiver (Sample)" data-doc-desc="For commercial samples with no commercial value." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">GR Waiver (Free Sample)</span>
-                        </button>
-                        <button data-doc-code="GR_REPAIR" data-doc-title="GR Waiver (Repair)" data-doc-desc="For goods exported for repair and subsequent re-import." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">GR Waiver (Repair & Return)</span>
-                        </button>
-                        <button data-doc-code="SDF" data-doc-title="SDF Form" data-doc-desc="Mandatory FEMA declaration for all exports from India." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">SDF Form</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Category 4: Product & Destination -->
-                <div>
-                    <h3 class="px-6 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Category 4: Product & Destination</h3>
-                    <div class="space-y-1 pr-2">
-                        <button data-doc-code="MSDS" data-doc-title="MSDS" data-doc-desc="Required for shipping chemicals, pharmaceuticals, or any hazardous substances." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">MSDS</span>
-                        </button>
-                        <button data-doc-code="TSCA" data-doc-title="TSCA Certificate" data-doc-desc="Required for chemical shipments to the USA." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">TSCA Certificate</span>
-                        </button>
-                        <button data-doc-code="NEG_DEC" data-doc-title="Negative Declaration" data-doc-desc="Required for Silk products (>70% silk) exported to the USA." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Negative Declaration</span>
-                        </button>
-                        <button data-doc-code="NON_DG" data-doc-title="Non-DG Declaration" data-doc-desc="Certifies cargo is non-hazardous as per IATA regulations (for air freight)." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Non-DG Declaration</span>
-                        </button>
-                        <button data-doc-code="QUOTA" data-doc-title="Quota Charge Statement" data-doc-desc="Required for textile exports subject to quota charges." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Quota Charge Statement</span>
-                        </button>
-                        <button data-doc-code="SCD" data-doc-title="Single Country Declaration" data-doc-desc="For goods wholly produced in one country (often for US imports)." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Single Country Declaration</span>
-                        </button>
-                        <button data-doc-code="COO" data-doc-title="Certificate of Origin" data-doc-desc="Certifies the country where the goods were manufactured." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 border-l-4 border-transparent transition-all text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Certificate of Origin</span>
-                        </button>
-                        <button data-doc-code="MCD" data-doc-title="Multiple Country Declaration" data-doc-desc="For goods assembled across multiple countries (often for US textile imports)." class="doc-link w-full flex flex-col px-6 py-2 hover:bg-blue-50 transition-colors text-left group rounded-r-full">
-                            <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-700">Multiple Country Declaration</span>
-                        </button>
-                    </div>
-                </div>
-
-            </nav>
+            </div>
         </aside>
-
-        <!-- Content Area -->
-        <section id="app-content" class="flex-1 p-6 lg:p-10 overflow-y-auto">
-            <!-- Content is dynamically rendered by docs-gen.js -->
-        </section>
     </main>
 
-    <!-- Footer Placeholder -->
-    <div id="footer-placeholder"></div>
-
-    <!-- HTML Templates for Dynamic Content -->
+    <!-- Templates for Dynamic Tables -->
     <template id="doc-item-row-template">
-        <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
-            <td class="px-2 py-2 text-center text-xs font-mono row-number"></td>
-            <td class="px-2 py-2"><input type="text" name="item_marks[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Marks/No"></td>
-            <td class="px-2 py-2"><input type="text" name="item_desc[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Description"></td>
-            <td class="px-2 py-2"><input type="text" name="item_hsn[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="HSN"></td>
-            <td class="px-2 py-2"><input type="number" step="any" name="item_qty[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0"></td>
-            <td class="px-2 py-2"><input type="text" name="item_unit[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="PCS"></td>
-            <td class="px-2 py-2"><input type="number" step="any" name="item_rate[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0.00"></td>
-            <td class="px-2 py-2"><input type="number" step="any" name="item_amount[]" class="w-full p-1.5 border border-gray-200 rounded text-xs bg-gray-50 text-gray-600 cursor-not-allowed" readonly placeholder="0.00"></td>
-            <td class="px-2 py-2 text-center">
-                <button type="button" class="remove-row-btn text-gray-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
-            </td>
+        <tr>
+            <td class="px-2 py-2 text-center row-number">1</td>
+            <td class="px-2 py-2"><input type="text" name="item_marks[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2"><input type="text" name="item_desc[]" class="w-full p-1 border border-gray-300 rounded text-xs" required></td>
+            <td class="px-2 py-2"><input type="text" name="item_hsn[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2"><input type="number" name="item_qty[]" class="w-full p-1 border border-gray-300 rounded text-xs" step="any"></td>
+            <td class="px-2 py-2"><input type="text" name="item_unit[]" class="w-full p-1 border border-gray-300 rounded text-xs" value="PCS"></td>
+            <td class="px-2 py-2"><input type="number" name="item_rate[]" class="w-full p-1 border border-gray-300 rounded text-xs" step="any"></td>
+            <td class="px-2 py-2"><input type="number" name="item_amount[]" class="w-full p-1 border border-gray-300 rounded text-xs" step="any" readonly></td>
+            <td class="px-2 py-2 text-center"><button type="button" class="remove-row-btn text-red-500 hover:text-red-700"><i class="fa-solid fa-trash text-xs"></i></button></td>
         </tr>
     </template>
 
     <template id="nondg-row-template">
-        <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
-            <td class="px-2 py-2"><input type="text" name="nondg_marks[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="C/NO. 1-34"></td>
-            <td class="px-2 py-2"><input type="text" name="nondg_desc[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Cotton Textile Fabric (100% Cotton)"></td>
-            <td class="px-2 py-2"><input type="text" name="nondg_qty[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="125.0 KGS"></td>
-            <td class="px-2 py-2 text-center">
-                <button type="button" class="remove-row-btn text-gray-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
-            </td>
-        </tr>
-    </template>
-
-    <template id="packing-row-template">
-        <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
-            <td class="px-2 py-2"><input type="text" name="pkl_carton[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="1-10"></td>
-            <td class="px-2 py-2"><input type="text" name="pkl_desc[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Description"></td>
-            <td class="px-2 py-2"><input type="text" name="pkl_qty[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Qty"></td>
-            <td class="px-2 py-2"><input type="number" step="any" name="pkl_net[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0.00"></td>
-            <td class="px-2 py-2"><input type="number" step="any" name="pkl_gross[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="0.00"></td>
-            <td class="px-2 py-2 flex gap-1">
-                <input type="number" name="pkl_l[]" class="w-1/3 p-1.5 border border-gray-300 rounded text-xs" placeholder="L">
-                <input type="number" name="pkl_b[]" class="w-1/3 p-1.5 border border-gray-300 rounded text-xs" placeholder="B">
-                <input type="number" name="pkl_h[]" class="w-1/3 p-1.5 border border-gray-300 rounded text-xs" placeholder="H">
-            </td>
-            <td class="px-2 py-2"><input type="number" step="any" name="pkl_vol[]" class="w-full p-1.5 border border-gray-200 rounded text-xs bg-gray-50 text-gray-600" readonly placeholder="0.00"></td>
-            <td class="px-2 py-2 text-center">
-                <button type="button" class="remove-row-btn text-gray-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
-            </td>
+        <tr>
+            <td class="px-2 py-2"><input type="text" name="nondg_marks[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2"><input type="text" name="nondg_desc[]" class="w-full p-1 border border-gray-300 rounded text-xs" required></td>
+            <td class="px-2 py-2"><input type="text" name="nondg_qty[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2 text-center"><button type="button" class="remove-row-btn text-red-500 hover:text-red-700"><i class="fa-solid fa-trash text-xs"></i></button></td>
         </tr>
     </template>
 
     <template id="neg-row-template">
-        <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
-            <td class="px-2 py-2"><input type="text" name="neg_marks[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="GE/SILK/001"></td>
-            <td class="px-2 py-2"><input type="text" name="neg_desc[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Pure Silk Sarees - 72% Silk Content"></td>
-            <td class="px-2 py-2"><input type="text" name="neg_country[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Made in India"></td>
-            <td class="px-2 py-2 text-center">
-                <button type="button" class="remove-row-btn text-gray-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
-            </td>
+        <tr>
+            <td class="px-2 py-2"><input type="text" name="neg_marks[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2"><input type="text" name="neg_desc[]" class="w-full p-1 border border-gray-300 rounded text-xs" required></td>
+            <td class="px-2 py-2"><input type="text" name="neg_country[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2 text-center"><button type="button" class="remove-row-btn text-red-500 hover:text-red-700"><i class="fa-solid fa-trash text-xs"></i></button></td>
         </tr>
     </template>
 
     <template id="mcd-row-template">
-        <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
-            <td class="px-2 py-2"><input type="text" name="mcd_marks[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="GE/001"></td>
-            <td class="px-2 py-2"><input type="text" name="mcd_desc[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Cotton Fabric"></td>
-            <td class="px-2 py-2"><input type="text" name="mcd_mfg_ops[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Weaving & Dyeing"></td>
-            <td class="px-2 py-2"><input type="date" name="mcd_mfg_date[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none"></td>
-            <td class="px-2 py-2"><input type="text" name="mcd_mfg_country[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="INDIA"></td>
-            <td class="px-2 py-2"><input type="text" name="mcd_material[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Cotton Yarn"></td>
-            <td class="px-2 py-2"><input type="date" name="mcd_material_date[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none"></td>
-            <td class="px-2 py-2"><input type="text" name="mcd_prod_country[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="INDIA"></td>
-            <td class="px-2 py-2"><input type="date" name="mcd_export_date[]" class="w-full p-1.5 border border-gray-300 rounded text-xs focus:ring-1 focus:ring-blue-500 outline-none"></td>
-            <td class="px-2 py-2 text-center">
-                <button type="button" class="remove-row-btn text-gray-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash-can"></i></button>
-            </td>
+        <tr>
+            <td class="px-2 py-2"><input type="text" name="mcd_marks[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2"><input type="text" name="mcd_desc[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2"><input type="text" name="mcd_mfg_ops[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2"><input type="date" name="mcd_mfg_date[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2"><input type="text" name="mcd_mfg_country[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2"><input type="text" name="mcd_material[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2"><input type="date" name="mcd_material_date[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2"><input type="text" name="mcd_prod_country[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2"><input type="date" name="mcd_export_date[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2 text-center"><button type="button" class="remove-row-btn text-red-500 hover:text-red-700"><i class="fa-solid fa-trash text-xs"></i></button></td>
         </tr>
     </template>
 
-    <!-- Layout Script -->
-    <script src="layout.js"></script>
-    
-    <!-- PDF & DOCX Generation Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
+    <template id="packing-row-template">
+        <tr>
+            <td class="px-2 py-2"><input type="text" name="pkl_carton[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2"><input type="text" name="pkl_desc[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2"><input type="text" name="pkl_qty[]" class="w-full p-1 border border-gray-300 rounded text-xs"></td>
+            <td class="px-2 py-2"><input type="number" name="pkl_net[]" class="w-full p-1 border border-gray-300 rounded text-xs" step="any"></td>
+            <td class="px-2 py-2"><input type="number" name="pkl_gross[]" class="w-full p-1 border border-gray-300 rounded text-xs" step="any"></td>
+            <td class="px-2 py-2">
+                <div class="flex gap-1">
+                    <input type="number" name="pkl_l[]" placeholder="L" class="w-1/3 p-1 border border-gray-300 rounded text-xs" step="any">
+                    <input type="number" name="pkl_b[]" placeholder="B" class="w-1/3 p-1 border border-gray-300 rounded text-xs" step="any">
+                    <input type="number" name="pkl_h[]" placeholder="H" class="w-1/3 p-1 border border-gray-300 rounded text-xs" step="any">
+                </div>
+            </td>
+            <td class="px-2 py-2"><input type="number" name="pkl_vol[]" class="w-full p-1 border border-gray-300 rounded text-xs" step="any" readonly></td>
+            <td class="px-2 py-2 text-center"><button type="button" class="remove-row-btn text-red-500 hover:text-red-700"><i class="fa-solid fa-trash text-xs"></i></button></td>
+        </tr>
+    </template>
 
-    <!-- Document Generation Logic -->
+    <script src="layout.js"></script>
+    <script src="docs-db.js"></script>
     <script src="docs-config.js"></script>
-    <script src="docs-templates.js"></script>
+    <script src="docs-validation.js"></script>
     <script src="docs-gen.js"></script>
-    <script>
-        // This script block demonstrates how to handle the click events unobtrusively.
-        // It is recommended to move this logic into the 'docs-gen.js' file for better separation of concerns.
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.doc-link').forEach(button => {
-                button.addEventListener('click', () => {
-                    // The 'selectDoc' function is expected to be globally available from 'docs-gen.js'
-                    if (typeof selectDoc === 'function') {
-                        selectDoc(button, button.dataset.docCode, button.dataset.docTitle, button.dataset.docDesc);
-                    } else {
-                        console.error('selectDoc function not found. Make sure docs-gen.js is loaded and selectDoc is a global function.');
-                    }
-                });
-            });
-        });
-    </script>
+    <script src="docs-templates.js"></script>
 </body>
 </html>

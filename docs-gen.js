@@ -24,6 +24,527 @@ function sanitizeHTML(str) {
 }
 
 // ============================================================================
+// TABLE ROW MANAGEMENT FUNCTIONS
+// ============================================================================
+function addDocItemRow() {
+    const tbody = document.getElementById('doc-items-body');
+    if (!tbody) return;
+    
+    const template = document.getElementById('doc-item-row-template');
+    if (!template) return;
+    
+    const clone = template.content.cloneNode(true);
+    const rowNumber = tbody.children.length + 1;
+    clone.querySelector('.row-number').textContent = rowNumber;
+    
+    // Add event listeners
+    const removeBtn = clone.querySelector('.remove-row-btn');
+    removeBtn.addEventListener('click', function() {
+        this.closest('tr').remove();
+        updateRowNumbers();
+    });
+    
+    // Add calculation listeners
+    const qtyInput = clone.querySelector('input[name="item_qty[]"]');
+    const rateInput = clone.querySelector('input[name="item_rate[]"]');
+    const amountInput = clone.querySelector('input[name="item_amount[]"]');
+    
+    [qtyInput, rateInput].forEach(input => {
+        input.addEventListener('input', () => {
+            const qty = parseFloat(qtyInput.value) || 0;
+            const rate = parseFloat(rateInput.value) || 0;
+            amountInput.value = (qty * rate).toFixed(2);
+        });
+    });
+    
+    tbody.appendChild(clone);
+}
+
+function addNonDGRow() {
+    const tbody = document.getElementById('nondg-items-body');
+    if (!tbody) return;
+    
+    const template = document.getElementById('nondg-row-template');
+    if (!template) return;
+    
+    const clone = template.content.cloneNode(true);
+    
+    const removeBtn = clone.querySelector('.remove-row-btn');
+    removeBtn.addEventListener('click', function() {
+        this.closest('tr').remove();
+    });
+    
+    tbody.appendChild(clone);
+}
+
+function addNegRow() {
+    const tbody = document.getElementById('neg-items-body');
+    if (!tbody) return;
+    
+    const template = document.getElementById('neg-row-template');
+    if (!template) return;
+    
+    const clone = template.content.cloneNode(true);
+    
+    const removeBtn = clone.querySelector('.remove-row-btn');
+    removeBtn.addEventListener('click', function() {
+        this.closest('tr').remove();
+    });
+    
+    tbody.appendChild(clone);
+}
+
+function addMCDRow() {
+    const tbody = document.getElementById('mcd-items-body');
+    if (!tbody) return;
+    
+    const template = document.getElementById('mcd-row-template');
+    if (!template) return;
+    
+    const clone = template.content.cloneNode(true);
+    
+    const removeBtn = clone.querySelector('.remove-row-btn');
+    removeBtn.addEventListener('click', function() {
+        this.closest('tr').remove();
+    });
+    
+    tbody.appendChild(clone);
+}
+
+function addPackingRow() {
+    const tbody = document.getElementById('pkl-items-body');
+    if (!tbody) return;
+    
+    const template = document.getElementById('packing-row-template');
+    if (!template) return;
+    
+    const clone = template.content.cloneNode(true);
+    
+    const removeBtn = clone.querySelector('.remove-row-btn');
+    removeBtn.addEventListener('click', function() {
+        this.closest('tr').remove();
+    });
+    
+    // Add dimension calculation
+    const lInput = clone.querySelector('input[name="pkl_l[]"]');
+    const bInput = clone.querySelector('input[name="pkl_b[]"]');
+    const hInput = clone.querySelector('input[name="pkl_h[]"]');
+    const volInput = clone.querySelector('input[name="pkl_vol[]"]');
+    
+    [lInput, bInput, hInput].forEach(input => {
+        input.addEventListener('input', () => {
+            const l = parseFloat(lInput.value) || 0;
+            const b = parseFloat(bInput.value) || 0;
+            const h = parseFloat(hInput.value) || 0;
+            volInput.value = (l * b * h / 1000000).toFixed(3); // Convert to cubic meters
+        });
+    });
+    
+    tbody.appendChild(clone);
+}
+
+function updateRowNumbers() {
+    const tbody = document.getElementById('doc-items-body');
+    if (!tbody) return;
+    
+    Array.from(tbody.children).forEach((row, index) => {
+        const numberCell = row.querySelector('.row-number');
+        if (numberCell) {
+            numberCell.textContent = index + 1;
+        }
+    });
+}
+
+// ============================================================================
+// VALIDATION TOGGLE FUNCTIONS
+// ============================================================================
+let validationEnabled = true;
+
+function toggleValidation() {
+    validationEnabled = !validationEnabled;
+    const button = document.getElementById('validation-toggle');
+    const checklist = document.getElementById('integrity-checklist');
+    
+    if (validationEnabled) {
+        button.classList.remove('bg-gray-500');
+        button.classList.add('bg-amber-600');
+        button.title = 'Validation ON - Click to disable';
+        if (checklist) checklist.style.display = 'block';
+    } else {
+        button.classList.remove('bg-amber-600');
+        button.classList.add('bg-gray-500');
+        button.title = 'Validation OFF - Click to enable';
+        if (checklist) checklist.style.display = 'none';
+    }
+}
+let isPreviewOpen = false;
+let currentDocId = null;
+let savedDocsVisible = false;
+
+// ============================================================================
+// INDEXEDDB SETUP FOR DOCUMENT STORAGE
+// ============================================================================
+// Using docs-db.js for IndexedDB operations
+
+// ============================================================================
+// MOBILE RESPONSIVE FUNCTIONS (LEFTOVERS - CAN BE REMOVED)
+// ============================================================================
+
+// ============================================================================
+// SAVED DOCUMENTS FUNCTIONS
+// ============================================================================
+function toggleSavedDocs() {
+    const pane = document.getElementById('savedDocsPane');
+    savedDocsVisible = !savedDocsVisible;
+    
+    if (savedDocsVisible) {
+        pane.classList.remove('hidden');
+        loadSavedDocuments();
+    } else {
+        pane.classList.add('hidden');
+    }
+}
+
+async function loadSavedDocuments() {
+    const container = document.getElementById('savedDocsList');
+    const userId = getCurrentUserId();
+    
+    try {
+        const docs = await DocumentDB.getByUser(userId);
+        
+        if (docs.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 text-sm">No saved documents found.</p>';
+            return;
+        }
+        
+        container.innerHTML = docs.map(doc => `
+            <div class="p-3 bg-gray-50 rounded-lg border cursor-pointer hover:bg-gray-100" onclick="loadSavedDocument('${doc.id}')">
+                <div class="font-semibold text-sm text-gray-800">${doc.title}</div>
+                <div class="text-xs text-gray-500">${doc.docId} • ${new Date(doc.timestamp).toLocaleDateString()}</div>
+                <div class="flex gap-1 mt-2">
+                    <button onclick="event.stopPropagation(); copySavedDocument('${doc.id}')" class="text-blue-500 hover:text-blue-700 text-xs px-2 py-1 bg-blue-50 rounded" title="Copy to clipboard">
+                        <i class="fa-solid fa-copy"></i>
+                    </button>
+                    <button onclick="event.stopPropagation(); deleteSavedDocument('${doc.id}')" class="text-red-500 hover:text-red-700 text-xs px-2 py-1 bg-red-50 rounded" title="Delete">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    } catch (error) {
+        container.innerHTML = '<p class="text-red-500 text-sm">Error loading saved documents.</p>';
+    }
+}
+
+async function loadSavedDocument(docId) {
+    try {
+        const doc = await DocumentDB.getById(parseInt(docId));
+        if (doc) {
+            selectDoc(null, doc.docId, doc.title, '');
+            
+            setTimeout(() => {
+                const form = document.getElementById('doc-form');
+                if (form) {
+                    // Load basic form fields
+                    Object.entries(doc.data).forEach(([key, value]) => {
+                        const input = form.querySelector(`[name="${key}"]`);
+                        if (input && typeof value === 'string') {
+                            input.value = value;
+                        }
+                    });
+                    
+                    // Restore dynamic table data
+                    
+                    // 1. Items table
+                    if (doc.data.items && Array.isArray(doc.data.items)) {
+                        const itemsBody = document.getElementById('doc-items-body');
+                        if (itemsBody) {
+                            // Clear existing rows
+                            itemsBody.innerHTML = '';
+                            
+                            // Add saved items
+                            doc.data.items.forEach(item => {
+                                addDocItemRow();
+                                const lastRow = itemsBody.lastElementChild;
+                                if (lastRow) {
+                                    const inputs = lastRow.querySelectorAll('input');
+                                    if (inputs[0]) inputs[0].value = item.marks || '';
+                                    if (inputs[1]) inputs[1].value = item.desc || '';
+                                    if (inputs[2]) inputs[2].value = item.hsn || '';
+                                    if (inputs[3]) inputs[3].value = item.qty || '';
+                                    if (inputs[4]) inputs[4].value = item.unit || '';
+                                    if (inputs[5]) inputs[5].value = item.rate || '';
+                                    if (inputs[6]) inputs[6].value = item.amount || '';
+                                }
+                            });
+                        }
+                    }
+                    
+                    // 2. Packages table
+                    if (doc.data.packages && Array.isArray(doc.data.packages)) {
+                        const packingBody = document.getElementById('pkl-items-body');
+                        if (packingBody) {
+                            // Clear existing rows
+                            packingBody.innerHTML = '';
+                            
+                            // Add saved packages
+                            doc.data.packages.forEach(pkg => {
+                                addPackingRow();
+                                const lastRow = packingBody.lastElementChild;
+                                if (lastRow) {
+                                    const inputs = lastRow.querySelectorAll('input');
+                                    if (inputs[0]) inputs[0].value = pkg.carton || '';
+                                    if (inputs[1]) inputs[1].value = pkg.desc || '';
+                                    if (inputs[2]) inputs[2].value = pkg.qty || '';
+                                    if (inputs[3]) inputs[3].value = pkg.net || '';
+                                    if (inputs[4]) inputs[4].value = pkg.gross || '';
+                                    if (inputs[5]) inputs[5].value = pkg.l || '';
+                                    if (inputs[6]) inputs[6].value = pkg.b || '';
+                                    if (inputs[7]) inputs[7].value = pkg.h || '';
+                                    if (inputs[8]) inputs[8].value = pkg.vol || '';
+                                }
+                            });
+                        }
+                    }
+                    
+                    // 3. Non-DG items
+                    if (doc.data.nondgItems && Array.isArray(doc.data.nondgItems)) {
+                        const nondgBody = document.getElementById('nondg-items-body');
+                        if (nondgBody) {
+                            nondgBody.innerHTML = '';
+                            doc.data.nondgItems.forEach(item => {
+                                addNonDGRow();
+                                const lastRow = nondgBody.lastElementChild;
+                                if (lastRow) {
+                                    const inputs = lastRow.querySelectorAll('input');
+                                    if (inputs[0]) inputs[0].value = item.marks || '';
+                                    if (inputs[1]) inputs[1].value = item.description || '';
+                                    if (inputs[2]) inputs[2].value = item.quantity || '';
+                                }
+                            });
+                        }
+                    }
+                    
+                    // 4. Negative Declaration items
+                    if (doc.data.negItems && Array.isArray(doc.data.negItems)) {
+                        const negBody = document.getElementById('neg-items-body');
+                        if (negBody) {
+                            negBody.innerHTML = '';
+                            doc.data.negItems.forEach(item => {
+                                addNegRow();
+                                const lastRow = negBody.lastElementChild;
+                                if (lastRow) {
+                                    const inputs = lastRow.querySelectorAll('input');
+                                    if (inputs[0]) inputs[0].value = item.marks || '';
+                                    if (inputs[1]) inputs[1].value = item.description || '';
+                                    if (inputs[2]) inputs[2].value = item.country || '';
+                                }
+                            });
+                        }
+                    }
+                    
+                    // 5. MCD items
+                    if (doc.data.mcdItems && Array.isArray(doc.data.mcdItems)) {
+                        const mcdBody = document.getElementById('mcd-items-body');
+                        if (mcdBody) {
+                            mcdBody.innerHTML = '';
+                            doc.data.mcdItems.forEach(item => {
+                                addMCDRow();
+                                const lastRow = mcdBody.lastElementChild;
+                                if (lastRow) {
+                                    const inputs = lastRow.querySelectorAll('input');
+                                    if (inputs[0]) inputs[0].value = item.marks || '';
+                                    if (inputs[1]) inputs[1].value = item.description || '';
+                                    if (inputs[2]) inputs[2].value = item.mfgOps || '';
+                                    if (inputs[3]) inputs[3].value = item.mfgDate || '';
+                                    if (inputs[4]) inputs[4].value = item.mfgCountry || '';
+                                    if (inputs[5]) inputs[5].value = item.material || '';
+                                    if (inputs[6]) inputs[6].value = item.materialDate || '';
+                                    if (inputs[7]) inputs[7].value = item.prodCountry || '';
+                                    if (inputs[8]) inputs[8].value = item.exportDate || '';
+                                }
+                            });
+                        }
+                    }
+                }
+            }, 100);
+            
+            if (window.showNotification) {
+                window.showNotification('Document loaded successfully!', 'success');
+            }
+        }
+    } catch (error) {
+        if (window.showNotification) {
+            window.showNotification('Error loading document.', 'error');
+        }
+    }
+}
+
+async function copySavedDocument(docId) {
+    try {
+        const doc = await DocumentDB.getById(parseInt(docId));
+        if (doc) {
+            const copyText = JSON.stringify(doc.data, null, 2);
+            await navigator.clipboard.writeText(copyText);
+            if (window.showNotification) {
+                window.showNotification('Document data copied to clipboard!', 'success');
+            }
+        }
+    } catch (error) {
+        if (window.showNotification) {
+            window.showNotification('Failed to copy document.', 'error');
+        }
+    }
+}
+
+async function deleteSavedDocument(docId) {
+    if (!confirm('Delete this saved document?')) return;
+    
+    try {
+        await DocumentDB.delete(parseInt(docId));
+        if (window.showNotification) {
+            window.showNotification('Document deleted!', 'success');
+        }
+        loadSavedDocuments();
+    } catch (error) {
+        if (window.showNotification) {
+            window.showNotification('Error deleting document.', 'error');
+        }
+    }
+}
+
+function getCurrentUserId() {
+    const loginData = JSON.parse(localStorage.getItem('loginData') || '{}');
+    return loginData.CODE || loginData.code || 'guest';
+}
+
+// ============================================================================
+// REAL-TIME VALIDATION FUNCTIONS
+// ============================================================================
+
+/**
+ * Real-time field validation as user types
+ * @param {HTMLElement} input - The input element
+ * @param {string} fieldKey - The field key
+ */
+function validateFieldRealTime(input, fieldKey) {
+    // Use document-specific validation if available
+    const validation = validateFieldForDoc ? 
+        validateFieldForDoc(fieldKey, input.value, currentDocId) : 
+        validateField(fieldKey, input.value);
+    
+    // Remove existing validation classes
+    input.classList.remove('border-red-500', 'border-green-500', 'bg-red-50', 'bg-green-50');
+    
+    // Remove existing error message
+    const existingError = input.parentNode.querySelector('.field-error');
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    if (!validation.isValid && input.value.trim()) {
+        // Show error state
+        input.classList.add('border-red-500', 'bg-red-50');
+        
+        // Add error message
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'field-error text-red-600 text-xs mt-1';
+        errorDiv.textContent = validation.error;
+        input.parentNode.appendChild(errorDiv);
+    } else if (validation.isValid && input.value.trim()) {
+        // Show success state
+        input.classList.add('border-green-500', 'bg-green-50');
+    }
+    
+    // Update integrity checklist if visible
+    const currentSchema = DOC_SCHEMAS[currentDocId];
+    if (currentSchema) {
+        updateIntegrityChecks(currentSchema);
+    }
+}
+
+// ============================================================================
+// DOCUMENT INTEGRITY CHECK
+// ============================================================================
+/**
+ * Enhanced integrity checklist using validation scheme
+ * @param {object} schema - Document schema
+ * @returns {string} - HTML for integrity checklist
+ */
+function createIntegrityChecklist(schema) {
+    // Use document-specific required fields if available
+    const getRequiredFieldsFunc = getRequiredFieldsForDoc || getRequiredFields;
+    const requiredFieldKeys = getRequiredFieldsFunc(schema.id);
+    
+    const requiredFields = schema.fields.filter(f => 
+        requiredFieldKeys.includes(f.key)
+    );
+    
+    if (requiredFields.length === 0) {
+        return '';
+    }
+    
+    return `
+        <div id="integrity-checklist" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4" style="display: none;">
+            <h4 class="font-semibold text-yellow-800 mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-clipboard-check"></i>
+                Required Fields Checklist:
+            </h4>
+            <div class="space-y-1">
+                ${requiredFields.map(field => {
+                    const validation = getFieldValidation(field.key);
+                    const errorMsg = validation ? validation.errorMessage : '';
+                    return `
+                        <div class="flex items-center gap-2 text-sm">
+                            <input type="checkbox" id="check-${field.key}" class="integrity-check" data-field="${field.key}">
+                            <label for="check-${field.key}" class="text-yellow-700 flex-1" title="${errorMsg}">${field.label}</label>
+                            <span class="validation-error text-red-600 text-xs hidden" id="error-${field.key}"></span>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+            <div class="mt-3 text-xs text-yellow-600">
+                <i class="fa-solid fa-info-circle mr-1"></i>
+                Hover over field names to see validation requirements
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Enhanced validation using the centralized validation scheme
+ * @param {object} schema - Document schema
+ * @returns {object} - {valid: boolean, missing: array, errors: object}
+ */
+function validateRequiredFields(schema) {
+    const form = document.getElementById('doc-form');
+    if (!form) return { valid: true, missing: [], errors: {} };
+    
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Use document-specific validation by default
+    const validation = validateDocumentWithProfile ? 
+        validateDocumentWithProfile(data, schema.id) : 
+        validateDocument(data, schema.id);
+    
+    // Convert to legacy format for compatibility
+    const missing = [];
+    Object.keys(validation.errors).forEach(fieldKey => {
+        const field = schema.fields.find(f => f.key === fieldKey);
+        if (field) {
+            missing.push(field.label);
+        }
+    });
+    
+    return {
+        valid: validation.isValid,
+        missing: missing,
+        errors: validation.errors
+    };
+}
+
+// ============================================================================
 // SECTION 0: DATA DICTIONARY (COMMON MUTUAL FIELDS)
 // ============================================================================
 // These keys are used across multiple documents to ensure data consistency.
@@ -48,6 +569,8 @@ function sanitizeHTML(str) {
  * @param {string} docDesc - Fallback description.
  */
 function selectDoc(element, docId, docTitle, docDesc) {
+    currentDocId = docId;
+    
     // 1. Visual Selection Logic
     document.querySelectorAll('.doc-link').forEach(link => {
         link.classList.remove('bg-blue-50', 'border-blue-500', 'text-blue-700');
@@ -89,8 +612,12 @@ function renderDecisionGuide() {
 
     let guideHtml = `
         <div class="max-w-5xl mx-auto animate-fade-in">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Document Decision Guide</h1>
-            <p class="text-gray-600 mb-8">Use this table to quickly identify the documents you need for your shipment.</p>
+            <div class="flex items-center gap-4 mb-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Document Decision Guide</h1>
+                    <p class="text-gray-600">Use this table to quickly identify the documents you need for your shipment.</p>
+                </div>
+            </div>
             <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <table class="w-full text-left">
                     <thead class="border-b-2 border-gray-200 bg-gray-50">
@@ -292,14 +819,39 @@ function renderDocumentWorkspace(schema) {
                         </div>
                     `;
                 } else if (field.type === 'textarea') {
-                    inputHtml = `<textarea name="${field.key}" rows="4" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${readonlyClasses}" ${readonlyAttr} ${placeholderAttr}>${field.value || ''}</textarea>`;
+                    const validation = getFieldValidation(field.key);
+                    const validationAttrs = validation ? {
+                        minlength: validation.minLength || '',
+                        maxlength: validation.maxLength || ''
+                    } : {};
+                    
+                    const validationAttrStr = Object.entries(validationAttrs)
+                        .filter(([key, value]) => value !== '')
+                        .map(([key, value]) => `${key}="${value}"`)
+                        .join(' ');
+                        
+                    inputHtml = `<textarea name="${field.key}" rows="4" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${readonlyClasses}" ${readonlyAttr} ${placeholderAttr} oninput="validateFieldRealTime(this, '${field.key}')" ${validationAttrStr}>${field.value || ''}</textarea>`;
                 } else {
                     const stepAttr = field.type === 'number' ? 'step="any"' : '';
+                    const validation = getFieldValidation(field.key);
+                    const validationAttrs = validation ? {
+                        minlength: validation.minLength || '',
+                        maxlength: validation.maxLength || '',
+                        min: validation.min || '',
+                        max: validation.max || '',
+                        pattern: validation.pattern ? validation.pattern.source : ''
+                    } : {};
+                    
+                    const validationAttrStr = Object.entries(validationAttrs)
+                        .filter(([key, value]) => value !== '')
+                        .map(([key, value]) => `${key}="${value}"`)
+                        .join(' ');
+                    
                     if (field.key === 'reference_id') {
                         // SPECIAL CASE: Attach the auto-fill trigger to Reference ID
-                        inputHtml = `<input type="${field.type}" name="${field.key}" value="${field.value || ''}" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${readonlyClasses}" ${readonlyAttr} placeholder="Enter Ref/AWB to Auto-fill" onblur="autoFillFromReference(this.value, '${schema.id}')" ${stepAttr}>`;
+                        inputHtml = `<input type="${field.type}" name="${field.key}" value="${field.value || ''}" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${readonlyClasses}" ${readonlyAttr} placeholder="Enter Ref/AWB to Auto-fill" onblur="autoFillFromReference(this.value, '${schema.id}')" oninput="validateFieldRealTime(this, '${field.key}')" ${stepAttr} ${validationAttrStr}>`;
                     } else {
-                        inputHtml = `<input type="${field.type}" name="${field.key}" value="${field.value || ''}" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${readonlyClasses}" ${readonlyAttr} ${placeholderAttr} ${stepAttr}>`;
+                        inputHtml = `<input type="${field.type}" name="${field.key}" value="${field.value || ''}" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all ${readonlyClasses}" ${readonlyAttr} ${placeholderAttr} oninput="validateFieldRealTime(this, '${field.key}')" ${stepAttr} ${validationAttrStr}>`;
                     }
                 }
 
@@ -312,6 +864,19 @@ function renderDocumentWorkspace(schema) {
             }
             formHtml += fieldWrapper;
         });
+        
+        // Add design selector for TAX_CHALLAN and DELIVERY_CHALLAN
+        if (schema.id === 'TAX_CHALLAN' || schema.id === 'DELIVERY_CHALLAN') {
+            formHtml += `
+                <div class="w-full px-2 mt-4">
+                    <label class="block text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">🎨 Design Template <span class="text-red-500">*</span></label>
+                    <select name="designId" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white">
+                        ${Array.from({length: 10}, (_, i) => `<option value="${i + 1}">Design ${i + 1} ${i === 0 ? '(Default)' : ''}</option>`).join('')}
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Choose from 10 different design variations for your document</p>
+                </div>
+            `;
+        }
 
         formHtml += `</form>`;
     } else {
@@ -325,7 +890,7 @@ function renderDocumentWorkspace(schema) {
 
     // Common Header with Toolbar
     const headerHtml = `
-        <div class="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4 animate-fade-in">
+        <div class="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-fade-in">
             <div class="flex items-center gap-3">
                 <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
                     <i class="fa-solid fa-file-contract text-xl"></i>
@@ -336,36 +901,39 @@ function renderDocumentWorkspace(schema) {
                 </div>
             </div>
             
-            <div class="flex flex-wrap justify-center items-center gap-2 bg-gray-50 p-1 rounded-lg border border-gray-200">
-                <button onclick="document.getElementById('doc-form').reset()" class="p-2 text-gray-600 hover:text-orange-600 hover:bg-white rounded-md transition-all shadow-sm" title="Reset Form">
-                    <i class="fa-solid fa-eraser"></i>
+            <div class="flex flex-wrap justify-center items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
+                <button type="button" id="validation-toggle" onclick="toggleValidation()" class="px-3 py-2 bg-amber-600 text-white rounded hover:bg-amber-700 transition-colors text-sm font-medium" title="Toggle field validation">
+                    <i class="fa-solid fa-check-circle"></i>
                 </button>
-                <button onclick="handleGenerate('${schema.id}')" class="p-2 text-blue-600 hover:text-blue-800 hover:bg-white rounded-md transition-all shadow-sm" title="Generate Document">
+                <button onclick="document.getElementById('doc-form').reset()" class="px-3 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors text-sm font-medium" title="Reset Form">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </button>
+                <button onclick="handleGenerate('${schema.id}')" class="px-3 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors text-sm font-medium" title="Generate Document">
                     <i class="fa-solid fa-wand-magic-sparkles"></i>
                 </button>
-                <div class="w-px h-6 bg-gray-300 mx-1 self-center"></div>
-                <button onclick="togglePreview()" class="p-2 text-gray-600 hover:text-blue-700 hover:bg-white rounded-md transition-all shadow-sm" title="Toggle Live Preview">
-                    <i id="preview-toggle-icon" class="fa-regular ${isPreviewOpen ? 'fa-eye' : 'fa-eye-slash'}"></i>
+                <button onclick="handleBlankPrint('${schema.id}')" class="px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors text-sm font-medium" title="Print Blank Template">
+                    <i class="fa-solid fa-file-lines"></i>
                 </button>
-                <div class="w-px h-6 bg-gray-300 mx-1 self-center"></div>
-                <button onclick="handleDownloadPDF('${schema.id}')" class="p-2 text-gray-600 hover:text-red-600 hover:bg-white rounded-md transition-all shadow-sm" title="Download PDF">
-                    <i class="fa-regular fa-file-pdf"></i>
+                <button onclick="togglePreview()" class="px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-sm font-medium" title="Toggle Preview">
+                    <i class="fa-regular fa-eye" id="preview-toggle-icon"></i>
                 </button>
-                <button onclick="handleDownloadDOCX('${schema.id}')" class="p-2 text-gray-600 hover:text-blue-800 hover:bg-white rounded-md transition-all shadow-sm" title="Download Data Summary (DOCX)">
-                    <i class="fa-regular fa-file-word"></i>
+                <button onclick="handleDownloadPDF('${schema.id}')" class="px-3 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors text-sm font-medium" title="Download PDF">
+                    <i class="fa-solid fa-file-pdf"></i>
                 </button>
-                <button onclick="showDocInfo('${schema.title.replace(/'/g, "\\'")}', '${schema.desc.replace(/'/g, "\\'")}')" class="p-2 text-gray-600 hover:text-yellow-600 hover:bg-white rounded-md transition-all shadow-sm" title="Info">
-                    <i class="fa-solid fa-circle-info"></i>
+                <button onclick="handleDownloadDOCX('${schema.id}')" class="px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors text-sm font-medium" title="Download DOCX">
+                    <i class="fa-solid fa-file-word"></i>
                 </button>
-                <button onclick="saveLocalDraft('${schema.id}')" class="p-2 text-gray-600 hover:text-green-600 hover:bg-white rounded-md transition-all shadow-sm" title="Save Local">
-                    <i class="fa-solid fa-floppy-disk"></i>
+                <button onclick="showDocInfo('${schema.title}', '${schema.desc}')" class="px-3 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700 transition-colors text-sm font-medium" title="Document Info">
+                    <i class="fa-solid fa-info-circle"></i>
                 </button>
-                <button onclick="saveCloudDraft('${schema.id}')" class="p-2 text-gray-600 hover:text-purple-600 hover:bg-white rounded-md transition-all shadow-sm" title="Save Cloud">
-                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                <button onclick="saveLocalDraft('${schema.id}')" class="px-3 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors text-sm font-medium" title="Save Locally">
+                    <i class="fa-solid fa-save"></i>
                 </button>
-                <div class="w-px h-6 bg-gray-300 mx-1 self-center"></div>
-                <button onclick="renderDecisionGuide()" class="p-2 text-gray-400 hover:text-red-600 hover:bg-white rounded-md transition-all shadow-sm" title="Close">
-                    <i class="fa-solid fa-xmark"></i>
+                <button onclick="saveCloudDraft('${schema.id}')" class="px-3 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 transition-colors text-sm font-medium" title="Save to Cloud">
+                    <i class="fa-solid fa-cloud"></i>
+                </button>
+                <button onclick="renderDecisionGuide()" class="px-3 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors text-sm font-medium" title="Close Document">
+                    <i class="fa-solid fa-times"></i>
                 </button>
             </div>
         </div>
@@ -378,6 +946,8 @@ function renderDocumentWorkspace(schema) {
     contentArea.innerHTML = `
         <div class="max-w-5xl mx-auto animate-fade-in">
             ${headerHtml}
+            
+            ${createIntegrityChecklist(schema)}
             
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <!-- Left: Input Form -->
@@ -421,6 +991,9 @@ function renderDocumentWorkspace(schema) {
             @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         </style>
     `;
+    
+    // Setup integrity check listeners
+    setupIntegrityCheckListeners(schema);
 }
 
 /**
@@ -452,146 +1025,158 @@ function togglePreview() {
 }
 
 /**
+ * Handles blank printing - generates document with empty/default values
+ */
+function handleBlankPrint(docId) {
+    const data = { designId: '1' }; // Default design for blank printing
+    generatePrintView(docId, data);
+    
+    if (window.showNotification) {
+        window.showNotification(`Blank ${docId} template generated!`, 'success');
+    }
+}
+
+/**
  * Handles the generation logic.
  */
 function handleGenerate(docId) {
     const form = document.getElementById('doc-form');
     if (!form) return;
 
-    // Simple validation
-    if (!form.checkValidity()) {
-        form.reportValidity();
-        return;
+    // Check if validation is enabled
+    if (validationEnabled) {
+        const schema = DOC_SCHEMAS[docId];
+        const validation = validateRequiredFields(schema);
+        
+        if (!validation.valid) {
+            // Show detailed validation errors
+            const errorMessages = Object.entries(validation.errors).map(([field, error]) => {
+                const fieldDef = schema.fields.find(f => f.key === field);
+                const fieldLabel = fieldDef ? fieldDef.label : field;
+                return `${fieldLabel}: ${error}`;
+            }).join('\n');
+            
+            if (window.showNotification) {
+                window.showNotification(`Validation failed:\n${errorMessages}`, 'error');
+            } else {
+                alert(`Validation failed:\n${errorMessages}`);
+            }
+            return;
+        }
     }
 
     const formData = new FormData(form);
     const data = Object.fromEntries(formData.entries());
 
-    // --- Special Handling for Dynamic Items Table ---
-    if (docId === 'COM_INV') {
-        const descs = formData.getAll('item_desc[]');
-        if (descs.length > 0) {
-            const marks = formData.getAll('item_marks[]');
-            const hsns = formData.getAll('item_hsn[]');
-            const qtys = formData.getAll('item_qty[]');
-            const units = formData.getAll('item_unit[]');
-            const rates = formData.getAll('item_rate[]');
-            
-            data.products = descs.map((desc, i) => ({
-                sno: i + 1,
-                marks: marks[i] || '',
-                desc: desc,
-                hsn: hsns[i] || '',
-                qty: parseFloat(qtys[i] || 0),
-                unit: units[i] || '',
-                rate: parseFloat(rates[i] || 0),
-                amount: (parseFloat(qtys[i] || 0) * parseFloat(rates[i] || 0))
-            }));
+    // Collect ALL form fields including empty ones
+    const allInputs = form.querySelectorAll('input, textarea, select');
+    allInputs.forEach(input => {
+        if (input.name && !data.hasOwnProperty(input.name)) {
+            data[input.name] = input.value || ''; // Include empty fields
         }
+    });
+
+    // --- Enhanced Dynamic Table Collection ---
+    
+    // 1. Items table (COM_INV, TAX_CHALLAN, DELIVERY_CHALLAN)
+    const itemsBody = document.getElementById('doc-items-body');
+    if (itemsBody && itemsBody.children.length > 0) {
+        const items = [];
+        Array.from(itemsBody.children).forEach((row, index) => {
+            const inputs = row.querySelectorAll('input');
+            if (inputs.length > 0) {
+                const item = {
+                    sno: index + 1,
+                    marks: inputs[0]?.value || '',
+                    desc: inputs[1]?.value || '',
+                    hsn: inputs[2]?.value || '',
+                    qty: parseFloat(inputs[3]?.value) || 0,
+                    unit: inputs[4]?.value || '',
+                    rate: parseFloat(inputs[5]?.value) || 0,
+                    amount: parseFloat(inputs[6]?.value) || (parseFloat(inputs[3]?.value || 0) * parseFloat(inputs[5]?.value || 0))
+                };
+                items.push(item);
+            }
+        });
+        if (items.length > 0) data.products = items; // Use 'products' for template compatibility
     }
 
-    // --- Special Handling for NON_DG Table ---
-    if (docId === 'NON_DG') {
-        const marks = formData.getAll('nondg_marks[]');
-        if (marks.length > 0) {
-            const descs = formData.getAll('nondg_desc[]');
-            const qtys = formData.getAll('nondg_qty[]');
-            
-            data.nondgItems = marks.map((mark, i) => ({
-                marks: mark,
-                description: descs[i] || '',
-                quantity: qtys[i] || ''
-            }));
-        }
+    // 2. Packing table (PKL, DELIVERY_CHALLAN)
+    const packingBody = document.getElementById('pkl-items-body');
+    if (packingBody && packingBody.children.length > 0) {
+        const packages = [];
+        Array.from(packingBody.children).forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            if (inputs.length > 0) {
+                packages.push({
+                    carton: inputs[0]?.value || '',
+                    desc: inputs[1]?.value || '',
+                    qty: inputs[2]?.value || '',
+                    net: parseFloat(inputs[3]?.value) || 0,
+                    gross: parseFloat(inputs[4]?.value) || 0,
+                    dims: `${inputs[5]?.value || ''}x${inputs[6]?.value || ''}x${inputs[7]?.value || ''}`,
+                    vol: parseFloat(inputs[8]?.value) || 0
+                });
+            }
+        });
+        if (packages.length > 0) data.packages = packages;
     }
 
-    // --- Special Handling for NEG_DEC Table ---
-    if (docId === 'NEG_DEC') {
-        const marks = formData.getAll('neg_marks[]');
-        if (marks.length > 0) {
-            const descs = formData.getAll('neg_desc[]');
-            const countries = formData.getAll('neg_country[]');
-            
-            data.negItems = marks.map((mark, i) => ({
-                marks: mark,
-                description: descs[i] || '',
-                country: countries[i] || ''
-            }));
-        }
+    // 3. Non-DG table
+    const nondgBody = document.getElementById('nondg-items-body');
+    if (nondgBody && nondgBody.children.length > 0) {
+        const nondgItems = [];
+        Array.from(nondgBody.children).forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            if (inputs.length > 0) {
+                nondgItems.push({
+                    marks: inputs[0]?.value || '',
+                    description: inputs[1]?.value || '',
+                    quantity: inputs[2]?.value || ''
+                });
+            }
+        });
+        if (nondgItems.length > 0) data.nondgItems = nondgItems;
     }
 
-    // --- Special Handling for MCD Table ---
-    if (docId === 'MCD') {
-        const marks = formData.getAll('mcd_marks[]');
-        if (marks.length > 0) {
-            const descs = formData.getAll('mcd_desc[]');
-            const mfgOps = formData.getAll('mcd_mfg_ops[]');
-            const mfgDates = formData.getAll('mcd_mfg_date[]');
-            const mfgCountries = formData.getAll('mcd_mfg_country[]');
-            const materials = formData.getAll('mcd_material[]');
-            const materialDates = formData.getAll('mcd_material_date[]');
-            const prodCountries = formData.getAll('mcd_prod_country[]');
-            const exportDates = formData.getAll('mcd_export_date[]');
-            
-            data.mcdItems = marks.map((mark, i) => ({
-                marks: mark,
-                description: descs[i] || '',
-                mfgOps: mfgOps[i] || '',
-                mfgDate: mfgDates[i] || '',
-                mfgCountry: mfgCountries[i] || '',
-                material: materials[i] || '',
-                materialDate: materialDates[i] || '',
-                prodCountry: prodCountries[i] || '',
-                exportDate: exportDates[i] || ''
-            }));
-        }
+    // 4. Negative Declaration table
+    const negBody = document.getElementById('neg-items-body');
+    if (negBody && negBody.children.length > 0) {
+        const negItems = [];
+        Array.from(negBody.children).forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            if (inputs.length > 0) {
+                negItems.push({
+                    marks: inputs[0]?.value || '',
+                    description: inputs[1]?.value || '',
+                    country: inputs[2]?.value || ''
+                });
+            }
+        });
+        if (negItems.length > 0) data.negItems = negItems;
     }
 
-    // --- Special Handling for DELIVERY_CHALLAN (both products and packages) ---
-    if (docId === 'DELIVERY_CHALLAN') {
-        // Handle products table
-        const descs = formData.getAll('item_desc[]');
-        if (descs.length > 0) {
-            const marks = formData.getAll('item_marks[]');
-            const hsns = formData.getAll('item_hsn[]');
-            const qtys = formData.getAll('item_qty[]');
-            const units = formData.getAll('item_unit[]');
-            const rates = formData.getAll('item_rate[]');
-            
-            data.products = descs.map((desc, i) => ({
-                sno: i + 1,
-                marks: marks[i] || '',
-                desc: desc,
-                hsn: hsns[i] || '',
-                qty: parseFloat(qtys[i] || 0),
-                unit: units[i] || '',
-                rate: parseFloat(rates[i] || 0),
-                amount: (parseFloat(qtys[i] || 0) * parseFloat(rates[i] || 0))
-            }));
-        }
-        
-        // Handle packages table
-        const cartons = formData.getAll('pkl_carton[]');
-        if (cartons.length > 0) {
-            const pdescs = formData.getAll('pkl_desc[]');
-            const pqtys = formData.getAll('pkl_qty[]');
-            const nets = formData.getAll('pkl_net[]');
-            const gross = formData.getAll('pkl_gross[]');
-            const ls = formData.getAll('pkl_l[]');
-            const bs = formData.getAll('pkl_b[]');
-            const hs = formData.getAll('pkl_h[]');
-            const vols = formData.getAll('pkl_vol[]');
-
-            data.packages = cartons.map((c, i) => ({
-                carton: c,
-                desc: pdescs[i] || '',
-                qty: pqtys[i] || '',
-                net: parseFloat(nets[i] || 0),
-                gross: parseFloat(gross[i] || 0),
-                dims: `${ls[i]}x${bs[i]}x${hs[i]}`,
-                vol: parseFloat(vols[i] || 0)
-            }));
-        }
+    // 5. MCD table
+    const mcdBody = document.getElementById('mcd-items-body');
+    if (mcdBody && mcdBody.children.length > 0) {
+        const mcdItems = [];
+        Array.from(mcdBody.children).forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            if (inputs.length > 0) {
+                mcdItems.push({
+                    marks: inputs[0]?.value || '',
+                    description: inputs[1]?.value || '',
+                    mfgOps: inputs[2]?.value || '',
+                    mfgDate: inputs[3]?.value || '',
+                    mfgCountry: inputs[4]?.value || '',
+                    material: inputs[5]?.value || '',
+                    materialDate: inputs[6]?.value || '',
+                    prodCountry: inputs[7]?.value || '',
+                    exportDate: inputs[8]?.value || ''
+                });
+            }
+        });
+        if (mcdItems.length > 0) data.mcdItems = mcdItems;
     }
 
     // Visual Feedback
@@ -855,19 +1440,222 @@ function generatePrintView(docId, data) {
     }
 }
 
-function saveLocalDraft(docId) {
-    // Placeholder for local draft saving
-    if (window.showNotification) window.showNotification('Local draft saved!', 'success');
+async function saveLocalDraft(docId) {
+    const form = document.getElementById('doc-form');
+    if (!form) {
+        if (window.showNotification) window.showNotification('No form to save.', 'error');
+        return;
+    }
+    
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    const schema = DOC_SCHEMAS[docId];
+    const userId = getCurrentUserId();
+    
+    // Collect dynamic table data - CRITICAL FOR SAVING ALL FIELDS
+    
+    // 1. Items table (for COM_INV, TAX_CHALLAN, DELIVERY_CHALLAN)
+    const itemsBody = document.getElementById('doc-items-body');
+    if (itemsBody && itemsBody.children.length > 0) {
+        const items = [];
+        Array.from(itemsBody.children).forEach((row, index) => {
+            const inputs = row.querySelectorAll('input');
+            if (inputs.length > 0) {
+                items.push({
+                    sno: index + 1,
+                    marks: inputs[0]?.value || '',
+                    desc: inputs[1]?.value || '',
+                    hsn: inputs[2]?.value || '',
+                    qty: inputs[3]?.value || '',
+                    unit: inputs[4]?.value || '',
+                    rate: inputs[5]?.value || '',
+                    amount: inputs[6]?.value || ''
+                });
+            }
+        });
+        if (items.length > 0) data.items = items;
+    }
+    
+    // 2. Packing table (for PKL, DELIVERY_CHALLAN)
+    const packingBody = document.getElementById('pkl-items-body');
+    if (packingBody && packingBody.children.length > 0) {
+        const packages = [];
+        Array.from(packingBody.children).forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            if (inputs.length > 0) {
+                packages.push({
+                    carton: inputs[0]?.value || '',
+                    desc: inputs[1]?.value || '',
+                    qty: inputs[2]?.value || '',
+                    net: inputs[3]?.value || '',
+                    gross: inputs[4]?.value || '',
+                    l: inputs[5]?.value || '',
+                    b: inputs[6]?.value || '',
+                    h: inputs[7]?.value || '',
+                    vol: inputs[8]?.value || ''
+                });
+            }
+        });
+        if (packages.length > 0) data.packages = packages;
+    }
+    
+    // 3. Non-DG table
+    const nondgBody = document.getElementById('nondg-items-body');
+    if (nondgBody && nondgBody.children.length > 0) {
+        const nondgItems = [];
+        Array.from(nondgBody.children).forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            if (inputs.length > 0) {
+                nondgItems.push({
+                    marks: inputs[0]?.value || '',
+                    description: inputs[1]?.value || '',
+                    quantity: inputs[2]?.value || ''
+                });
+            }
+        });
+        if (nondgItems.length > 0) data.nondgItems = nondgItems;
+    }
+    
+    // 4. Negative Declaration table
+    const negBody = document.getElementById('neg-items-body');
+    if (negBody && negBody.children.length > 0) {
+        const negItems = [];
+        Array.from(negBody.children).forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            if (inputs.length > 0) {
+                negItems.push({
+                    marks: inputs[0]?.value || '',
+                    description: inputs[1]?.value || '',
+                    country: inputs[2]?.value || ''
+                });
+            }
+        });
+        if (negItems.length > 0) data.negItems = negItems;
+    }
+    
+    // 5. MCD table
+    const mcdBody = document.getElementById('mcd-items-body');
+    if (mcdBody && mcdBody.children.length > 0) {
+        const mcdItems = [];
+        Array.from(mcdBody.children).forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            if (inputs.length > 0) {
+                mcdItems.push({
+                    marks: inputs[0]?.value || '',
+                    description: inputs[1]?.value || '',
+                    mfgOps: inputs[2]?.value || '',
+                    mfgDate: inputs[3]?.value || '',
+                    mfgCountry: inputs[4]?.value || '',
+                    material: inputs[5]?.value || '',
+                    materialDate: inputs[6]?.value || '',
+                    prodCountry: inputs[7]?.value || '',
+                    exportDate: inputs[8]?.value || ''
+                });
+            }
+        });
+        if (mcdItems.length > 0) data.mcdItems = mcdItems;
+    }
+    
+    // 6. Collect ALL form fields including empty ones
+    const allInputs = form.querySelectorAll('input, textarea, select');
+    allInputs.forEach(input => {
+        if (input.name && !data.hasOwnProperty(input.name)) {
+            data[input.name] = input.value || ''; // Save empty fields as empty strings
+        }
+    });
+    
+    console.log('Complete data being saved:', { docId, title: schema.title, data, userId });
+    
+    try {
+        const result = await DocumentDB.save(docId, schema.title, data, userId);
+        console.log('Document saved with ID:', result);
+        
+        if (window.showNotification) window.showNotification('Document saved locally!', 'success');
+        
+        // Refresh saved docs if visible
+        if (savedDocsVisible) {
+            loadSavedDocuments();
+        }
+    } catch (error) {
+        console.error('Error saving document:', error);
+        if (window.showNotification) window.showNotification('Error saving document.', 'error');
+    }
 }
 
 function saveCloudDraft(docId) {
-    // Placeholder for cloud draft saving
-    if (window.showNotification) window.showNotification('Cloud draft saved!', 'success');
+    // Placeholder for cloud saving - would integrate with backend
+    if (window.showNotification) window.showNotification('Cloud save feature coming soon!', 'info');
 }
 
 function loadLocalDraft(docId) {
-    // Placeholder for local draft loading
-    if (window.showNotification) window.showNotification('Local draft loaded!', 'info');
+    // Show saved documents pane
+    if (!savedDocsVisible) {
+        toggleSavedDocs();
+    }
+}
+
+// ============================================================================
+// INTEGRITY CHECK SETUP
+// ============================================================================
+function setupIntegrityCheckListeners(schema) {
+    // Update checkboxes when form fields change
+    const form = document.getElementById('doc-form');
+    if (!form) return;
+    
+    form.addEventListener('input', () => {
+        updateIntegrityChecks(schema);
+    });
+    
+    // Set initial checklist visibility based on validation state
+    const checklist = document.getElementById('integrity-checklist');
+    if (checklist) {
+        checklist.style.display = validationEnabled ? 'block' : 'none';
+    }
+    
+    // Initial check
+    setTimeout(() => updateIntegrityChecks(schema), 100);
+}
+
+/**
+ * Enhanced integrity check updates using validation scheme
+ * @param {object} schema - Document schema
+ */
+function updateIntegrityChecks(schema) {
+    const form = document.getElementById('doc-form');
+    if (!form) return;
+    
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    schema.fields.forEach(field => {
+        const checkbox = document.getElementById(`check-${field.key}`);
+        const errorSpan = document.getElementById(`error-${field.key}`);
+        
+        if (checkbox) {
+            // Use document-specific validation if available
+            const validation = validateFieldForDoc ? 
+                validateFieldForDoc(field.key, data[field.key], schema.id) : 
+                validateField(field.key, data[field.key], schema.id);
+            
+            if (validation.isValid) {
+                checkbox.checked = true;
+                checkbox.classList.remove('text-red-500');
+                checkbox.classList.add('text-green-500');
+                if (errorSpan) {
+                    errorSpan.textContent = '';
+                    errorSpan.classList.add('hidden');
+                }
+            } else {
+                checkbox.checked = false;
+                checkbox.classList.remove('text-green-500');
+                checkbox.classList.add('text-red-500');
+                if (errorSpan && validation.error) {
+                    errorSpan.textContent = validation.error;
+                    errorSpan.classList.remove('hidden');
+                }
+            }
+        }
+    });
 }
 
 function handleImportData(docId) {
@@ -990,6 +1778,35 @@ window.autoFillFromReference = function(ref, docId) {
     console.log(`Auto-filled ${filledCount} fields for ${docId}`);
 };
 
+// ============================================================================
+// EXPOSE FUNCTIONS GLOBALLY FOR HTML ONCLICK HANDLERS
+// ============================================================================
+window.addDocItemRow = addDocItemRow;
+window.addNonDGRow = addNonDGRow;
+window.addNegRow = addNegRow;
+window.addMCDRow = addMCDRow;
+window.addPackingRow = addPackingRow;
+window.handleGenerate = handleGenerate;
+window.handleBlankPrint = handleBlankPrint;
+window.handleDownloadPDF = handleDownloadPDF;
+window.handleDownloadDOCX = handleDownloadDOCX;
+window.showDocInfo = showDocInfo;
+window.saveLocalDraft = saveLocalDraft;
+window.saveCloudDraft = saveCloudDraft;
+window.loadLocalDraft = loadLocalDraft;
+window.handleImportData = handleImportData;
+window.togglePreview = togglePreview;
+window.renderDecisionGuide = renderDecisionGuide;
+window.initDocCenter = initDocCenter;
+window.loadSavedDocument = loadSavedDocument;
+window.deleteSavedDocument = deleteSavedDocument;
+window.copySavedDocument = copySavedDocument;
+window.generatePrintView = generatePrintView;
+window.selectDoc = selectDoc;
+window.toggleSavedDocs = toggleSavedDocs;
+window.validateFieldRealTime = validateFieldRealTime;
+window.toggleValidation = toggleValidation;
+
 // Initialize the document center
 function initDocCenter() {
     renderDecisionGuide();
@@ -998,4 +1815,18 @@ function initDocCenter() {
 // Auto-initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     initDocCenter();
+    
+    // Setup document click handlers
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.doc-link')) {
+            const link = e.target.closest('.doc-link');
+            const docCode = link.dataset.docCode;
+            const docTitle = link.dataset.docTitle;
+            const docDesc = link.dataset.docDesc;
+            
+            if (docCode) {
+                selectDoc(link, docCode, docTitle, docDesc);
+            }
+        }
+    });
 });
