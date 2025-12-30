@@ -1,8 +1,0 @@
-{
-  "projects": {
-    "default": "ipostex",
-    "new": "ipostex-v2"
-  },
-  "targets": {},
-  "etags": {}
-}
